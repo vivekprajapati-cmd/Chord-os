@@ -1,0 +1,13 @@
+{
+  "name": "ChordOS",
+  "short_name": "ChordOS",
+  "description": "Operations + AI workspace for Chord and 1702 Digital",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#F2EBD9",
+  "theme_color": "#0A0A0A",
+  "orientation": "portrait",
+  "icons": [],
+  "screenshots": [],
+  "categories": ["productivity", "business"]
+}

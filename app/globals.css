@@ -1,0 +1,203 @@
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+
+:root {
+  /* Chord brand palette */
+  --cream: #F2EBD9;
+  --cream-2: #EAE0C5;
+  --paper: #FFFCF4;
+  --ink: #0A0A0A;
+  --cobalt: #2226D9;
+  --yellow: #F0E63C;
+  --red: #FF3B2F;
+  --gray: #7A7468;
+  --line: rgba(10, 10, 10, 0.14);
+  --line-w: rgba(255, 252, 244, 0.16);
+
+  --background: var(--cream);
+  --foreground: var(--ink);
+
+  /* Typography */
+  --f-display: 'Anton', sans-serif;
+  --f-body: 'Bricolage Grotesque', sans-serif;
+  --f-italic: 'Fraunces', serif;
+  --f-mono: 'JetBrains Mono', monospace;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-cream: var(--cream);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-cobalt: var(--cobalt);
+  --color-yellow: var(--yellow);
+  --color-red: var(--red);
+  --color-gray: var(--gray);
+  --font-sans: var(--f-body);
+  --font-display: var(--f-display);
+  --font-italic: var(--f-italic);
+  --font-mono: var(--f-mono);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--f-body);
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.55;
+  overflow-x: hidden;
+}
+
+/* Grain overlay — z-index 10 keeps it below modals/dropdowns */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.04;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+a {
+  text-decoration: none;
+}
+
+em {
+  font-family: var(--f-italic);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+}
+
+.mono {
+  font-family: var(--f-mono);
+  letter-spacing: 0;
+  font-size: 11px;
+  text-transform: lowercase;
+}
+
+/* Offset shadow utility */
+.shadow-offset {
+  box-shadow: 8px 8px 0 var(--ink);
+}
+
+.shadow-offset-sm {
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+/* Chord-style card */
+.card-chord {
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 8px 8px 0 var(--ink);
+}
+
+.card-chord.lg {
+  border-radius: 18px;
+  padding: 32px;
+}
+
+/* Pill button */
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid currentColor;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-pill:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* Display heading */
+.heading-display {
+  font-family: var(--f-display);
+  font-size: clamp(32px, 6vw, 72px);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* Metadata label */
+.label-meta {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+/* ── Mobile utilities ── */
+
+/* Analytics table — horizontal scroll on small screens */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Modal — full screen on mobile */
+@media (max-width: 640px) {
+  .modal-inner {
+    max-width: 100% !important;
+    border-radius: 18px 18px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-height: 92dvh !important;
+  }
+  .modal-wrap {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+}
+
+/* Dashboard stat grid — 1 col on mobile */
+@media (max-width: 640px) {
+  .stat-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .stat-grid-2 {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Hide scrollbar on mobile nav areas */
+@media (max-width: 768px) {
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Safe area bottom padding for PWA */
+.pb-safe {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
