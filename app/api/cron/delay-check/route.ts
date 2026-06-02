@@ -2,7 +2,7 @@
 // Add to vercel.json: { "crons": [{ "path": "/api/cron/delay-check", "schedule": "30 3 * * *" }] }
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/admin';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { notifySlack } from '@/lib/slack';
 
 export const runtime = 'nodejs';
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  const supabase = createClient();
+  const supabase = createAdminClient();
   const now = new Date();
 
   // Find all active tasks past their deadline with no submission

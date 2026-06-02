@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import SidebarNav from '@/components/sidebar-nav';
 import MobileDrawer from '@/components/mobile-drawer';
+import SidebarUser from '@/components/sidebar-user';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -11,7 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, name, role, department, is_team_lead')
+    .select('id, name, role, department, seniority, location, is_team_lead')
     .eq('email', user.email!)
     .maybeSingle();
 
@@ -46,17 +47,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         <SidebarNav tier={tier} />
 
-        <div className="px-5 py-5" style={{ borderTop: '1px solid var(--line)' }}>
-          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--ink)', fontWeight: 500 }}>{firstName}</p>
-          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px' }}>
-            {person?.role ?? person?.department ?? ''}
-          </p>
-          {tier !== 'staff' && (
-            <span style={{ display: 'inline-block', marginTop: '8px', fontFamily: 'var(--f-mono)', fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.1em', border: '1px solid var(--ink)', borderRadius: '999px', padding: '2px 8px', color: 'var(--ink)' }}>
-              {tier === 'admin' ? 'Lead' : 'POC'}
-            </span>
-          )}
-        </div>
+        <SidebarUser
+          person={{
+            id: person?.id ?? '',
+            name: person?.name ?? firstName,
+            email: user.email ?? '',
+            role: person?.role ?? '',
+            department: person?.department ?? '',
+            seniority: (person as any)?.seniority ?? 'Mid',
+            location: (person as any)?.location ?? 'Mumbai',
+          }}
+          tier={tier}
+        />
       </aside>
 
       {/* ── Main content ── */}

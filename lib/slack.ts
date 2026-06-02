@@ -1,4 +1,4 @@
-// Slack notifications via webhook to #chord-os in edernityteam.slack.com
+// Slack notifications via webhook to #1702fam in edernityteam.slack.com
 
 export async function notifySlack(message: string) {
   const url = process.env.SLACK_WEBHOOK_URL;

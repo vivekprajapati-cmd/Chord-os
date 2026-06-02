@@ -6,12 +6,13 @@ import { usePathname } from 'next/navigation';
 
 const NAV = [
   { href: '/demo/dashboard', label: 'Dashboard', num: '01' },
-  { href: '/demo/tasks',     label: 'Tasks',     num: '02' },
-  { href: '/demo/calendar',  label: 'Calendar',  num: '03' },
-  { href: '/demo/brands',    label: 'Brands',    num: '04' },
-  { href: '/demo/chat',      label: 'Allocator', num: '05' },
-  { href: '/demo/team',      label: 'Team',      num: '06' },
-  { href: '/demo/analytics', label: 'Analytics', num: '07' },
+  { href: '/demo/briefings', label: 'Briefings',  num: '02' },
+  { href: '/demo/tasks',     label: 'Tasks',     num: '03' },
+  { href: '/demo/calendar',  label: 'Calendar',  num: '04' },
+  { href: '/demo/brands',    label: 'Brands',    num: '05' },
+  { href: '/demo/chat',      label: 'Allocator', num: '06' },
+  { href: '/demo/team',      label: 'Team',      num: '07' },
+  { href: '/demo/analytics', label: 'Analytics', num: '08' },
 ];
 
 export default function DemoDrawer() {
