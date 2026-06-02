@@ -1,160 +1,133 @@
-# ChordOS Progress
+# ChordOS — Build Status
 
-**Status:** MVP functional. Reviewer approval + required references shipped. Budget optimization complete.
-
-**Last Updated:** 2026-05-12
+**Last Updated:** June 2026
+**Status:** Feature-complete MVP. Ready for deployment.
 
 ---
 
-## What's Done
+## What's Built
 
-### Core Allocator
-- Chat interface with Claude tool-use (agentic loop)
-- `create_task_and_block` tool wired to Supabase
-- Conflict detection (prevents double-booking)
-- Prompt caching: system prompt + tools cached for 5min (~90% cost reduction on cache hits)
-- Model no longer hardcoded — reads from `ANTHROPIC_MODEL_ID` env var
-
-### Calendar + Real-Time
-- Week view with day selector
-- Click-to-context modal (brand colors, voice, references, notes)
-- Supabase realtime subscriptions — calendar updates instantly when blocks assigned
-- Mark done → task moves to ready_for_review
-
-### Reviewer Approval Flow (NEW)
-- Approve button → task status = `approved` → Slack notification
-- Request rework button → task reverts to `assigned` → owner retries
-- Shows only to reviewer when task is `ready_for_review`
-- Powered by Slack #chord-os webhook
-
-### Required References (NEW)
-- Mood boards / storyboards / inspiration links now REQUIRED when assigning
-- System prompt enforces this: "References are REQUIRED. If not provided, ask."
-- References auto-stored in `task_references` table
-- Task holder sees them in context modal
+### Auth
+- Slack OAuth (edernityteam workspace only)
+- Auto-creates `people` row on first login from Slack profile
+- Role-based access: `is_team_lead` flag controls lead vs staff
+- RLS policies on all tables
 
 ### Dashboard
-- Today's blocks (scheduled + in progress)
-- In progress count
-- Review queue alert (red badge if tasks waiting for your approval)
-- Real data from Supabase
+- Today's blocks, in-progress count, review queue alert
+- Upcoming blocks if nothing today
+- Live data from Supabase
 
-### Tasks Page
-- Grouped by status (in_progress, scheduled, ready_for_review, approved, done)
-- Role-based: leads see all, others see own
-- Sortable by priority + deadline
+### Tasks
+- Grouped by status: in_progress → scheduled → ready_for_review → approved → done
+- Leads see all tasks, staff see own only
+- Edit modal: change deliverable, assignee, priority, status, hours, deadline
+- Block transfer on reassign (old block cancelled, new one created)
 
-### Auth + Access Control
-- Google OAuth, domain-restricted (@theampmworld.com)
-- RLS policies on all tables (people, tasks, blocks)
-- Auto-link auth_user_id to people table on first login
+### Calendar
+- Week view with day selector
+- Click any block → Context modal
+- Realtime updates via Supabase subscriptions
 
-### Brand Pages
-- Brand list + detail view
-- Brand colors, typography, voice summary
-- Tasks filtered by brand
+### Context Modal
+- Brand colors, voice, references per task
+- Acknowledge button (assignee confirms task seen) → Slack notified
+- Mark done + submission URL required → Slack notified
+- Revision round counter
+- Approve / Rework with notes (reviewer only) → Slack notified
+- Revision threshold alert at round 3+
 
-### Database
-- 8 tables: people, brands, tasks, blocks, task_references, ai_gate_results, chat_messages, activity_log
-- 19 team members seeded (from CSV)
-- 4 brands seeded (IndiaGate, TrueSilver, AlphaKid, Vadilal)
-- RLS policies enforce role-based access
+### Chat Allocator (Team leads only)
+- Natural language task assignment via Claude / Groq
+- Bulk morning allocation (multiple people, one message)
+- Reassignment via chat ("move X to Y")
+- Due date required, hours optional
+- References optional (asks once)
+- Conflict detection, overload warning (20h+)
+- Brand brain context (rules, meeting notes)
+- AI fallback: Anthropic → Groq (auto)
 
-### PWA
-- `manifest.json` configured (installable on mobile/desktop)
-- Still needs: icon-192.png + icon-512.png in `/public/`
+### Brands
+- Brand list + detail page
+- Colors, typography, voice summary
+- Active tasks per brand
 
----
+### Briefings
+- Meeting notes per brand
+- Action items, decisions, tasks suggested, knowledge rules
+- Filterable by brand
 
-## What's Left
+### Team (leads only)
+- Full team list grouped by department
+- Add Person modal → writes to Supabase `people` table
+- Self-serve via Slack login (no manual seeding needed)
 
-### High Priority (Ship Next)
-1. **PWA Icons** — 30min
-   - Generate 192×192 and 512×512 PNG files
-   - Save to `/public/icon-192.png` and `/public/icon-512.png`
-   - Makes app installable on mobile/desktop
+### Analytics (leads only)
+- Per-member: active tasks, total, completed, on-time rate, delays, avg turnaround
+- Team-wide summary
+- Export to Excel (.xlsx) + PDF (browser print)
 
-### Medium Priority (Nice to Have)
-2. **AI Gate Enforcement** — 3-4h
-   - Wire gate checks into task detail view
-   - Block approval if tier-1 brand fails gate
-   - Currently in schema, not connected to UI
-   - Skip unless you hit a specific quality issue
+### Slack Notifications
+All state changes fire to `#chord-os`:
+- Task assigned, acknowledged, submitted, approved
+- Rework requested (with notes + round number)
+- Reassigned (from → to → by)
+- Delayed (daily cron, 9am IST)
+- 24hr deadline reminder (same cron)
+- Repeat delay warning (3+ delays in 30 days)
+- Revision threshold breach (round 3+)
 
-### Not Needed for MVP
-- Email notifications (using Slack only per request)
-- Additional task fields beyond what exists
-
----
-
-## Budget Status
-
-**Spend:** $31 / $40 (77% used)
-
-**Optimizations shipped:**
-- ✅ Removed hardcoded `claude-sonnet-4-6` model from chat route
-- ✅ Implemented prompt caching (5-min ephemeral, ~90% cost reduction on cache hits)
-- ✅ Model now reads from `ANTHROPIC_MODEL_ID` env var (no hardcoding)
-
-**Remaining burn:** Only on actual API calls to Anthropic for chat allocations. No wasted token burn.
-
----
-
-## How to Run
-
-```bash
-npm install
-npm run dev
-```
-
-Open `http://localhost:3000` in Chrome.
-
-**Required env vars:**
-```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-ANTHROPIC_API_KEY=
-SLACK_WEBHOOK_URL=
-ANTHROPIC_MODEL_ID=claude-3-5-sonnet-20241022  # optional, defaults to this
-```
+### Mobile
+- Responsive layout: sidebar on desktop, hamburger drawer on mobile
+- Drawer has all nav links including Team + Analytics
+- Context modal slides up from bottom on mobile
+- Analytics table horizontally scrollable
+- PWA manifest configured (portrait, installable)
 
 ---
 
-## File Structure
+## SQL Files (run in order)
 
 ```
-app/
-  (app)/
-    dashboard/
-    calendar/
-    tasks/
-    brands/
-  api/
-    chat/              # allocator endpoint with tool-use
-    slack/notify/      # approval notifications
-lib/
-  slack.ts            # webhook + notification helpers
-components/
-  context-modal.tsx   # task detail + approval buttons
+1. schema.sql        — all tables + RLS policies
+2. seed.sql          — 4 brands (IndiaGate, TrueSilver, AlphaKid, Vadilal)
+3. features-patch.sql — acknowledgment, submission, revision tracking, member_stats view
+```
+
+Note: `seed.sql` no longer seeds people — they self-onboard via Slack login.
+
+---
+
+## Environment Variables
+
+See `.env.example` for full list. Key ones:
+
+```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+ANTHROPIC_API_KEY          # primary AI (optional if Groq set)
+GROQ_API_KEY               # fallback AI (free at console.groq.com)
+SLACK_WEBHOOK_URL          # #chord-os incoming webhook
+NEXT_PUBLIC_APP_URL        # https://chord-os.theampmworld.com
+CRON_SECRET                # random string, secures cron endpoint
 ```
 
 ---
 
-## Next Steps
+## Cron Job
 
-1. Generate PWA icons (30min, optional but recommended for polish)
-2. Test the full flow:
-   - Lead assigns task via chat with references
-   - Owner marks done → task to ready_for_review
-   - Reviewer approves or requests rework
-   - Slack notification fires
-3. Ship to team
+Daily delay check at 9am IST — see `docs/cron-setup.md` for setup on Hostinger via cron-job.org.
 
 ---
 
-## Notes for Future Work
+## What's Pending
 
-- **AI gate:** Schema ready (`ai_gate_results` table), just needs UI wiring + enforcement logic
-- **Scaling:** RLS policies are in place. Can add more people/brands without code changes.
-- **References:** Currently accepts URLs. Can extend to accept Figma embeds, Miro links, etc.
-- **Reviewer routing:** Currently assigned via task creation. Could be automated by role/brand later.
+| Item | Priority | Notes |
+|---|---|---|
+| PWA icons | Low | Add icon-192.png + icon-512.png to /public for mobile install |
+| AI gates enforcement | Low | Schema ready, UI pending |
+| Rejection notes visible to assignee | Medium | Rework notes fire to Slack but not shown in assignee's task view |
+| Creative capacity dashboard | Medium | Active hours in allocator prompt only, no visual panel |
+| Briefings → confirm tasks | Medium | `tasks_confirmed` flag exists, no UI action yet |
+| Standup logger | v2 | Not started |
