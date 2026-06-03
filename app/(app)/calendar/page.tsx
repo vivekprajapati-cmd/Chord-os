@@ -37,7 +37,7 @@ export default async function CalendarPage() {
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, name, is_team_lead')
+    .select('id, name, is_team_lead, google_calendar_connected')
     .eq('email', user!.email!)
     .maybeSingle();
 
@@ -74,6 +74,7 @@ export default async function CalendarPage() {
       personId={person.id}
       personName={person.name}
       isLead={person.is_team_lead}
+      googleConnected={!!(person as any).google_calendar_connected}
       blocks={(blocks ?? []) as BlockWithTask[]}
     />
   );

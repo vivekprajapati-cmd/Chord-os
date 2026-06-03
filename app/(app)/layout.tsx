@@ -37,7 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="px-6 pt-7 pb-6" style={{ borderBottom: '1px solid var(--line)' }}>
           <Link href="/dashboard" className="group block">
             <span style={{ fontFamily: 'var(--f-display)', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
-              ChordOS
+              Harmony
             </span>
             <span style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gray)', marginTop: '2px' }}>
               Ops workspace
@@ -68,7 +68,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           style={{ background: 'var(--cream)', borderBottom: '1px solid var(--line)' }}>
           <MobileDrawer tier={tier} firstName={firstName} role={person?.role ?? person?.department ?? ''} />
           <span style={{ fontFamily: 'var(--f-display)', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
-            ChordOS
+            Harmony
           </span>
           <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', textTransform: 'uppercase' }}>
             {firstName}

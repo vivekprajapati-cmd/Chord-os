@@ -104,7 +104,7 @@ function AddModal({ onClose, onAdd }: { onClose: () => void; onAdd: (p: Person) 
             <div><label style={labelStyle}>Seniority</label><select value={seniority} onChange={e => setSeniority(e.target.value)} style={inputStyle}>{SENIORITIES.map(s => <option key={s}>{s}</option>)}</select></div>
           </div>
           <div><label style={labelStyle}>Location</label><input value={location} onChange={e => setLocation(e.target.value)} placeholder="Mumbai" style={inputStyle} /></div>
-          <div onClick={() => setIsLead(v => !v)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: isLead ? 'var(--yellow)' : 'var(--paper)', border: `1px solid ${isLead ? 'var(--ink)' : 'var(--line)'}`, borderRadius: '12px', padding: '14px 18px', cursor: 'pointer', transition: 'all 0.15s' }}>
+          <div onClick={() => setIsLead(v => !v)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: isLead ? 'var(--coral)' : 'var(--paper)', border: `1px solid ${isLead ? 'var(--ink)' : 'var(--line)'}`, borderRadius: '12px', padding: '14px 18px', cursor: 'pointer', transition: 'all 0.15s' }}>
             <div>
               <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink)' }}>Team Lead</p>
               <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', marginTop: '3px' }}>Can use Allocator, see all tasks, approve work</p>

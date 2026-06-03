@@ -1,6 +1,6 @@
 {
-  "name": "ChordOS",
-  "short_name": "ChordOS",
+  "name": "Harmony",
+  "short_name": "Harmony",
   "description": "Operations + AI workspace for Chord and 1702 Digital",
   "start_url": "/dashboard",
   "display": "standalone",

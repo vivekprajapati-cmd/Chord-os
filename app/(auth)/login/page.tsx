@@ -24,7 +24,7 @@ function LoginForm() {
 
   return (
     <div className="w-full max-w-md bg-[var(--paper)] border border-[var(--line)] rounded-2xl p-10 shadow-[8px_8px_0_var(--ink)]">
-      <h1 className="font-display text-5xl uppercase tracking-tight mb-2">ChordOS</h1>
+      <h1 className="font-display text-5xl uppercase tracking-tight mb-2">Harmony</h1>
       <p className="text-sm text-[var(--gray)] mb-8">
         Internal workspace for <strong>1702 Digital + Chord</strong>.<br />
         Sign in with your <strong>edernityteam</strong> Slack account.

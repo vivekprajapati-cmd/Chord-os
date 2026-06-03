@@ -1,14 +1,14 @@
-@import url("https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
 :root {
-  /* Chord brand palette */
+  /* Harmony brand palette */
   --cream: #F2EBD9;
   --cream-2: #EAE0C5;
   --paper: #FFFCF4;
   --ink: #0A0A0A;
   --cobalt: #2226D9;
-  --yellow: #F0E63C;
+  --coral: #E55D4A;
   --red: #FF3B2F;
   --gray: #7A7468;
   --line: rgba(10, 10, 10, 0.14);
@@ -19,7 +19,7 @@
 
   /* Typography */
   --f-display: 'Anton', sans-serif;
-  --f-body: 'Bricolage Grotesque', sans-serif;
+  --f-body: 'DM Sans', sans-serif;
   --f-italic: 'Fraunces', serif;
   --f-mono: 'JetBrains Mono', monospace;
 }
@@ -31,7 +31,7 @@
   --color-paper: var(--paper);
   --color-ink: var(--ink);
   --color-cobalt: var(--cobalt);
-  --color-yellow: var(--yellow);
+  --color-coral: var(--coral);
   --color-red: var(--red);
   --color-gray: var(--gray);
   --font-sans: var(--f-body);

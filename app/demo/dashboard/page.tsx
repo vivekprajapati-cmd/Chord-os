@@ -103,14 +103,14 @@ export default function DemoDashboardPage() {
 function StatCard({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div style={{
-      background: highlight ? 'var(--yellow)' : 'var(--paper)',
+      background: highlight ? 'var(--coral)' : 'var(--paper)',
       border: `1.5px solid ${highlight ? 'var(--ink)' : 'var(--line)'}`,
       borderRadius: '14px',
       padding: '24px',
       boxShadow: '6px 6px 0 var(--ink)',
     }}>
-      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: '10px' }}>{label}</p>
-      <p style={{ fontFamily: 'var(--f-display)', fontSize: 'clamp(40px, 5vw, 56px)', fontWeight: 400, textTransform: 'uppercase', lineHeight: 1, color: 'var(--ink)' }}>{value}</p>
+      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: highlight ? 'rgba(255,255,255,0.7)' : 'var(--gray)', marginBottom: '10px' }}>{label}</p>
+      <p style={{ fontFamily: 'var(--f-display)', fontSize: 'clamp(40px, 5vw, 56px)', fontWeight: 400, textTransform: 'uppercase', lineHeight: 1, color: highlight ? '#fff' : 'var(--ink)' }}>{value}</p>
     </div>
   );
 }

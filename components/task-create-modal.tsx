@@ -26,10 +26,12 @@ export default function TaskCreateModal({
   const [form, setForm] = useState({
     brand_id: brands[0]?.id ?? '',
     owner_id: people[0]?.id ?? '',
+    reviewer_id: '',
     deliverable: '',
     task_type: 'design' as typeof TASK_TYPES[number],
     estimated_hours: '',
     priority: 'P1' as typeof PRIORITIES[number],
+    start_date: '',
     deadline: '',
     notes: '',
   });
@@ -61,6 +63,8 @@ export default function TaskCreateModal({
         body: JSON.stringify({
           ...form,
           estimated_hours: Number(form.estimated_hours),
+          reviewer_id: form.reviewer_id || undefined,
+          start_date: form.start_date || undefined,
           deadline: form.deadline || undefined,
           notes: form.notes || undefined,
         }),
@@ -134,6 +138,21 @@ export default function TaskCreateModal({
             </div>
           </div>
 
+          {/* Reviewer */}
+          <div>
+            <label className={label}>Reviewer (optional)</label>
+            <select
+              value={form.reviewer_id}
+              onChange={e => setForm(f => ({ ...f, reviewer_id: e.target.value }))}
+              className={input}
+            >
+              <option value="">— No reviewer —</option>
+              {people.map(p => (
+                <option key={p.id} value={p.id}>{p.name} — {p.department}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Deliverable */}
           <div>
             <label className={label}>Deliverable</label>
@@ -186,15 +205,26 @@ export default function TaskCreateModal({
             </div>
           </div>
 
-          {/* Deadline */}
-          <div>
-            <label className={label}>Deadline (blocks calendar up to this time)</label>
-            <input
-              type="datetime-local"
-              value={form.deadline}
-              onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
-              className={input}
-            />
+          {/* Start + End date */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={label}>Start date</label>
+              <input
+                type="datetime-local"
+                value={form.start_date}
+                onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))}
+                className={input}
+              />
+            </div>
+            <div>
+              <label className={label}>End / deadline</label>
+              <input
+                type="datetime-local"
+                value={form.deadline}
+                onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
+                className={input}
+              />
+            </div>
           </div>
 
           {/* Notes */}

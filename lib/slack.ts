@@ -20,8 +20,8 @@ export async function notifySlack(message: string) {
 
 // Convenience helpers
 export const slack = {
-  newBlock: (person: string, brand: string, hours: number, start: string) =>
-    notifySlack(`📅 *New block* — ${person} blocked ${hours}h for *${brand}* starting ${start}`),
+  newBlock: (person: string, brand: string, hours: number, deadline: string) =>
+    notifySlack(`📅 *New task assigned* — ${person} · *${brand}* · ${hours > 0 ? `${hours}h` : 'no hours set'} · Due: ${deadline}`),
   overrun: (person: string, brand: string) =>
     notifySlack(`⚠️ *Overrun* — ${person} hasn't marked the *${brand}* block as done`),
   readyForReview: (reviewer: string, owner: string, brand: string) =>

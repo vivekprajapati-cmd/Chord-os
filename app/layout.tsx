@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
-import { Bricolage_Grotesque, Anton, Fraunces, JetBrains_Mono } from 'next/font/google';
+import { DM_Sans, Anton, Fraunces, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 
-const bricolage = Bricolage_Grotesque({ variable: '--font-bricolage', subsets: ['latin'] });
+const dmSans = DM_Sans({ variable: '--font-dm-sans', subsets: ['latin'] });
 const anton = Anton({ variable: '--font-anton', weight: '400', subsets: ['latin'] });
 const fraunces = Fraunces({ variable: '--font-fraunces', subsets: ['latin'] });
 const jetbrains = JetBrains_Mono({ variable: '--font-jetbrains', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'ChordOS',
+  title: 'Harmony',
   description: 'Operations + AI workspace for Chord and 1702 Digital',
   manifest: '/manifest.json',
   viewport: {
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'ChordOS',
+    title: 'Harmony',
   },
   themeColor: '#0A0A0A',
 };
@@ -29,7 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="en"
-      className={`${bricolage.variable} ${anton.variable} ${fraunces.variable} ${jetbrains.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${anton.variable} ${fraunces.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>

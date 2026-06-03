@@ -86,7 +86,7 @@ export default function MobileDrawer({ tier, firstName, role }: { tier: Tier; fi
         {/* Drawer header */}
         <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <span style={{ fontFamily: 'var(--f-display)', fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)' }}>ChordOS</span>
+            <span style={{ fontFamily: 'var(--f-display)', fontSize: '22px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)' }}>Harmony</span>
             <span style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gray)', marginTop: '2px' }}>Ops workspace</span>
           </div>
           <button
@@ -113,7 +113,7 @@ export default function MobileDrawer({ tier, firstName, role }: { tier: Tier; fi
                   padding: '12px 14px',
                   borderRadius: '10px',
                   textDecoration: 'none',
-                  background: active ? 'var(--ink)' : 'transparent',
+                  background: active ? 'var(--coral)' : 'transparent',
                   marginBottom: '2px',
                   transition: 'background 0.15s',
                 }}

@@ -3,7 +3,7 @@ import { notifySlack } from '@/lib/slack';
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { type, task, reviewer, from, to, by, person, round, notes, link, days_late, delay_count, approver } = body;
+  const { type, task, reviewer, from, to, by, person, round, notes, link, days_late, delay_count, approver, deadline } = body;
 
   let message = '';
 

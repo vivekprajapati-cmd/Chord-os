@@ -41,16 +41,36 @@ const STATUS_LABEL: Record<string, string> = {
   ready_for_review: 'Review',
 };
 
-export default function CalendarClient({ personId, personName, isLead, blocks: initialBlocks }: {
+export default function CalendarClient({ personId, personName, isLead, googleConnected, blocks: initialBlocks }: {
   personId: string;
   personName: string;
   isLead: boolean;
+  googleConnected: boolean;
   blocks: BlockWithTask[];
 }) {
   const [blocks, setBlocks] = useState<BlockWithTask[]>(initialBlocks);
   const [selectedBlock, setSelectedBlock] = useState<BlockWithTask | null>(null);
   const [selectedDay, setSelectedDay] = useState(0);
-  const weekDays = getWeekDays();
+  const [googleEvents, setGoogleEvents] = useState<any[]>([]);
+  const [weekDays, setWeekDays] = useState<Date[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setWeekDays(getWeekDays());
+    setMounted(true);
+  }, []);
+
+  // Fetch Google Calendar events if connected
+  useEffect(() => {
+    if (!googleConnected || weekDays.length === 0) return;
+    const weekStart = weekDays[0];
+    const weekEnd = new Date(weekDays[6]);
+    weekEnd.setHours(23, 59, 59, 999);
+    fetch(`/api/calendar/google-events?timeMin=${weekStart.toISOString()}&timeMax=${weekEnd.toISOString()}`)
+      .then(r => r.json())
+      .then(data => setGoogleEvents(data.events ?? []))
+      .catch(() => {});
+  }, [googleConnected, weekDays]);
 
   // Realtime: live-update blocks when someone assigns a new one
   useEffect(() => {
@@ -88,25 +108,45 @@ export default function CalendarClient({ personId, personName, isLead, blocks: i
   const todayIdx = weekDays.findIndex(d => isSameDay(d, new Date()));
   const activeDay = weekDays[selectedDay] ?? weekDays[todayIdx];
 
-  const todayBlocks = blocks.filter((b: BlockWithTask) => isSameDay(new Date(b.start_at), activeDay));
+  const todayBlocks = blocks.filter((b: BlockWithTask) => activeDay && isSameDay(new Date(b.start_at), activeDay));
+  const todayGoogleEvents = googleEvents.filter(e => e.start && activeDay && isSameDay(new Date(e.start), activeDay));
+
+  if (!mounted) return null;
 
   return (
     <>
       <div className="space-y-6">
-        <div className="flex items-end justify-between">
+        <div className="flex items-end justify-between flex-wrap gap-3">
           <div>
             <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)]">Calendar</p>
             <h1 className="font-display text-5xl uppercase tracking-tight">{personName}</h1>
           </div>
-          {isLead && (
-            <span className="text-xs font-mono text-[var(--gray)]">Go to Chat to add blocks</span>
-          )}
+          <div className="flex items-center gap-3 flex-wrap">
+            {googleConnected ? (
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34A853', display: 'inline-block' }} />
+                Google Calendar connected
+              </span>
+            ) : (
+              <a
+                href="/api/auth/google"
+                style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink)', color: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '8px 16px', textDecoration: 'none', display: 'inline-block' }}
+              >
+                Connect Google Calendar
+              </a>
+            )}
+            {isLead && (
+              <span className="text-xs font-mono text-[var(--gray)]">Go to Chat to add blocks</span>
+            )}
+          </div>
         </div>
 
         {/* Week strip */}
         <div className="grid grid-cols-7 gap-2">
           {weekDays.map((d, i) => {
-            const count = blocks.filter((b: BlockWithTask) => isSameDay(new Date(b.start_at), d)).length;
+            const blockCount = blocks.filter((b: BlockWithTask) => isSameDay(new Date(b.start_at), d)).length;
+            const googleCount = googleEvents.filter(e => e.start && isSameDay(new Date(e.start), d)).length;
+            const count = blockCount + googleCount;
             const isToday = isSameDay(d, new Date());
             const isActive = i === selectedDay;
             return (
@@ -115,15 +155,15 @@ export default function CalendarClient({ personId, personName, isLead, blocks: i
                 onClick={() => setSelectedDay(i)}
                 className="flex flex-col items-center py-3 rounded-xl border transition"
                 style={{
-                  background: isActive ? 'var(--ink)' : 'var(--paper)',
-                  color: isActive ? 'var(--cream)' : 'var(--ink)',
-                  borderColor: isActive ? 'var(--ink)' : isToday ? 'var(--ink)' : 'var(--line)',
+                  background: isActive ? 'var(--coral)' : 'var(--paper)',
+                  color: isActive ? '#fff' : 'var(--ink)',
+                  borderColor: isActive ? 'var(--coral)' : isToday ? 'var(--coral)' : 'var(--line)',
                 }}
               >
                 <span className="text-xs font-mono uppercase tracking-wider">{DAYS[i]}</span>
                 <span className="font-display text-2xl mt-0.5">{d.getDate()}</span>
                 {count > 0 && (
-                  <span className="text-xs mt-1" style={{ color: isActive ? 'rgba(242,235,217,0.6)' : 'var(--gray)' }}>
+                  <span className="text-xs mt-1" style={{ color: isActive ? 'rgba(255,255,255,0.7)' : 'var(--gray)' }}>
                     {count} block{count !== 1 ? 's' : ''}
                   </span>
                 )}
@@ -138,13 +178,14 @@ export default function CalendarClient({ personId, personName, isLead, blocks: i
             {activeDay.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
 
-          {todayBlocks.length === 0 ? (
+          {todayBlocks.length === 0 && todayGoogleEvents.length === 0 ? (
             <div className="bg-[var(--paper)] border border-[var(--line)] rounded-2xl p-10 text-center">
               <p className="text-[var(--gray)]">No blocks assigned for this day.</p>
               {isLead && <p className="text-xs text-[var(--gray)] mt-1 font-mono">Use Chat to add work.</p>}
             </div>
           ) : (
             <div className="space-y-3">
+              {/* Task blocks */}
               {todayBlocks.map((block) => (
                 <button
                   key={block.id}
@@ -176,6 +217,44 @@ export default function CalendarClient({ personId, personName, isLead, blocks: i
                     Tap to open context →
                   </p>
                 </button>
+              ))}
+
+              {/* Google Calendar events */}
+              {todayGoogleEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="w-full bg-[var(--paper)] border rounded-2xl p-5 text-left"
+                  style={{ borderColor: '#4285F4', borderLeftWidth: '4px' }}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="text-xs font-mono uppercase tracking-[0.1em]" style={{ color: '#4285F4' }}>
+                        Google Calendar
+                      </p>
+                      <p className="font-display text-2xl uppercase tracking-tight mt-0.5">
+                        {event.title}
+                      </p>
+                    </div>
+                    {event.meetLink && (
+                      <a
+                        href={event.meetLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', background: '#4285F4', color: '#fff', borderRadius: '999px', padding: '6px 12px', textDecoration: 'none', flexShrink: 0 }}
+                      >
+                        Join Meet
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 text-xs font-mono text-[var(--gray)]">
+                    {!event.isAllDay && event.start && event.end && (
+                      <span>{formatTime(event.start)} – {formatTime(event.end)}</span>
+                    )}
+                    {event.isAllDay && <span>All day</span>}
+                    {event.location && <span>{event.location}</span>}
+                  </div>
+                </div>
               ))}
             </div>
           )}

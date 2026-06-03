@@ -98,34 +98,88 @@ export async function POST(req: Request) {
 
   // ── STEP 1: Extract (returns preview, doesn't save yet) ──
   if (action === 'extract') {
-    if (!process.env.ANTHROPIC_API_KEY?.trim()) {
-      return NextResponse.json({ error: 'ANTHROPIC_API_KEY not set. Add it to .env.local and restart.' }, { status: 500 });
-    }
-
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const model = process.env.ANTHROPIC_MODEL_ID || 'claude-haiku-4-5-20251001';
+    const prompt = buildExtractionPrompt(
+      brand.name,
+      brand.voice_summary,
+      (brand.knowledge as Record<string, unknown>) ?? {},
+      raw_notes
+    );
 
     let text = '';
-    try {
-      const response = await anthropic.messages.create({
-        model,
-        max_tokens: 2048,
-        messages: [
-          {
-            role: 'user',
-            content: buildExtractionPrompt(
-              brand.name,
-              brand.voice_summary,
-              (brand.knowledge as Record<string, unknown>) ?? {},
-              raw_notes
-            ),
+
+    // Try Anthropic first
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    const anthropicOk = anthropicKey && !anthropicKey.startsWith('sk-ant-placeholder');
+
+    if (anthropicOk) {
+      try {
+        const anthropic = new Anthropic({ apiKey: anthropicKey });
+        const model = process.env.ANTHROPIC_MODEL_ID || 'claude-haiku-4-5-20251001';
+        const response = await anthropic.messages.create({
+          model,
+          max_tokens: 2048,
+          messages: [{ role: 'user', content: prompt }],
+        });
+        text = response.content.find(c => c.type === 'text')?.text ?? '';
+      } catch (err) {
+        console.warn('[meeting] Anthropic failed, falling back to Groq:', err instanceof Error ? err.message : err);
+        text = '';
+      }
+    }
+
+    // Groq fallback
+    if (!text) {
+      const groqKey = process.env.GROQ_API_KEY;
+      if (!groqKey) {
+        return NextResponse.json({ error: 'No AI key configured. Add ANTHROPIC_API_KEY or GROQ_API_KEY to .env.local.' }, { status: 500 });
+      }
+      try {
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${groqKey}`,
+            'Content-Type': 'application/json',
           },
-        ],
-      });
-      text = response.content.find(c => c.type === 'text')?.text ?? '';
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Anthropic API error';
-      return NextResponse.json({ error: msg }, { status: 500 });
+          body: JSON.stringify({
+            model: process.env.GROQ_MODEL_ID || 'llama3-groq-70b-8192-tool-use-preview',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 2048,
+          }),
+        });
+        if (!res.ok) throw new Error(`Groq error: ${res.status}`);
+        const data = await res.json();
+        text = data.choices?.[0]?.message?.content ?? '';
+      } catch (err) {
+        console.warn('[meeting] Groq failed, trying Gemini:', err instanceof Error ? err.message : err);
+        text = '';
+      }
+    }
+
+    // Gemini fallback
+    if (!text) {
+      const geminiKey = process.env.GEMINI_API_KEY;
+      if (!geminiKey) {
+        return NextResponse.json({ error: 'No AI key configured. Add ANTHROPIC_API_KEY, GROQ_API_KEY, or GEMINI_API_KEY.' }, { status: 500 });
+      }
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ role: 'user', parts: [{ text: prompt }] }],
+              generationConfig: { maxOutputTokens: 2048 },
+            }),
+          }
+        );
+        if (!res.ok) throw new Error(`Gemini error: ${res.status}`);
+        const data = await res.json();
+        text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Gemini API error';
+        return NextResponse.json({ error: msg }, { status: 500 });
+      }
     }
 
     let extracted: Record<string, unknown> = {};

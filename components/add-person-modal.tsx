@@ -136,7 +136,7 @@ export default function AddPersonModal({ onClose, onAdded }: {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: isLead ? 'var(--yellow)' : 'var(--paper)',
+              background: isLead ? 'var(--coral)' : 'var(--paper)',
               border: `1px solid ${isLead ? 'var(--ink)' : 'var(--line)'}`,
               borderRadius: '12px',
               padding: '14px 18px',

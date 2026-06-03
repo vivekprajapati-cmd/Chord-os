@@ -5,7 +5,7 @@ const month = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'num
 async function exportExcel(stats: typeof MOCK_STATS, totalTasks: number, totalDone: number, totalDelays: number, teamRate: number) {
   const xlsx = await import('xlsx');
   const summaryData = [
-    ['ChordOS Monthly Report', month],
+    ['Harmony Monthly Report', month],
     [],
     ['Metric', 'Value'],
     ['Total Tasks', totalTasks],
@@ -22,7 +22,7 @@ async function exportExcel(stats: typeof MOCK_STATS, totalTasks: number, totalDo
   const ws = xlsx.utils.aoa_to_sheet(memberData);
   ws['!cols'] = [{ wch: 22 }, { wch: 14 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 12 }, { wch: 8 }, { wch: 20 }];
   xlsx.utils.book_append_sheet(wb, ws, 'Member Breakdown');
-  xlsx.writeFile(wb, `ChordOS_Report_${month.replace(' ', '_')}.xlsx`);
+  xlsx.writeFile(wb, `Harmony_Report_${month.replace(' ', '_')}.xlsx`);
 }
 
 const MOCK_STATS = [
@@ -86,7 +86,7 @@ export default function DemoAnalyticsPage() {
           { label: 'Total Delays', value: String(totalDelays), alert: true },
           { label: 'On-time Rate', value: `${teamOnTimeRate}%` },
         ].map(({ label, value, alert }) => (
-          <div key={label} style={{ background: alert ? 'var(--yellow)' : 'var(--paper)', border: `1.5px solid ${alert ? 'var(--ink)' : 'var(--line)'}`, borderRadius: '14px', padding: '20px', boxShadow: '5px 5px 0 var(--ink)' }}>
+          <div key={label} style={{ background: alert ? 'var(--coral)' : 'var(--paper)', border: `1.5px solid ${alert ? 'var(--ink)' : 'var(--line)'}`, borderRadius: '14px', padding: '20px', boxShadow: '5px 5px 0 var(--ink)' }}>
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: '8px' }}>{label}</p>
             <p style={{ fontFamily: 'var(--f-display)', fontSize: '40px', fontWeight: 400, textTransform: 'uppercase', lineHeight: 1, color: 'var(--ink)' }}>{value}</p>
           </div>

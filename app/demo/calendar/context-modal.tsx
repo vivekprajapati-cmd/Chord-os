@@ -178,11 +178,11 @@ export default function DemoContextModal({ block, onClose }: { block: Block; onC
 
           {/* Mark done / awaiting / approve+rework */}
           {approved ? (
-            <div style={{ ...btnBase, flex: 1, background: 'var(--yellow)', color: 'var(--ink)', textAlign: 'center', cursor: 'default' }}>✓ Approved</div>
+            <div style={{ ...btnBase, flex: 1, background: 'var(--coral)', color: 'var(--ink)', textAlign: 'center', cursor: 'default' }}>✓ Approved</div>
           ) : done ? (
             <>
-              <div style={{ ...btnBase, flex: 1, background: 'var(--yellow)', color: 'var(--ink)', textAlign: 'center', cursor: 'default' }}>✓ Awaiting review</div>
-              <button onClick={() => { setApproved(true); }} style={{ ...btnBase, background: 'var(--yellow)', color: 'var(--ink)' }}>✓ Approve</button>
+              <div style={{ ...btnBase, flex: 1, background: 'var(--coral)', color: 'var(--ink)', textAlign: 'center', cursor: 'default' }}>✓ Awaiting review</div>
+              <button onClick={() => { setApproved(true); }} style={{ ...btnBase, background: 'var(--coral)', color: 'var(--ink)' }}>✓ Approve</button>
               <button onClick={handleRequestRework} style={{ ...btnBase, background: 'var(--red)', color: '#fff', border: '1px solid var(--red)' }}>↺ Rework</button>
             </>
           ) : (

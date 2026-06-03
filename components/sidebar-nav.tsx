@@ -27,10 +27,8 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
       <Link
         key={href}
         href={href}
-        style={{ textDecoration: 'none' }}
-        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-all ${
-          active ? 'bg-[var(--ink)]' : 'hover:bg-[var(--ink)]/6'
-        }`}
+        style={{ textDecoration: 'none', background: active ? 'var(--coral)' : 'transparent', borderRadius: '8px', transition: 'background 0.15s' }}
+        className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-[var(--ink)]/6"
       >
         <span style={{
           fontFamily: 'var(--f-mono)',
@@ -38,7 +36,7 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
           opacity: active ? 0.5 : 0.3,
           width: '16px',
           flexShrink: 0,
-          color: active ? 'var(--cream)' : 'var(--ink)',
+          color: active ? 'var(--paper)' : 'var(--ink)',
         }}>
           {num}
         </span>
@@ -47,7 +45,7 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
           fontSize: '11px',
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
-          color: active ? 'var(--cream)' : 'var(--ink)',
+          color: active ? 'var(--paper)' : 'var(--ink)',
         }}>
           {label}
         </span>

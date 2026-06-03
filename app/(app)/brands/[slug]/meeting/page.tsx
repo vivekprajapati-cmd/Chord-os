@@ -43,9 +43,24 @@ export default function MeetingPage({ params }: { params: Promise<{ slug: string
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
 
   const [extracted, setExtracted] = useState<Extracted | null>(null);
   const [tasks, setTasks] = useState<ExtractedTask[]>([]);
+
+  // Manual mode state
+  const [manualSummary, setManualSummary] = useState('');
+
+  function syncManualToExtracted() {
+    setExtracted({
+      summary: manualSummary,
+      decisions: [],
+      tasks_suggested: [],
+      knowledge_delta: [],
+      contacts: [],
+    });
+    setTasks([]);
+  }
 
   async function handleExtract(e: React.FormEvent) {
     e.preventDefault();
@@ -166,23 +181,58 @@ export default function MeetingPage({ params }: { params: Promise<{ slug: string
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--red)' }}>{error}</p>
           </div>
         )}
-        <button
-          type="submit"
-          disabled={extracting || !notes.trim()}
-          className="w-full uppercase tracking-[0.12em] text-sm font-mono py-4 rounded-full hover:opacity-90 disabled:opacity-40 transition shadow-[4px_4px_0_var(--gray)]"
-          style={{ background: 'var(--ink)', color: 'var(--cream)' }}
-        >
-          {extracting ? 'Extracting with Claude…' : extracted ? 'Re-extract' : 'Extract →'}
-        </button>
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            disabled={extracting || !notes.trim()}
+            className="flex-1 uppercase tracking-[0.12em] text-sm font-mono py-4 rounded-full hover:opacity-90 disabled:opacity-40 transition shadow-[4px_4px_0_var(--gray)]"
+            style={{ background: 'var(--ink)', color: 'var(--cream)' }}
+          >
+            {extracting ? 'Extracting with AI…' : extracted ? 'Re-extract' : 'Extract with AI →'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setManualMode(m => !m)}
+            className="px-6 py-4 rounded-full border text-xs font-mono uppercase tracking-[0.12em] transition"
+            style={{ borderColor: manualMode ? 'var(--ink)' : 'var(--line)', color: manualMode ? 'var(--ink)' : 'var(--gray)' }}
+          >
+            Manual
+          </button>
+        </div>
       </form>
+
+      {/* Manual mode form */}
+      {manualMode && (
+        <div className="space-y-5" style={{ borderTop: '1px solid var(--line)', paddingTop: '24px' }}>
+          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)' }}>
+            Manual entry
+          </p>
+          <div>
+            <label className={labelCls}>Meeting summary</label>
+            <textarea
+              rows={4}
+              value={manualSummary}
+              onChange={e => setManualSummary(e.target.value)}
+              placeholder="Briefly summarise what was discussed and decided."
+              className={`${inputCls} resize-none`}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={syncManualToExtracted}
+            disabled={!manualSummary.trim()}
+            className="w-full uppercase tracking-[0.12em] text-sm font-mono py-4 rounded-full hover:opacity-90 disabled:opacity-40 transition"
+            style={{ background: 'var(--coral)', color: 'var(--ink)', border: '1px solid var(--ink)' }}
+          >
+            Save summary →
+          </button>
+        </div>
+      )}
 
       {/* Extraction results — appear inline after extraction */}
       {extracted && (
         <div className="space-y-6 pt-2">
           <div style={{ borderTop: '1px solid var(--line)', paddingTop: '24px' }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)', marginBottom: '6px' }}>
-              What Claude found
-            </p>
             <p className="text-sm leading-relaxed">{extracted.summary}</p>
           </div>
 
@@ -294,7 +344,7 @@ export default function MeetingPage({ params }: { params: Promise<{ slug: string
               className="w-full uppercase tracking-[0.12em] text-sm font-mono py-4 rounded-full hover:opacity-90 disabled:opacity-50 transition shadow-[6px_6px_0_var(--ink)]"
               style={{ background: 'var(--ink)', color: 'var(--cream)' }}
             >
-              {confirming ? 'Saving…' : `Confirm — create ${tasks.filter(t => t.included).length} task${tasks.filter(t => t.included).length !== 1 ? 's' : ''} + update brain`}
+              {confirming ? 'Saving…' : manualMode ? 'Save summary' : `Confirm — create ${tasks.filter(t => t.included).length} task${tasks.filter(t => t.included).length !== 1 ? 's' : ''} + update brain`}
             </button>
           </div>
         </div>

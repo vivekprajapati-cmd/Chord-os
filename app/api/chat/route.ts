@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { slack } from '@/lib/slack';
+import { createCalendarEvent } from '@/lib/google-calendar';
 
 export const runtime = 'nodejs';
 
@@ -64,7 +65,7 @@ function buildSystemPrompt(
       }).join('\n\n')
     : '';
 
-  return `You are ChordOS, the AI allocator for the 1702 Digital + Chord team.
+  return `You are Harmony, the AI allocator for the 1702 Digital + Chord team.
 
 Current user: ${person.name}, ${person.role} (${person.department} team). You are a team lead.
 
@@ -87,6 +88,7 @@ Rules:
 - Match brand by name or slug (case-insensitive).
 - Check active task load before assigning — if someone already has 20h+ active, flag it and ask if intentional.
 - References are optional. If not provided, ask ONCE. If the lead says no or skips it, proceed without references.
+- Reviewer is optional. If specified (e.g. "Pierre reviews this"), set reviewer_first_name. If not mentioned, skip — don't ask.
 - Apply brand brain rules automatically — never violate a hard_no rule.
 - Use recent meeting context to surface relevant decisions or pending work when relevant.
 - If unclear on something critical (wrong name, unknown brand), ask ONE question.
@@ -110,6 +112,7 @@ const TOOLS: Anthropic.Messages.Tool[] = [
         estimated_hours: { type: 'number', description: 'Optional. If not provided, no calendar block is created — task will have deadline only.' },
         deadline: { type: 'string', description: 'ISO 8601 UTC. REQUIRED — due date for the task.' },
         priority: { type: 'string', enum: ['P0', 'P1', 'P2'] },
+        reviewer_first_name: { type: 'string', description: 'Optional. First name of the person who will review and approve this task.' },
         start_at: { type: 'string', description: 'ISO 8601 UTC. Only relevant if estimated_hours is provided. Default: tomorrow 10am IST.' },
         references: { type: 'array', description: 'List of reference URLs (mood boards, inspiration, storyboards, etc.)', items: { type: 'string' } },
       },
@@ -145,6 +148,7 @@ async function executeTool(
     estimated_hours,
     deadline,
     priority,
+    reviewer_first_name,
     start_at,
     references,
   } = toolInput as {
@@ -155,9 +159,20 @@ async function executeTool(
     estimated_hours?: number;
     deadline: string;
     priority: string;
+    reviewer_first_name?: string;
     start_at?: string;
     references?: string[];
   };
+
+  // Resolve reviewer if specified
+  let reviewerId: string | null = null;
+  if (reviewer_first_name) {
+    const { data: allPeople } = await supabase.from('people').select('id, name');
+    const reviewer = allPeople?.find((p: { id: string; name: string }) =>
+      p.name.toLowerCase().startsWith(reviewer_first_name.toLowerCase())
+    );
+    if (reviewer) reviewerId = reviewer.id;
+  }
 
   // Resolve brand
   const { data: brand } = await supabase
@@ -168,11 +183,11 @@ async function executeTool(
   if (!brand) return `Brand "${brand_slug}" not found.`;
 
   // Resolve person
-  const { data: people } = await supabase.from('people').select('id, name, email');
+  const { data: people } = await supabase.from('people').select('id, name, email, google_refresh_token');
   const owner = people?.find(
-    (p: { id: string; name: string; email: string }) =>
+    (p: { id: string; name: string; email: string; google_refresh_token: string | null }) =>
       p.name.toLowerCase().startsWith(owner_first_name.toLowerCase())
-  );
+  ) as { id: string; name: string; email: string; google_refresh_token: string | null } | undefined;
   if (!owner) return `No one named "${owner_first_name}" found on the team.`;
 
   const hasHours = !!estimated_hours && estimated_hours > 0;
@@ -205,6 +220,7 @@ async function executeTool(
       deliverable,
       task_type,
       owner_id: owner.id,
+      reviewer_id: reviewerId,
       assigned_by_id: assignedById,
       priority,
       estimated_hours: estimated_hours ?? null,
@@ -236,6 +252,17 @@ async function executeTool(
       status: 'scheduled',
     });
     if (blockErr) return `Task created but block failed: ${blockErr.message}`;
+
+    // Create Google Calendar event if owner has connected their calendar
+    if (owner.google_refresh_token) {
+      await createCalendarEvent({
+        refreshToken: owner.google_refresh_token,
+        title: `[${brand.name}] ${deliverable}`,
+        description: `Priority: ${priority}\nTask type: ${task_type}\nAssigned via Harmony`,
+        startAt,
+        endAt,
+      }).catch(err => console.warn('[google-calendar] Failed to create event:', err));
+    }
   }
 
   // Log activity
@@ -246,15 +273,14 @@ async function executeTool(
     details: { brand: brand.name, owner: owner.name, deliverable, hours: estimated_hours, priority },
   });
 
-  // Notify Slack
-  const deadlineLocal = new Date(new Date(deadline).getTime() + IST_OFFSET);
-  const deadlineStr = deadlineLocal.toLocaleString('en-IN', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  // Notify Slack — always show deadline in IST
+  const deadlineStr = new Date(deadline).toLocaleString('en-IN', {
+    weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata',
+  });
 
   if (hasHours) {
-    const startLocal = new Date(new Date(startAt).getTime() + IST_OFFSET);
-    const timeStr = startLocal.toLocaleString('en-IN', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
-    await slack.newBlock(owner.name, brand.name, estimated_hours!, timeStr);
-    return `Done. ${owner.name} blocked ${estimated_hours}h for ${brand.name} — ${deliverable} (${priority}) starting ${timeStr}. Due ${deadlineStr}.`;
+    await slack.newBlock(owner.name, brand.name, estimated_hours!, deadlineStr);
+    return `Done. ${owner.name} blocked ${estimated_hours}h for ${brand.name} — ${deliverable} (${priority}). Due ${deadlineStr}.`;
   } else {
     await slack.newBlock(owner.name, brand.name, 0, deadlineStr);
     return `Done. ${owner.name} assigned ${brand.name} — ${deliverable} (${priority}). Due ${deadlineStr}. No calendar block created.`;
@@ -463,9 +489,7 @@ export async function POST(req: Request) {
   // ── Groq fallback (OpenAI-compatible API) ────────────────────────────────
   if (!finalReply) {
     const groqKey = process.env.GROQ_API_KEY;
-    if (!groqKey) {
-      return NextResponse.json({ reply: 'AI service unavailable. No API keys configured.' });
-    }
+    if (groqKey) {
 
     try {
       // Convert tools to OpenAI format
@@ -545,7 +569,82 @@ export async function POST(req: Request) {
     } catch (err) {
       console.error('[chat] Groq failed:', err instanceof Error ? err.message : err);
     }
+    } // end groqKey check
   }
 
-  return NextResponse.json({ reply: finalReply || 'Something went wrong. Both AI services unavailable.' });
+  // ── Gemini fallback ──────────────────────────────────────────────────────
+  if (!finalReply) {
+    const geminiKey = process.env.GEMINI_API_KEY;
+    if (geminiKey) {
+      try {
+        // Convert tools to Gemini function declarations format
+        const geminiTools = [{
+          functionDeclarations: TOOLS.map(t => ({
+            name: t.name,
+            description: t.description,
+            parameters: t.input_schema,
+          })),
+        }];
+
+        const geminiMessages = messages.map((m: { role: string; content: string }) => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }],
+        }));
+
+        for (let i = 0; i < 20; i++) {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                system_instruction: { parts: [{ text: systemText }] },
+                contents: geminiMessages,
+                tools: geminiTools,
+                tool_config: { function_calling_config: { mode: 'AUTO' } },
+              }),
+            }
+          );
+
+          if (!res.ok) {
+            console.error('[chat] Gemini error:', await res.text());
+            break;
+          }
+
+          const data = await res.json();
+          const candidate = data.candidates?.[0];
+          if (!candidate) break;
+
+          const parts = candidate.content?.parts ?? [];
+          const textPart = parts.find((p: any) => p.text);
+          const funcPart = parts.find((p: any) => p.functionCall);
+
+          if (!funcPart) {
+            finalReply = textPart?.text ?? '';
+            break;
+          }
+
+          // Function call
+          const toolName = funcPart.functionCall.name;
+          const toolInput = funcPart.functionCall.args ?? {};
+
+          const toolResult = toolName === 'reassign_task'
+            ? await executeReassignTool(toolInput, person.id, supabase)
+            : await executeTool(toolInput, person.id, supabase);
+
+          // Add assistant + tool result to messages
+          geminiMessages.push({ role: 'model', parts });
+          geminiMessages.push({
+            role: 'user',
+            parts: [{ functionResponse: { name: toolName, response: { content: toolResult } } }],
+          });
+          continue;
+        }
+      } catch (err) {
+        console.error('[chat] Gemini failed:', err instanceof Error ? err.message : err);
+      }
+    }
+  }
+
+  return NextResponse.json({ reply: finalReply || 'Something went wrong. All AI services unavailable.' });
 }

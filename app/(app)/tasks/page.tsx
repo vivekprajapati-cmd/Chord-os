@@ -41,7 +41,7 @@ export default async function TasksPage({
     (() => {
       let q = supabase
         .from('tasks')
-        .select('id, deliverable, task_type, priority, status, estimated_hours, deadline, meeting_id, owner_id, brands(name), owner:people!tasks_owner_id_fkey(name)')
+        .select('id, deliverable, task_type, priority, status, estimated_hours, deadline, meeting_id, owner_id, reviewer_id, brands(name), owner:people!tasks_owner_id_fkey(name)')
         .order('priority', { ascending: true })
         .order('deadline', { ascending: true, nullsFirst: false })
         .limit(100);
@@ -67,9 +67,9 @@ export default async function TasksPage({
         <div className="flex items-center gap-3">
           <div className="flex gap-2">
             {[
-              { href: '/tasks',                         label: 'Active',       active: !statusFilter,                        activeColor: 'var(--ink)' },
-              { href: '/tasks?status=ready_for_review', label: 'Review queue', active: statusFilter === 'ready_for_review',  activeColor: 'var(--red)' },
-              { href: '/tasks?status=done',             label: 'Done',         active: statusFilter === 'done',               activeColor: 'var(--ink)' },
+              { href: '/tasks',                         label: 'Active',       active: !statusFilter,                        activeColor: 'var(--coral)' },
+              { href: '/tasks?status=ready_for_review', label: 'Review queue', active: statusFilter === 'ready_for_review',  activeColor: 'var(--coral)' },
+              { href: '/tasks?status=done',             label: 'Done',         active: statusFilter === 'done',               activeColor: 'var(--coral)' },
             ].map(({ href, label, active, activeColor }) => (
               <a
                 key={href}

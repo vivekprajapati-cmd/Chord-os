@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { brand_id, owner_id, deliverable, task_type, estimated_hours, priority, deadline, notes } = body;
+  const { brand_id, owner_id, reviewer_id, deliverable, task_type, estimated_hours, priority, start_date, deadline, notes } = body;
 
   if (!brand_id || !owner_id || !deliverable || !task_type || !estimated_hours) {
     return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
@@ -30,10 +30,12 @@ export async function POST(req: Request) {
       deliverable,
       task_type,
       owner_id,
+      reviewer_id: reviewer_id || null,
       assigned_by_id: person.id,
       priority: priority || 'P1',
       estimated_hours: Number(estimated_hours),
       status: 'scheduled',
+      start_date: start_date || null,
       deadline: deadline || null,
       notes: notes || null,
     })
@@ -42,10 +44,12 @@ export async function POST(req: Request) {
 
   if (error || !task) return NextResponse.json({ error: error?.message ?? 'Insert failed' }, { status: 500 });
 
-  // Create calendar block if deadline provided
-  if (deadline) {
-    const endAt = new Date(deadline).toISOString();
-    const startAt = new Date(new Date(deadline).getTime() - Number(estimated_hours) * 3600000).toISOString();
+  // Create calendar block if start or deadline provided
+  if (start_date || deadline) {
+    const endAt = deadline ? new Date(deadline).toISOString() : null;
+    const startAt = start_date
+      ? new Date(start_date).toISOString()
+      : new Date(new Date(deadline).getTime() - Number(estimated_hours) * 3600000).toISOString();
     await supabase.from('blocks').insert({
       task_id: task.id,
       person_id: owner_id,

@@ -16,8 +16,9 @@ export default function ContextModal({ block, onClose }: {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserName, setCurrentUserName] = useState<string>('');
   const [isReviewer, setIsReviewer] = useState(false);
-  const [submissionLink, setSubmissionLink] = useState('');
+  const [submissionLink, setSubmissionLink] = useState((task as any).submission_link ?? '');
   const [showSubmitInput, setShowSubmitInput] = useState(false);
+  const [savingLink, setSavingLink] = useState(false);
   const [reworkNotes, setReworkNotes] = useState('');
   const [showReworkInput, setShowReworkInput] = useState(false);
   const brand = task.brands;
@@ -53,6 +54,13 @@ export default function ContextModal({ block, onClose }: {
     });
     setAcknowledged(true);
     setLoading(false);
+  }
+
+  async function saveSubmissionLink() {
+    if (!submissionLink.trim()) return;
+    setSavingLink(true);
+    await supabase.from('tasks').update({ submission_link: submissionLink.trim() }).eq('id', task.id);
+    setSavingLink(false);
   }
 
   async function markDone() {
@@ -227,6 +235,26 @@ export default function ContextModal({ block, onClose }: {
             </Section>
           )}
 
+          {/* Dates */}
+          {((task as any).start_date || (task as any).deadline) && (
+            <Section label="Timeline">
+              <div className="flex gap-6">
+                {(task as any).start_date && (
+                  <div>
+                    <p className="text-xs font-mono uppercase tracking-[0.08em] text-[var(--gray)] mb-1">Start</p>
+                    <p className="text-sm font-mono">{new Date((task as any).start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  </div>
+                )}
+                {(task as any).deadline && (
+                  <div>
+                    <p className="text-xs font-mono uppercase tracking-[0.08em] text-[var(--gray)] mb-1">Deadline</p>
+                    <p className="text-sm font-mono">{new Date((task as any).deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  </div>
+                )}
+              </div>
+            </Section>
+          )}
+
           {/* Reviewer */}
           {task.reviewer && (
             <Section label="Reviewer">
@@ -241,27 +269,30 @@ export default function ContextModal({ block, onClose }: {
             </Section>
           )}
 
-          {/* Submission link */}
-          {(task as any).submission_link && (
-            <Section label="Submitted Work">
-              <a href={(task as any).submission_link} target="_blank" rel="noopener noreferrer" className="text-sm text-[var(--cobalt)] underline underline-offset-2 break-all">
-                {(task as any).submission_link}
+          {/* Submission URL — always visible */}
+          <Section label="Submission URL">
+            <div className="flex gap-2 items-center">
+              <input
+                value={submissionLink}
+                onChange={e => setSubmissionLink(e.target.value)}
+                placeholder="Figma, Drive, Notion, any link..."
+                style={{ flex: 1, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '999px', padding: '9px 14px', fontSize: '13px', outline: 'none', fontFamily: 'inherit' }}
+              />
+              <button
+                onClick={saveSubmissionLink}
+                disabled={savingLink || !submissionLink.trim()}
+                style={{ background: 'var(--ink)', color: 'var(--cream)', border: 'none', borderRadius: '999px', padding: '9px 18px', fontFamily: 'var(--f-mono)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: savingLink || !submissionLink.trim() ? 'not-allowed' : 'pointer', opacity: savingLink || !submissionLink.trim() ? 0.4 : 1, whiteSpace: 'nowrap' }}
+              >
+                {savingLink ? '…' : 'Save'}
+              </button>
+            </div>
+            {submissionLink && (
+              <a href={submissionLink} target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--cobalt)] underline underline-offset-2 mt-2 block truncate">
+                {submissionLink}
               </a>
-            </Section>
-          )}
+            )}
+          </Section>
         </div>
-
-        {/* Submission link input — shown when Mark Done clicked without a link */}
-        {showSubmitInput && (
-          <div style={{ padding: '0 32px 16px', display: 'flex', gap: '8px' }}>
-            <input
-              value={submissionLink}
-              onChange={e => setSubmissionLink(e.target.value)}
-              placeholder="Paste Google Drive / Figma / any URL"
-              style={{ flex: 1, background: 'var(--paper)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 16px', fontSize: '13px', outline: 'none', fontFamily: 'inherit' }}
-            />
-          </div>
-        )}
 
         {/* Rework notes input */}
         {showReworkInput && (
@@ -301,7 +332,7 @@ export default function ContextModal({ block, onClose }: {
                 disabled={loading}
                 style={{
                   flex: 1,
-                  background: 'var(--yellow)',
+                  background: 'var(--coral)',
                   color: 'var(--ink)',
                   padding: '12px 16px',
                   borderRadius: '999px',
@@ -342,7 +373,7 @@ export default function ContextModal({ block, onClose }: {
           ) : done ? (
             <div style={{
               flex: 1,
-              background: 'var(--yellow)',
+              background: 'var(--coral)',
               border: '1px solid var(--ink)',
               color: 'var(--ink)',
               textAlign: 'center',

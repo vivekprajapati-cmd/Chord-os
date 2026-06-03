@@ -18,6 +18,7 @@ type MemberStat = {
 
 type Props = {
   members: MemberStat[];
+  isLead: boolean;
   totalTasks: number;
   totalCompleted: number;
   totalDelays: number;
@@ -25,7 +26,7 @@ type Props = {
   month: string;
 };
 
-export default function AnalyticsClient({ members, totalTasks, totalCompleted, totalDelays, teamOnTimeRate, month }: Props) {
+export default function AnalyticsClient({ members, isLead, totalTasks, totalCompleted, totalDelays, teamOnTimeRate, month }: Props) {
   const printRef = useRef<HTMLDivElement>(null);
 
   async function exportExcel() {
@@ -33,7 +34,7 @@ export default function AnalyticsClient({ members, totalTasks, totalCompleted, t
 
     // Sheet 1 — summary
     const summaryData = [
-      ['ChordOS Monthly Report', month],
+      ['Harmony Monthly Report', month],
       [],
       ['Metric', 'Value'],
       ['Total Tasks', totalTasks],
@@ -70,7 +71,7 @@ export default function AnalyticsClient({ members, totalTasks, totalCompleted, t
     wsMembers['!cols'] = [{ wch: 22 }, { wch: 14 }, { wch: 8 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 12 }, { wch: 20 }];
     xlsx.utils.book_append_sheet(wb, wsMembers, 'Member Breakdown');
 
-    xlsx.writeFile(wb, `ChordOS_Report_${month.replace(' ', '_')}.xlsx`);
+    xlsx.writeFile(wb, `Harmony_Report_${month.replace(' ', '_')}.xlsx`);
   }
 
   function exportPDF() {
@@ -94,29 +95,31 @@ export default function AnalyticsClient({ members, totalTasks, totalCompleted, t
         {/* Header */}
         <div className="flex items-end justify-between no-print">
           <div>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: '8px' }}>Team Performance</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: '8px' }}>{isLead ? 'Team Performance' : 'My Performance'}</p>
             <h1 className="font-display text-5xl uppercase tracking-tight">Analytics</h1>
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', marginTop: '6px' }}>{month}</p>
           </div>
-          <div className="flex gap-2 no-print">
-            <button
-              onClick={exportExcel}
-              style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink)', color: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 20px', cursor: 'pointer', boxShadow: '3px 3px 0 var(--ink)' }}
-            >
-              ↓ Export Excel
-            </button>
-            <button
-              onClick={exportPDF}
-              style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 20px', cursor: 'pointer' }}
-            >
-              ↓ Export PDF
-            </button>
-          </div>
+          {isLead && (
+            <div className="flex gap-2 no-print">
+              <button
+                onClick={exportExcel}
+                style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink)', color: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 20px', cursor: 'pointer', boxShadow: '3px 3px 0 var(--ink)' }}
+              >
+                ↓ Export Excel
+              </button>
+              <button
+                onClick={exportPDF}
+                style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 20px', cursor: 'pointer' }}
+              >
+                ↓ Export PDF
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Print header — only visible in print */}
         <div style={{ display: 'none' }} className="print-only">
-          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', marginBottom: '4px' }}>ChordOS Monthly Report</h1>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', marginBottom: '4px' }}>Harmony Monthly Report</h1>
           <p style={{ fontSize: '13px', color: '#666' }}>{month}</p>
         </div>
 
@@ -128,15 +131,15 @@ export default function AnalyticsClient({ members, totalTasks, totalCompleted, t
             { label: 'Total Delays', value: String(totalDelays), alert: totalDelays > 5 },
             { label: 'On-time Rate', value: teamOnTimeRate !== null ? `${teamOnTimeRate}%` : '—' },
           ].map(({ label, value, alert }) => (
-            <div key={label} style={{ background: alert ? 'var(--yellow)' : 'var(--paper)', border: `1.5px solid ${alert ? 'var(--ink)' : 'var(--line)'}`, borderRadius: '14px', padding: '20px', boxShadow: '5px 5px 0 var(--ink)' }}>
+            <div key={label} style={{ background: alert ? 'var(--coral)' : 'var(--paper)', border: `1.5px solid ${alert ? 'var(--ink)' : 'var(--line)'}`, borderRadius: '14px', padding: '20px', boxShadow: '5px 5px 0 var(--ink)' }}>
               <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: '8px' }}>{label}</p>
               <p style={{ fontFamily: 'var(--f-display)', fontSize: '40px', fontWeight: 400, textTransform: 'uppercase', lineHeight: 1, color: 'var(--ink)' }}>{value}</p>
             </div>
           ))}
         </div>
 
-        {/* Per-member table */}
-        <section>
+        {/* Per-member table — leads only */}
+        {isLead && <section>
           <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)', marginBottom: '12px' }}>Per-member breakdown</p>
           <div className="table-scroll" style={{ borderRadius: '14px', border: '1px solid var(--line)' }}>
           <div style={{ background: 'var(--paper)', minWidth: '680px', overflow: 'hidden' }}>
@@ -181,7 +184,29 @@ export default function AnalyticsClient({ members, totalTasks, totalCompleted, t
             )}
           </div>
           </div>
-        </section>
+        </section>}
+
+        {/* Staff personal breakdown */}
+        {!isLead && members[0] && (
+          <section>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)', marginBottom: '12px' }}>Your breakdown</p>
+            <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '14px', overflow: 'hidden' }}>
+              {[
+                { label: 'Active tasks', value: String(members[0].active_tasks ?? 0) },
+                { label: 'Completed', value: String(members[0].completed_tasks ?? 0) },
+                { label: 'On-time', value: String(members[0].on_time_count ?? 0) },
+                { label: 'Late', value: String(members[0].late_count ?? 0) },
+                { label: 'Delays', value: String(members[0].total_delays ?? 0) },
+                { label: 'Avg turnaround', value: members[0].avg_turnaround_hours !== null ? `${members[0].avg_turnaround_hours}h` : '—' },
+              ].map(({ label, value }, i, arr) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderBottom: i < arr.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray)' }}>{label}</p>
+                  <p style={{ fontFamily: 'var(--f-display)', fontSize: '22px', textTransform: 'uppercase' }}>{value}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </>
   );

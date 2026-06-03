@@ -11,6 +11,7 @@ type Task = {
   deadline: string | null;
   status: string;
   owner_id: string;
+  reviewer_id: string | null;
   brands: { name: string } | null;
   owner: { name: string } | null;
 };
@@ -33,6 +34,7 @@ export default function TaskEditModal({ task, people, onClose, onSaved }: {
   );
   const [status, setStatus] = useState(task.status);
   const [ownerId, setOwnerId] = useState(task.owner_id);
+  const [reviewerId, setReviewerId] = useState(task.reviewer_id ?? '');
   const [error, setError] = useState('');
 
   async function save() {
@@ -45,6 +47,7 @@ export default function TaskEditModal({ task, people, onClose, onSaved }: {
       priority,
       status,
       owner_id: ownerId,
+      reviewer_id: reviewerId || null,
       estimated_hours: hours ? parseFloat(hours) : null,
       deadline: deadline ? new Date(deadline).toISOString() : null,
     };
@@ -153,14 +156,25 @@ export default function TaskEditModal({ task, people, onClose, onSaved }: {
             />
           </div>
 
-          {/* Assignee */}
-          <div>
-            <label style={labelStyle}>Assignee</label>
-            <select value={ownerId} onChange={e => setOwnerId(e.target.value)} style={inputStyle}>
-              {people.map(p => (
-                <option key={p.id} value={p.id}>{p.name} — {p.department}</option>
-              ))}
-            </select>
+          {/* Assignee + Reviewer */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div>
+              <label style={labelStyle}>Assignee</label>
+              <select value={ownerId} onChange={e => setOwnerId(e.target.value)} style={inputStyle}>
+                {people.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Reviewer</label>
+              <select value={reviewerId} onChange={e => setReviewerId(e.target.value)} style={inputStyle}>
+                <option value="">— None —</option>
+                {people.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Priority + Status */}

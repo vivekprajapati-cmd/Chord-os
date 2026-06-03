@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import BrandEditButton from '@/components/brand-edit-button';
 
 type Brand = {
   id: string;
@@ -78,18 +79,30 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           </p>
           <h1 className="font-display text-7xl uppercase tracking-tight">{b.name}</h1>
         </div>
-        <div className="flex items-center gap-3 mt-2">
+        <div className="flex items-center gap-3 mt-2 flex-wrap">
           <span className="text-xs font-mono uppercase border border-[var(--ink)] rounded-full px-3 py-1.5">
             {b.tier}
           </span>
           {canLogMeeting && (
-            <Link
-              href={`/brands/${slug}/meeting`}
-              className="text-xs font-mono uppercase tracking-[0.12em] px-5 py-2 rounded-full hover:opacity-90 transition shadow-[4px_4px_0_var(--gray)]"
-              style={{ background: 'var(--ink)', color: 'var(--cream)' }}
-            >
-              + Log meeting
-            </Link>
+            <>
+              <BrandEditButton brand={{
+                id: b.id,
+                slug: b.slug,
+                name: b.name,
+                category: b.category,
+                tier: b.tier,
+                voice_summary: b.voice_summary,
+                colors: b.colors ?? {},
+                typography: b.typography ?? {},
+              }} />
+              <Link
+                href={`/brands/${slug}/meeting`}
+                className="text-xs font-mono uppercase tracking-[0.12em] px-5 py-2 rounded-full hover:opacity-90 transition shadow-[4px_4px_0_var(--gray)]"
+                style={{ background: 'var(--ink)', color: 'var(--cream)' }}
+              >
+                + Log meeting
+              </Link>
+            </>
           )}
         </div>
       </div>
@@ -204,7 +217,12 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           </p>
           <div className="space-y-3">
             {recentMeetings.map(m => (
-              <div key={m.id} className="bg-[var(--paper)] border border-[var(--line)] rounded-xl p-5">
+              <Link
+                key={m.id}
+                href={`/briefings?brand=${b.slug}`}
+                className="block bg-[var(--paper)] border border-[var(--line)] rounded-xl p-5 hover:shadow-[4px_4px_0_var(--ink)] transition-shadow"
+                style={{ textDecoration: 'none' }}
+              >
                 <div className="flex items-start justify-between mb-2">
                   <p className="text-xs font-mono text-[var(--gray)]">
                     {new Date(m.meeting_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -218,7 +236,8 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
                 {m.ai_summary && (
                   <p className="text-sm text-[var(--gray)] leading-relaxed">{m.ai_summary}</p>
                 )}
-              </div>
+                <p className="text-xs font-mono text-[var(--cobalt)] mt-2">View in briefings →</p>
+              </Link>
             ))}
           </div>
         </div>

@@ -74,9 +74,9 @@ export default async function BriefingsPage({
               letterSpacing: '0.08em',
               padding: '6px 14px',
               borderRadius: '999px',
-              border: `1px solid ${!brandFilter ? 'var(--ink)' : 'var(--line)'}`,
-              background: !brandFilter ? 'var(--ink)' : 'transparent',
-              color: !brandFilter ? 'var(--cream)' : 'var(--ink)',
+              border: `1px solid ${!brandFilter ? 'var(--coral)' : 'var(--line)'}`,
+              background: !brandFilter ? 'var(--coral)' : 'transparent',
+              color: !brandFilter ? '#fff' : 'var(--ink)',
               textDecoration: 'none',
             }}
           >
@@ -93,9 +93,9 @@ export default async function BriefingsPage({
                 letterSpacing: '0.08em',
                 padding: '6px 14px',
                 borderRadius: '999px',
-                border: `1px solid ${brandFilter === b.slug ? 'var(--ink)' : 'var(--line)'}`,
-                background: brandFilter === b.slug ? 'var(--ink)' : 'transparent',
-                color: brandFilter === b.slug ? 'var(--cream)' : 'var(--ink)',
+                border: `1px solid ${brandFilter === b.slug ? 'var(--coral)' : 'var(--line)'}`,
+                background: brandFilter === b.slug ? 'var(--coral)' : 'transparent',
+                color: brandFilter === b.slug ? '#fff' : 'var(--ink)',
                 textDecoration: 'none',
               }}
             >
@@ -143,9 +143,9 @@ export default async function BriefingsPage({
                     {m.brand && (
                       <Link
                         href={`/brands/${m.brand.slug}`}
-                        style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', textDecoration: 'none' }}
+                        style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--cobalt)', textDecoration: 'underline', textUnderlineOffset: '3px' }}
                       >
-                        {m.brand.name}
+                        {m.brand.name} →
                       </Link>
                     )}
                     <span style={{ color: 'var(--line)', fontSize: '12px' }}>·</span>

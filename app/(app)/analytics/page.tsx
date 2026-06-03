@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
 import AnalyticsClient from './analytics-client';
 
 type MemberStat = {
@@ -22,18 +21,17 @@ export default async function AnalyticsPage() {
 
   const { data: person } = await supabase
     .from('people')
-    .select('is_team_lead')
+    .select('id, is_team_lead')
     .eq('email', user!.email!)
     .maybeSingle();
 
-  if (!person?.is_team_lead) redirect('/dashboard');
+  const isLead = !!person?.is_team_lead;
 
-  const { data: stats } = await supabase
-    .from('member_stats')
-    .select('*')
-    .order('department')
-    .order('name');
+  let statsQuery = supabase.from('member_stats').select('*');
+  if (!isLead && person?.id) statsQuery = statsQuery.eq('person_id', person.id);
+  else statsQuery = statsQuery.order('department').order('name');
 
+  const { data: stats } = await statsQuery;
   const members = (stats ?? []) as MemberStat[];
 
   const totalTasks = members.reduce((a, m) => a + (m.total_tasks ?? 0), 0);
@@ -48,6 +46,7 @@ export default async function AnalyticsPage() {
   return (
     <AnalyticsClient
       members={members}
+      isLead={isLead}
       totalTasks={totalTasks}
       totalCompleted={totalCompleted}
       totalDelays={totalDelays}

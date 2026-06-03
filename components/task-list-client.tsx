@@ -14,6 +14,7 @@ type Task = {
   deadline: string | null;
   meeting_id: string | null;
   owner_id: string;
+  reviewer_id: string | null;
   brands: { name: string } | null;
   owner: { name: string } | null;
 };
