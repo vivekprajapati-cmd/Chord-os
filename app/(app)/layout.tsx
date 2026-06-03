@@ -36,7 +36,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {/* Logo */}
         <div className="px-6 pt-7 pb-6" style={{ borderBottom: '1px solid var(--line)' }}>
           <Link href="/dashboard" className="group block">
-            <span style={{ fontFamily: 'var(--f-display)', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)' }}>
+            {/* Chord logo */}
+            <img
+              src="/chord-logo.png"
+              alt="Chord"
+              style={{ height: '60px', width: 'auto', marginBottom: '8px', display: 'block' }}
+            />
+            <span style={{ fontFamily: 'var(--f-display)', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)', fontWeight: 400 }}>
               Harmony
             </span>
             <span style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gray)', marginTop: '2px' }}>

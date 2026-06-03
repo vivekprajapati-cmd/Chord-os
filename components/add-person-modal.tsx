@@ -75,7 +75,7 @@ export default function AddPersonModal({ onClose, onAdded }: {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-      <div style={{ width: '100%', maxWidth: '540px', background: 'var(--cream)', border: '1.5px solid var(--ink)', borderRadius: '18px', boxShadow: '10px 10px 0 var(--ink)', overflow: 'hidden', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ width: '100%', maxWidth: '540px', background: 'var(--cream)', border: '1.5px solid var(--ink)', borderRadius: '18px', boxShadow: '10px 10px 0 var(--coral)', overflow: 'hidden', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
 
         {/* Header */}
         <div style={{ padding: '28px 32px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

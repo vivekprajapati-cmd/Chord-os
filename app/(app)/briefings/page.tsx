@@ -133,7 +133,7 @@ export default async function BriefingsPage({
                 border: '1px solid var(--line)',
                 borderRadius: '16px',
                 overflow: 'hidden',
-                boxShadow: '4px 4px 0 var(--ink)',
+                boxShadow: '4px 4px 0 var(--coral)',
               }}
             >
               {/* Header row */}

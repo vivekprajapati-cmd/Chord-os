@@ -11,6 +11,8 @@ type Task = {
   estimated_hours: number | null;
   deadline: string | null;
   meeting_id: string | null;
+  owner_id: string;
+  reviewer_id: string | null;
   brands: { name: string } | null;
   owner: { name: string } | null;
 };
@@ -36,6 +38,7 @@ export default async function TasksPage({
   const canCreate = !!person?.is_team_lead;
 
   const statusFilter = params.status;
+  const isDelayedFilter = statusFilter === 'delayed';
 
   const [tasksResult, brandsResult, peopleResult] = await Promise.all([
     (() => {
@@ -46,9 +49,24 @@ export default async function TasksPage({
         .order('deadline', { ascending: true, nullsFirst: false })
         .limit(100);
 
-      if (!canSeeAll) q = q.eq('owner_id', person?.id);
-      if (statusFilter) q = q.eq('status', statusFilter);
-      else q = q.not('status', 'in', '("done","cancelled")');
+      // Review queue — show tasks where user is owner OR reviewer
+      if (!canSeeAll && statusFilter === 'ready_for_review') {
+        q = q.or(`owner_id.eq.${person?.id},reviewer_id.eq.${person?.id}`);
+      } else if (!canSeeAll) {
+        q = q.eq('owner_id', person?.id);
+      }
+
+      if (isDelayedFilter) {
+        // Overdue: past deadline, not submitted, not done/approved/cancelled
+        q = q
+          .lt('deadline', new Date().toISOString())
+          .is('submitted_at', null)
+          .not('status', 'in', '("done","approved","cancelled")');
+      } else if (statusFilter) {
+        q = q.eq('status', statusFilter);
+      } else {
+        q = q.not('status', 'in', '("done","cancelled")');
+      }
 
       return q;
     })(),
@@ -68,7 +86,9 @@ export default async function TasksPage({
           <div className="flex gap-2">
             {[
               { href: '/tasks',                         label: 'Active',       active: !statusFilter,                        activeColor: 'var(--coral)' },
+              { href: '/tasks?status=scheduled',        label: 'Scheduled',    active: statusFilter === 'scheduled',          activeColor: 'var(--coral)' },
               { href: '/tasks?status=ready_for_review', label: 'Review queue', active: statusFilter === 'ready_for_review',  activeColor: 'var(--coral)' },
+              { href: '/tasks?status=delayed',          label: 'Delayed',      active: statusFilter === 'delayed',            activeColor: 'var(--red)' },
               { href: '/tasks?status=done',             label: 'Done',         active: statusFilter === 'done',               activeColor: 'var(--coral)' },
             ].map(({ href, label, active, activeColor }) => (
               <a

@@ -18,7 +18,7 @@ export default async function ChatPage() {
     return (
       <div className="space-y-4">
         <h1 className="font-display text-5xl uppercase tracking-tight">Allocator</h1>
-        <div style={{ background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '16px', padding: '40px', boxShadow: '6px 6px 0 var(--ink)', maxWidth: '560px' }}>
+        <div style={{ background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '16px', padding: '40px', boxShadow: '6px 6px 0 var(--coral)', maxWidth: '560px' }}>
           <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '12px' }}>
             Setup required
           </p>

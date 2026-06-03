@@ -186,10 +186,10 @@ function StatCard({ label, value, highlight = false }: {
   return (
     <div style={{
       background: highlight ? 'var(--coral)' : 'var(--paper)',
-      border: `1.5px solid ${highlight ? 'var(--ink)' : 'var(--line)'}`,
+      border: `1.5px solid ${highlight ? 'var(--coral)' : 'var(--coral)'}`,
       borderRadius: '14px',
       padding: '24px',
-      boxShadow: '6px 6px 0 var(--ink)',
+      boxShadow: '4px 4px 0 var(--coral)',
     }}>
       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: highlight ? 'rgba(255,255,255,0.7)' : 'var(--gray)', marginBottom: '10px' }}>
         {label}

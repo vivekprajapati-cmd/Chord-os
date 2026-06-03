@@ -157,7 +157,7 @@ export default function ContextModal({ block, onClose }: {
 
   return (
     <div className="modal-wrap" style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
-      <div className="modal-inner" style={{ width: '100%', maxWidth: '600px', background: 'var(--cream)', border: '1.5px solid var(--ink)', borderRadius: '18px', boxShadow: '12px 12px 0 var(--ink)', overflow: 'hidden', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="modal-inner" style={{ width: '100%', maxWidth: '600px', background: 'var(--cream)', border: '1.5px solid var(--ink)', borderRadius: '18px', boxShadow: '12px 12px 0 var(--coral)', overflow: 'hidden', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
 
         {/* Header */}
         <div style={{ padding: '32px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>

@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import { DM_Sans, Anton, Fraunces, JetBrains_Mono } from 'next/font/google';
+import { Poppins, Nunito, Bricolage_Grotesque, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 
-const dmSans = DM_Sans({ variable: '--font-dm-sans', subsets: ['latin'] });
-const anton = Anton({ variable: '--font-anton', weight: '400', subsets: ['latin'] });
-const fraunces = Fraunces({ variable: '--font-fraunces', subsets: ['latin'] });
+const poppins = Poppins({ variable: '--font-poppins', weight: ['400', '500', '600', '700'], subsets: ['latin'] });
+const nunito = Nunito({ variable: '--font-nunito', weight: ['400', '500', '600'], subsets: ['latin'] });
+const bricolage = Bricolage_Grotesque({ variable: '--font-bricolage', subsets: ['latin'] });
 const jetbrains = JetBrains_Mono({ variable: '--font-jetbrains', subsets: ['latin'] });
 
 export const metadata: Metadata = {
@@ -29,7 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${anton.variable} ${fraunces.variable} ${jetbrains.variable} h-full antialiased`}
+      className={`${poppins.variable} ${nunito.variable} ${bricolage.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>

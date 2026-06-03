@@ -1,26 +1,31 @@
-@import url("https://fonts.googleapis.com/css2?family=Anton&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Nunito:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600&family=JetBrains+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
 :root {
-  /* Harmony brand palette */
-  --cream: #F2EBD9;
-  --cream-2: #EAE0C5;
-  --paper: #FFFCF4;
-  --ink: #0A0A0A;
-  --cobalt: #2226D9;
+  /* Harmony — Chord brand palette */
+  --cream: #FAF7F2;
+  --cream-2: #EADCC3;
+  --paper: #EADCC3;
+  --paper-2: #E0CEB0;
+  --ink: #2B2B2B;
+  --ink-soft: #1A1A1A;
+  --cobalt: #2C7CE5;
   --coral: #E55D4A;
+  --lime: #D8E04D;
+  --orange: #F2951B;
   --red: #FF3B2F;
   --gray: #7A7468;
-  --line: rgba(10, 10, 10, 0.14);
+  --line: rgba(10, 10, 10, 0.12);
+  --shadow-color: var(--coral);
   --line-w: rgba(255, 252, 244, 0.16);
 
   --background: var(--cream);
   --foreground: var(--ink);
 
   /* Typography */
-  --f-display: 'Anton', sans-serif;
-  --f-body: 'DM Sans', sans-serif;
-  --f-italic: 'Fraunces', serif;
+  --f-display: 'Poppins', sans-serif;
+  --f-body: 'Nunito', sans-serif;
+  --f-italic: 'Bricolage Grotesque', sans-serif;
   --f-mono: 'JetBrains Mono', monospace;
 }
 
@@ -32,6 +37,8 @@
   --color-ink: var(--ink);
   --color-cobalt: var(--cobalt);
   --color-coral: var(--coral);
+  --color-lime: var(--lime);
+  --color-orange: var(--orange);
   --color-red: var(--red);
   --color-gray: var(--gray);
   --font-sans: var(--f-body);
@@ -55,8 +62,10 @@ body {
   background: var(--cream);
   color: var(--ink);
   font-size: 14px;
-  line-height: 1.55;
+  font-weight: 400;
+  line-height: 1.6;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Grain overlay — z-index 10 keeps it below modals/dropdowns */
@@ -200,4 +209,77 @@ em {
 /* Safe area bottom padding for PWA */
 .pb-safe {
   padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+/* ── Global card shadow color → coral ── */
+:root {
+  --card-shadow: var(--coral);
+}
+
+/* ── Stat cards on dashboard ── */
+.stat-card {
+  box-shadow: 4px 4px 0 var(--ink);
+  transition: box-shadow 0.18s ease;
+}
+
+.stat-card:hover {
+  box-shadow: 4px 4px 0 var(--coral);
+}
+
+/* ── Card hover animation — consistent across all tabs ── */
+.card-hover {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.card-hover:hover {
+  box-shadow: 4px 4px 0 var(--coral);
+}
+
+/* Override all static ink shadows to coral */
+.shadow-\[4px_4px_0_var\(--ink\)\],
+.shadow-\[5px_5px_0_var\(--ink\)\],
+.shadow-\[6px_6px_0_var\(--ink\)\],
+.shadow-\[8px_8px_0_var\(--ink\)\],
+.shadow-\[10px_10px_0_var\(--ink\)\],
+.shadow-\[12px_12px_0_var\(--ink\)\] {
+  box-shadow: 4px 4px 0 var(--coral) !important;
+}
+
+/* Override hover shadows to coral across all cards */
+.hover\:shadow-\[4px_4px_0_var\(--ink\)\]:hover,
+.hover\:shadow-\[6px_6px_0_var\(--ink\)\]:hover,
+.hover\:shadow-\[8px_8px_0_var\(--ink\)\]:hover {
+  box-shadow: 4px 4px 0 var(--coral) !important;
+}
+
+/* Apply to all task/block/brand cards */
+.bg-\[var\(--paper\)\] {
+  background: var(--paper) !important;
+}
+
+/* ── Custom scrollbar ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cream-2) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--cream-2);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--gray);
 }

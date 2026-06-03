@@ -131,7 +131,7 @@ export default function AnalyticsClient({ members, isLead, totalTasks, totalComp
             { label: 'Total Delays', value: String(totalDelays), alert: totalDelays > 5 },
             { label: 'On-time Rate', value: teamOnTimeRate !== null ? `${teamOnTimeRate}%` : '—' },
           ].map(({ label, value, alert }) => (
-            <div key={label} style={{ background: alert ? 'var(--coral)' : 'var(--paper)', border: `1.5px solid ${alert ? 'var(--ink)' : 'var(--line)'}`, borderRadius: '14px', padding: '20px', boxShadow: '5px 5px 0 var(--ink)' }}>
+            <div key={label} style={{ background: alert ? 'var(--coral)' : 'var(--paper)', border: `1.5px solid ${alert ? 'var(--ink)' : 'var(--line)'}`, borderRadius: '14px', padding: '20px', boxShadow: '5px 5px 0 var(--coral)' }}>
               <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: '8px' }}>{label}</p>
               <p style={{ fontFamily: 'var(--f-display)', fontSize: '40px', fontWeight: 400, textTransform: 'uppercase', lineHeight: 1, color: 'var(--ink)' }}>{value}</p>
             </div>
