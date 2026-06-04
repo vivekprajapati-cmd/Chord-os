@@ -47,17 +47,15 @@ export async function POST(req: Request) {
   // Create calendar block — always, defaulting to today if no dates given
   const hasEstimatedHours = !!estimated_hours && Number(estimated_hours) > 0;
   if (hasEstimatedHours) {
-    const nowIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
-    const defaultStart = new Date(nowIST);
-    defaultStart.setMinutes(0, 0, 0); // round to current hour
-    const defaultStartUTC = new Date(defaultStart.getTime() - 5.5 * 60 * 60 * 1000);
+    const now = new Date();
+    now.setSeconds(0, 0); // clean up seconds
 
     const startAt = start_date
       ? new Date(start_date).toISOString()
-      : defaultStartUTC.toISOString();
+      : now.toISOString();
     const endAt = deadline
       ? new Date(deadline).toISOString()
-      : new Date(new Date(startAt).getTime() + Number(estimated_hours) * 3600000).toISOString();
+      : new Date(now.getTime() + Number(estimated_hours) * 3600000).toISOString();
 
     // Conflict detection — check for overlapping blocks
     if (startAt && endAt) {
