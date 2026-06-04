@@ -75,6 +75,36 @@ export default function TaskEditModal({ task, people, onClose, onSaved }: {
         tomorrow.setHours(10, 0, 0, 0);
         const startAt = tomorrow.toISOString();
         const endAt = new Date(tomorrow.getTime() + newHours * 3600000).toISOString();
+
+        // Check for conflicts on new owner's calendar
+        const { data: conflicts } = await supabase
+          .from('blocks')
+          .select('id, start_at, end_at, tasks(deliverable, brands(name))')
+          .eq('person_id', ownerId)
+          .eq('status', 'scheduled')
+          .lt('start_at', endAt)
+          .gt('end_at', startAt);
+
+        if (conflicts && conflicts.length > 0) {
+          const existing = conflicts[0] as any;
+          const existingTask = existing.tasks?.deliverable ?? 'another task';
+          const existingBrand = existing.tasks?.brands?.name ?? '';
+          const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+          const fmtTime = (iso: string) => new Date(new Date(iso).getTime() + IST_OFFSET)
+            .toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' });
+          const fmtDate = (iso: string) => new Date(new Date(iso).getTime() + IST_OFFSET)
+            .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+          const blockedSlot = `${fmtDate(existing.start_at)}, ${fmtTime(existing.start_at)} – ${fmtTime(existing.end_at)} IST`;
+          // Restore old owner's block since we can't reassign
+          await supabase.from('blocks').update({ status: 'scheduled' })
+            .eq('task_id', task.id).eq('person_id', task.owner_id).eq('status', 'cancelled');
+          // Restore task owner
+          await supabase.from('tasks').update({ owner_id: task.owner_id, reviewer_id: task.reviewer_id || null }).eq('id', task.id);
+          setError(`Conflict: "${existingTask}"${existingBrand ? ` (${existingBrand})` : ''} is already blocked from ${blockedSlot} on ${newOwnerName}'s calendar.`);
+          setLoading(false);
+          return;
+        }
+
         await supabase.from('blocks').insert({
           task_id: task.id,
           person_id: ownerId,
