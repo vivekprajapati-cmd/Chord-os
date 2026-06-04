@@ -54,7 +54,7 @@ export default function CalendarClient({ personId, personName, isLead, googleCon
   const [googleEvents, setGoogleEvents] = useState<any[]>([]);
   const [weekDays, setWeekDays] = useState<Date[]>([]);
   const [mounted, setMounted] = useState(false);
-  const [capacity, setCapacity] = useState<{ total_hours: number; blocked_hours: number; remaining_hours: number } | null>(null);
+  const [capacity, setCapacity] = useState<{ total_hours: number; blocked_hours: number; remaining_hours: number; utilization_pct?: number } | null>(null);
 
   useEffect(() => {
     const days = getWeekDays();
