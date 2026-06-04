@@ -42,11 +42,13 @@ export default function TaskListClient({
   people,
   canEdit,
   statusFilter,
+  currentUserName,
 }: {
   tasks: Task[];
   people: Person[];
   canEdit: boolean;
   statusFilter?: string;
+  currentUserName?: string;
 }) {
   const supabase = createClient();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
@@ -78,7 +80,7 @@ export default function TaskListClient({
       body: JSON.stringify({
         type: 'task_submitted',
         task: { deliverable: submittingTask.deliverable, brand: submittingTask.brands?.name },
-        person: submittingTask.owner?.name,
+        person: currentUserName || submittingTask.owner?.name,
         reviewer: '',
         link: submissionLink.trim(),
       }),

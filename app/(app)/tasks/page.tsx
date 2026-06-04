@@ -30,7 +30,7 @@ export default async function TasksPage({
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, is_team_lead')
+    .select('id, name, is_team_lead')
     .eq('email', user!.email!)
     .maybeSingle();
 
@@ -115,7 +115,7 @@ export default async function TasksPage({
         </div>
       </div>
 
-      <TaskListClient tasks={tasks} people={people} canEdit={canSeeAll} statusFilter={statusFilter} />
+      <TaskListClient tasks={tasks} people={people} canEdit={canSeeAll} statusFilter={statusFilter} currentUserName={person?.name ?? ''} />
     </div>
   );
 }
