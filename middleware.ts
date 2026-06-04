@@ -2,7 +2,9 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next();
+  let response = NextResponse.next({
+    request: { headers: request.headers },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,12 +15,16 @@ export async function middleware(request: NextRequest) {
         setAll: (cookies) => {
           cookies.forEach(({ name, value, options }) => {
             request.cookies.set(name, value);
+            response = NextResponse.next({ request: { headers: request.headers } });
             response.cookies.set(name, value, options);
           });
         },
       },
     }
   );
+
+  // Refresh session — keeps cookies alive across navigations
+  await supabase.auth.getUser();
 
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -32,7 +38,6 @@ export async function middleware(request: NextRequest) {
     path === '/favicon.ico' ||
     path.startsWith('/icon-');
 
-  // Auth gate — Slack workspace restriction handled by Supabase OAuth config
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
@@ -45,5 +50,4 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
-  runtime: 'nodejs',
 };

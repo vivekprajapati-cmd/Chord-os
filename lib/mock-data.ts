@@ -6,7 +6,7 @@ export const MOCK_PERSON = {
   email: 'darshit@ampmnetwork.com',
   role: "Founders Office",
   department: 'Ops',
-  is_team_lead: true,
+  is_team_lead: false,
 };
 
 export const MOCK_BRANDS = [
