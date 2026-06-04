@@ -504,8 +504,88 @@ const doc = new Document({
       bullet('Add production URL to Authentication → URL Configuration → Redirect URLs'),
       pageBreak(),
 
-      // ─── 8. FUTURE SCOPE ──────────────────────────────────────────────────
-      h1('8. Future Scope'),
+      // ─── 8. USER FLOWS ────────────────────────────────────────────────────
+      h1('8. User Flows'),
+
+      h2('8.1 Team Lead — Morning Allocation'),
+      makeTable(
+        ['Step', 'Action', 'System Response'],
+        [
+          ['1', 'Lead opens Harmony → Chat (Allocator)', 'AI ready with live team context — active task load, brand rules, recent meetings'],
+          ['2', 'Types: "Block Vineet 3hrs for IndiaGate reel, due 8 June"', 'AI parses intent — resolves Vineet, IndiaGate, 3h, deadline'],
+          ['3', 'AI asks for references if not provided', 'Lead pastes Figma URL or skips'],
+          ['4', 'AI calls create_task_and_block', 'Task created, calendar block assigned, Google Calendar event created'],
+          ['5', 'AI confirms assignment', 'Slack fires to #1702fam: New block notification'],
+          ['6', 'Lead repeats for next person', 'Bulk allocation — all in one session'],
+        ],
+        [500, 3800, 4726]
+      ),
+      gap(),
+
+      h2('8.2 Staff — Task Lifecycle'),
+      makeTable(
+        ['Step', 'Action', 'System Response'],
+        [
+          ['1', 'Staff logs in via Slack', 'Auto-creates people row on first login. Lands on Dashboard.'],
+          ['2', 'Sees task on Dashboard or Tasks tab', 'Task shows with brand, deliverable, priority, deadline'],
+          ['3', 'Opens Calendar — clicks task block', 'Context modal: brand colors, voice, references, notes'],
+          ['4', 'Clicks Acknowledge', 'Slack fires: Acknowledged notification'],
+          ['5', 'Clicks Submit — pastes URL', 'Task moves to ready_for_review. Slack notifies reviewer.'],
+          ['6', 'Task shows "In review"', 'Awaiting reviewer action'],
+        ],
+        [500, 3800, 4726]
+      ),
+      gap(),
+
+      h2('8.3 Reviewer — Approval Flow'),
+      makeTable(
+        ['Step', 'Action', 'System Response'],
+        [
+          ['1', 'Reviewer sees task in Review Queue', 'Only tasks where they are set as reviewer'],
+          ['2', 'Opens context modal — reviews submission link', 'Brand brief, revision history shown'],
+          ['3a', 'Clicks Approve', 'Task approved. Slack fires. Assignee notified.'],
+          ['3b', 'Clicks Rework + types notes', 'Round counter increments. Slack fires with notes.'],
+          ['4 (3+ rounds)', 'Third rework requested', 'Additional Slack: Revision alert — escalate to manager'],
+        ],
+        [500, 3800, 4726]
+      ),
+      gap(),
+
+      h2('8.4 Lead — Brand Meeting Flow'),
+      makeTable(
+        ['Step', 'Action', 'System Response'],
+        [
+          ['1', 'Brands → Select brand → Log meeting', 'Meeting form opens'],
+          ['2', 'Paste raw meeting notes', 'Free-text, no structure needed'],
+          ['3', 'Click Extract with AI', 'AI extracts: summary, decisions, tasks, brand rules'],
+          ['4', 'Review and edit extracted data', 'Toggle tasks, edit briefs, set deadlines'],
+          ['5', 'Click Confirm', 'Meeting saved, tasks created, brand knowledge updated'],
+          ['6', 'Next allocator use for this brand', 'AI auto-includes meeting context in reasoning'],
+        ],
+        [500, 3800, 4726]
+      ),
+      gap(),
+
+      h2('8.5 Role-Based Access Summary'),
+      makeTable(
+        ['Feature', 'Team Lead', 'Staff', 'Reviewer (non-lead)'],
+        [
+          ['Dashboard', 'All stats + full team', 'Own stats only', 'Own stats only'],
+          ['Tasks', 'All tasks + Edit', 'Own tasks only', 'Own + review tasks'],
+          ['Chat Allocator', 'Yes', 'No', 'No'],
+          ['Calendar', 'Full + add via Chat', 'Own + Google sync', 'Own + Google sync'],
+          ['Brands', 'View + Edit + Add + Log meeting', 'View only', 'View only'],
+          ['Briefings', 'View all', 'View all', 'View all'],
+          ['Team', 'View all + Add person', 'No', 'No'],
+          ['Analytics', 'Full team + export', 'Own stats only', 'Own stats only'],
+          ['Approve/Reject', 'Yes (if reviewer)', 'No', 'Yes (assigned tasks)'],
+        ],
+        [2800, 1800, 1800, 2626]
+      ),
+      pageBreak(),
+
+      // ─── 9. FUTURE SCOPE ──────────────────────────────────────────────────
+      h1('9. Future Scope'),
 
       h2('8.1 Pending from Current Build'),
       makeTable(
