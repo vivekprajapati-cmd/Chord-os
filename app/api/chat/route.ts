@@ -87,6 +87,7 @@ Rules:
 - Match person by first name (case-insensitive).
 - Match brand by name or slug (case-insensitive).
 - Check active task load before assigning — if someone already has 20h+ active, flag it and ask if intentional.
+- Each person has 9 hours per day capacity. If assigning hours that would exceed their remaining daily capacity, warn the lead and ask if intentional.
 - References are optional. If not provided, ask ONCE. If the lead says no or skips it, proceed without references.
 - Reviewer is optional. If specified (e.g. "Pierre reviews this"), set reviewer_first_name. If not mentioned, skip — don't ask.
 - Apply brand brain rules automatically — never violate a hard_no rule.

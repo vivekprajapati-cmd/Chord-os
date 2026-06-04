@@ -50,6 +50,35 @@ export async function POST(req: Request) {
     const startAt = start_date
       ? new Date(start_date).toISOString()
       : new Date(new Date(deadline).getTime() - Number(estimated_hours) * 3600000).toISOString();
+
+    // Conflict detection — check for overlapping blocks
+    if (startAt && endAt) {
+      const { data: conflicts } = await supabase
+        .from('blocks')
+        .select('id, start_at, end_at, tasks(deliverable, brands(name))')
+        .eq('person_id', owner_id)
+        .eq('status', 'scheduled')
+        .lt('start_at', endAt)
+        .gt('end_at', startAt);
+
+      if (conflicts && conflicts.length > 0) {
+        const existing = conflicts[0] as any;
+        const existingTask = existing.tasks?.deliverable ?? 'another task';
+        const existingBrand = existing.tasks?.brands?.name ?? '';
+        const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+        const fmtTime = (iso: string) => new Date(new Date(iso).getTime() + IST_OFFSET)
+          .toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' });
+        const fmtDate = (iso: string) => new Date(new Date(iso).getTime() + IST_OFFSET)
+          .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+        const blockedSlot = `${fmtDate(existing.start_at)}, ${fmtTime(existing.start_at)} – ${fmtTime(existing.end_at)} IST`;
+        // Delete the just-created task since we can't create the block
+        await supabase.from('tasks').delete().eq('id', task.id);
+        return NextResponse.json({
+          error: `Conflict: "${existingTask}"${existingBrand ? ` (${existingBrand})` : ''} is already blocked from ${blockedSlot}. Pick a different time slot.`
+        }, { status: 409 });
+      }
+    }
+
     await supabase.from('blocks').insert({
       task_id: task.id,
       person_id: owner_id,

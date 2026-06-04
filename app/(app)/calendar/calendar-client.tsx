@@ -50,14 +50,24 @@ export default function CalendarClient({ personId, personName, isLead, googleCon
 }) {
   const [blocks, setBlocks] = useState<BlockWithTask[]>(initialBlocks);
   const [selectedBlock, setSelectedBlock] = useState<BlockWithTask | null>(null);
-  const [selectedDay, setSelectedDay] = useState(0);
+  const [selectedDay, setSelectedDay] = useState(-1); // -1 = auto-select today on mount
   const [googleEvents, setGoogleEvents] = useState<any[]>([]);
   const [weekDays, setWeekDays] = useState<Date[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [capacity, setCapacity] = useState<{ total_hours: number; blocked_hours: number; remaining_hours: number } | null>(null);
 
   useEffect(() => {
-    setWeekDays(getWeekDays());
+    const days = getWeekDays();
+    setWeekDays(days);
     setMounted(true);
+    // Auto-select today
+    const todayIndex = days.findIndex(d => isSameDay(d, new Date()));
+    if (todayIndex >= 0) setSelectedDay(todayIndex);
+    // Fetch today's capacity
+    fetch('/api/capacity')
+      .then(r => r.json())
+      .then(data => setCapacity(data))
+      .catch(() => {});
   }, []);
 
   // Fetch Google Calendar events if connected
@@ -106,7 +116,8 @@ export default function CalendarClient({ personId, personName, isLead, googleCon
 
   // default selected day = today
   const todayIdx = weekDays.findIndex(d => isSameDay(d, new Date()));
-  const activeDay = weekDays[selectedDay] ?? weekDays[todayIdx];
+  const activeDayIndex = selectedDay >= 0 ? selectedDay : todayIdx;
+  const activeDay = weekDays[activeDayIndex] ?? weekDays[0];
 
   const todayBlocks = blocks.filter((b: BlockWithTask) => activeDay && isSameDay(new Date(b.start_at), activeDay));
   const todayGoogleEvents = googleEvents.filter(e => e.start && activeDay && isSameDay(new Date(e.start), activeDay));
@@ -120,6 +131,16 @@ export default function CalendarClient({ personId, personName, isLead, googleCon
           <div>
             <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)]">Calendar</p>
             <h1 className="font-display text-5xl uppercase tracking-tight">{personName}</h1>
+            {capacity && (
+              <div className="flex items-center gap-3 mt-2">
+                <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>
+                  Today: <strong style={{ color: capacity.remaining_hours === 0 ? 'var(--coral)' : 'var(--ink)' }}>{capacity.remaining_hours}h remaining</strong> of {capacity.total_hours}h
+                </span>
+                <div style={{ width: '80px', height: '4px', background: 'var(--line)', borderRadius: '999px', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(100, capacity.utilization_pct ?? 0)}%`, height: '100%', background: (capacity.utilization_pct ?? 0) >= 100 ? 'var(--coral)' : 'var(--cobalt)', borderRadius: '999px', transition: 'width 0.3s ease' }} />
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             {googleConnected ? (
@@ -148,7 +169,7 @@ export default function CalendarClient({ personId, personName, isLead, googleCon
             const googleCount = googleEvents.filter(e => e.start && isSameDay(new Date(e.start), d)).length;
             const count = blockCount + googleCount;
             const isToday = isSameDay(d, new Date());
-            const isActive = i === selectedDay;
+            const isActive = i === activeDayIndex;
             return (
               <button
                 key={i}

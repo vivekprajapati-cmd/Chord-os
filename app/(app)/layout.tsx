@@ -34,18 +34,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         }}
       >
         {/* Logo */}
-        <div className="px-6 pt-7 pb-6" style={{ borderBottom: '1px solid var(--line)' }}>
+        <div className="px-4 pt-8 pb-6" style={{ borderBottom: '1px solid var(--line)', textAlign: 'center' }}>
           <Link href="/dashboard" className="group block">
             {/* Chord logo */}
             <img
               src="/chord-logo.png"
               alt="Chord"
-              style={{ height: '60px', width: 'auto', marginBottom: '8px', display: 'block' }}
+              style={{ height: '80px', width: 'auto', display: 'block', margin: '0 auto', mixBlendMode: 'multiply' }}
             />
-            <span style={{ fontFamily: 'var(--f-display)', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)', fontWeight: 400 }}>
-              Harmony
-            </span>
-            <span style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gray)', marginTop: '2px' }}>
+            <span style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gray)', marginTop: '8px' }}>
               Ops workspace
             </span>
           </Link>

@@ -7,7 +7,7 @@ export default async function DashboardPage() {
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, name, role, department, is_team_lead')
+    .select('id, name, role, department, is_team_lead, default_hours_per_day')
     .eq('email', user!.email!)
     .maybeSingle();
 
@@ -33,7 +33,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase
       .from('blocks')
-      .select('id, start_at, end_at, status, tasks(deliverable, priority, brands(name))')
+      .select('id, start_at, end_at, status, tasks(deliverable, priority, estimated_hours, brands(name))')
       .eq('person_id', person?.id)
       .gte('start_at', todayStart.toISOString())
       .lte('start_at', todayEnd.toISOString())
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
     // Upcoming 7 days — shown if today is empty
     supabase
       .from('blocks')
-      .select('id, start_at, end_at, status, tasks(deliverable, priority, brands(name))')
+      .select('id, start_at, end_at, status, tasks(deliverable, priority, estimated_hours, brands(name))')
       .eq('person_id', person?.id)
       .gt('start_at', todayEnd.toISOString())
       .lte('start_at', weekEnd.toISOString())
@@ -71,6 +71,13 @@ export default async function DashboardPage() {
   const blocksToShow = hasToday ? todayBlocks : upcomingBlocks;
   const blocksLabel = hasToday ? "Today's blocks" : "Coming up";
 
+  // Calculate today's capacity
+  const defaultHours = (person as any)?.default_hours_per_day ?? 9;
+  const blockedHoursToday = (todayBlocks ?? []).reduce((acc, b) => {
+    return acc + ((b.tasks as any)?.estimated_hours ?? 0);
+  }, 0);
+  const remainingHoursToday = Math.max(0, defaultHours - blockedHoursToday);
+
   return (
     <div className="space-y-12">
       {/* Hero */}
@@ -87,9 +94,14 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-5">
         <StatCard label="Blocks today" value={String(todayBlocks?.length ?? 0)} />
         <StatCard label="In progress" value={String(inProgressTasks?.length ?? 0)} />
+        <StatCard
+          label="Hours remaining"
+          value={`${remainingHoursToday}h`}
+          highlight={remainingHoursToday === 0}
+        />
         <StatCard
           label={isLead ? 'Awaiting approval' : 'Needs review'}
           value={String(reviewTasks?.length ?? 0)}
