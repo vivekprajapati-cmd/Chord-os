@@ -38,7 +38,7 @@ export async function GET(req: Request) {
 
     // Update delay count on task
     delayUpdates.push(
-      supabase.from('tasks').update({ delay_count: newDelayCount }).eq('id', task.id)
+      supabase.from('tasks').update({ delay_count: newDelayCount }).eq('id', task.id).then()
     );
 
     // Fire Slack for each delayed task
