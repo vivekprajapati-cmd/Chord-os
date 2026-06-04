@@ -128,8 +128,8 @@ function EditModal({ task, onClose, onSave }: {
                 status,
                 owner_id: ownerId,
                 owner: newOwner ? { name: newOwner.name } : task.owner,
-                estimated_hours: hours ? parseFloat(hours) : null,
-                deadline: deadline ? new Date(deadline).toISOString() : null,
+                estimated_hours: hours ? parseFloat(hours) : undefined,
+                deadline: deadline ? new Date(deadline).toISOString() : undefined,
               });
             }}
             style={{ flex: 1, background: 'var(--ink)', color: 'var(--cream)', padding: '12px 16px', borderRadius: '999px', border: '1px solid var(--ink)', fontFamily: 'var(--f-mono)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer' }}
