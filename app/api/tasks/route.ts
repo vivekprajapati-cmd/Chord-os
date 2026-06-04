@@ -63,14 +63,17 @@ export async function POST(req: Request) {
     if (startAt && endAt) {
       const { data: conflicts } = await supabase
         .from('blocks')
-        .select('id, start_at, end_at, tasks(deliverable, brands(name))')
+        .select('id, start_at, end_at, tasks(deliverable, status, brands(name))')
         .eq('person_id', owner_id)
-        .eq('status', 'scheduled')
+        .in('status', ['scheduled', 'in_progress'])
         .lt('start_at', endAt)
         .gt('end_at', startAt);
 
-      if (conflicts && conflicts.length > 0) {
-        const existing = conflicts[0] as any;
+      const activeConflicts = (conflicts ?? []).filter((c: any) =>
+        !['done', 'approved', 'ready_for_review', 'cancelled'].includes(c.tasks?.status)
+      );
+      if (activeConflicts.length > 0) {
+        const existing = activeConflicts[0] as any;
         const existingTask = existing.tasks?.deliverable ?? 'another task';
         const existingBrand = existing.tasks?.brands?.name ?? '';
         const IST_OFFSET = 5.5 * 60 * 60 * 1000;
