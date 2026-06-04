@@ -88,7 +88,7 @@ export default function CalendarClient({ personId, personName, isLead, googleCon
     const channel = supabase
       .channel(`blocks-${personId}`)
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         { event: '*', schema: 'public', table: 'blocks', filter: `person_id=eq.${personId}` },
         async (payload: { eventType: string; old: Record<string, string>; new: Record<string, string> }) => {
           if (payload.eventType === 'DELETE') {
