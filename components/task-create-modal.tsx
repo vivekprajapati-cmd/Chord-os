@@ -9,6 +9,47 @@ type Person = { id: string; name: string; department: string };
 const TASK_TYPES = ['design', 'copy', 'video', 'seo', 'content', 'strategy', 'other'] as const;
 const PRIORITIES = ['P0', 'P1', 'P2'] as const;
 
+const TASK_HOURS: Record<string, { min: number; max: number }> = {
+  'static':                  { min: 0.5, max: 2 },
+  'carousel':                { min: 1,   max: 3 },
+  'motion graphic frames':   { min: 0.5, max: 2 },
+  'ai frames':               { min: 0.5, max: 1.5 },
+  'ai video':                { min: 1,   max: 2.5 },
+  'shoot prep':              { min: 2,   max: 3 },
+  'shoot':                   { min: 2,   max: 8 },
+  'edit video':              { min: 2,   max: 4 },
+  'story':                   { min: 0.5, max: 0.5 },
+  'calendar':                { min: 2,   max: 4 },
+  'report':                  { min: 2,   max: 3 },
+  'brand tracker update':    { min: 0.5, max: 1 },
+  'orm tracker':             { min: 0.5, max: 1 },
+  'meeting':                 { min: 0.5, max: 1 },
+  'a+ content writing':      { min: 1,   max: 1.5 },
+  'a+ banner':               { min: 1,   max: 1.5 },
+  'a+ tile':                 { min: 1,   max: 1.5 },
+  'a+ master':               { min: 1,   max: 3 },
+  'brainstorming':           { min: 0.5, max: 3 },
+  'performance ad':          { min: 0.5, max: 1.5 },
+  'performance ad video':    { min: 1,   max: 2 },
+  'website content':         { min: 1.5, max: 2.5 },
+  'website wireframe':       { min: 0.5, max: 2 },
+  'website page':            { min: 0.5, max: 2.5 },
+  'influencer scripting':    { min: 0.5, max: 1.5 },
+  'strategy plan':           { min: 1,   max: 2.5 },
+  'dvc scripts':             { min: 2.5, max: 3.5 },
+  'mainline ad assets':      { min: 2,   max: 4 },
+  'adapts + minor changes':  { min: 0.5, max: 1 },
+  'shoot lineups':           { min: 0.5, max: 1 },
+  // fallback for generic types
+  'design':                  { min: 0.5, max: 8 },
+  'copy':                    { min: 0.5, max: 4 },
+  'video':                   { min: 1,   max: 8 },
+  'seo':                     { min: 0.5, max: 4 },
+  'content':                 { min: 0.5, max: 4 },
+  'strategy':                { min: 1,   max: 4 },
+  'other':                   { min: 0.5, max: 8 },
+};
+
 export default function TaskCreateModal({
   brands,
   people,
@@ -54,6 +95,20 @@ export default function TaskCreateModal({
     e.preventDefault();
     if (!form.deliverable.trim()) { setError('Deliverable is required.'); return; }
     if (!form.estimated_hours) { setError('Hours are required.'); return; }
+
+    const hours = Number(form.estimated_hours);
+    const taskKey = form.task_type.toLowerCase();
+    const limits = TASK_HOURS[taskKey] ?? TASK_HOURS[form.task_type] ?? null;
+    if (limits) {
+      if (hours < limits.min) {
+        setError(`Hours too low for ${form.task_type}. Min: ${limits.min}h, Max: ${limits.max}h.`);
+        return;
+      }
+      if (hours > limits.max) {
+        setError(`Hours too high for ${form.task_type}. Min: ${limits.min}h, Max: ${limits.max}h.`);
+        return;
+      }
+    }
     setLoading(true);
     setError('');
     try {

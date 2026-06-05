@@ -38,6 +38,12 @@ export default function TaskDetailModal({
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserName, setCurrentUserName] = useState('');
+  const [approving, setApproving] = useState(false);
+  const [reworking, setReworking] = useState(false);
+  const [reworkNotes, setReworkNotes] = useState('');
+  const [showReworkInput, setShowReworkInput] = useState(false);
   const [submissionLink, setSubmissionLink] = useState('');
   const [savingLink, setSavingLink] = useState(false);
 
@@ -63,7 +69,21 @@ export default function TaskDetailModal({
       }
       setLoading(false);
     }
+
+    async function fetchUser() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: person } = await supabase
+        .from('people')
+        .select('id, name')
+        .eq('email', user.email)
+        .maybeSingle();
+      setCurrentUserId(person?.id ?? null);
+      setCurrentUserName(person?.name ?? '');
+    }
+
     fetchTask();
+    fetchUser();
   }, [taskId]);
 
   async function saveLink() {
@@ -71,6 +91,53 @@ export default function TaskDetailModal({
     setSavingLink(true);
     await supabase.from('tasks').update({ submission_link: submissionLink.trim() }).eq('id', task.id);
     setSavingLink(false);
+  }
+
+  async function approve() {
+    if (!task) return;
+    setApproving(true);
+    await supabase.from('tasks').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', task.id);
+    await fetch('/api/slack/notify', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: 'task_approved',
+        task: { deliverable: task.deliverable, brand: task.brands?.name },
+        approver: currentUserName,
+        person: task.owner?.name,
+      }),
+    });
+    setApproving(false);
+    onClose();
+    onDeleted?.();
+  }
+
+  async function requestRework() {
+    if (!reworkNotes.trim()) { setShowReworkInput(true); return; }
+    if (!task) return;
+    setReworking(true);
+    const newRound = (task.revision_round ?? 0) + 1;
+    await supabase.from('tasks').update({ status: 'scheduled', revision_round: newRound }).eq('id', task.id);
+    await supabase.from('task_revisions').insert({
+      task_id: task.id,
+      round: newRound,
+      submission_link: task.submission_link,
+      feedback_notes: reworkNotes.trim(),
+      reviewed_by_id: currentUserId,
+    });
+    await fetch('/api/slack/notify', {
+      method: 'POST',
+      body: JSON.stringify({
+        type: 'task_rework_requested',
+        task: { deliverable: task.deliverable, brand: task.brands?.name },
+        reviewer: currentUserName,
+        person: task.owner?.name,
+        round: newRound,
+        notes: reworkNotes.trim(),
+      }),
+    });
+    setReworking(false);
+    onClose();
+    onDeleted?.();
   }
 
   async function deleteTask() {
@@ -293,23 +360,58 @@ export default function TaskDetailModal({
               )}
             </div>
 
+            {/* Rework notes input */}
+            {showReworkInput && (
+              <div style={{ padding: '0 32px 12px', display: 'flex', gap: '8px' }}>
+                <input
+                  value={reworkNotes}
+                  onChange={e => setReworkNotes(e.target.value)}
+                  placeholder="What needs to change? (required)"
+                  style={{ flex: 1, background: 'var(--paper)', border: '1px solid var(--red)', borderRadius: '999px', padding: '10px 16px', fontSize: '13px', outline: 'none', fontFamily: 'inherit' }}
+                />
+              </div>
+            )}
+
             {/* Footer */}
-            <div style={{ padding: '16px 32px', borderTop: '1px solid var(--line)', display: 'flex', gap: '10px', justifyContent: 'space-between', alignItems: 'center' }}>
-              {canDelete && (
+            <div style={{ padding: '16px 32px', borderTop: '1px solid var(--line)', display: 'flex', gap: '10px', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                {canDelete && (
+                  <button
+                    onClick={deleteTask}
+                    disabled={deleting}
+                    style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--red)', border: '1px solid var(--red)', borderRadius: '999px', padding: '10px 18px', cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.5 : 1 }}
+                  >
+                    {deleting ? '…' : 'Delete task'}
+                  </button>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}>
+                {/* Approve + Rework — reviewer only, ready_for_review status */}
+                {task && task.status === 'ready_for_review' && currentUserId === task.reviewer_id && (
+                  <>
+                    <button
+                      onClick={approve}
+                      disabled={approving}
+                      style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--coral)', color: '#fff', border: '1px solid var(--coral)', borderRadius: '999px', padding: '10px 18px', cursor: approving ? 'not-allowed' : 'pointer', opacity: approving ? 0.5 : 1 }}
+                    >
+                      {approving ? '…' : '✓ Approve'}
+                    </button>
+                    <button
+                      onClick={requestRework}
+                      disabled={reworking}
+                      style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--red)', color: '#fff', border: '1px solid var(--red)', borderRadius: '999px', padding: '10px 18px', cursor: reworking ? 'not-allowed' : 'pointer', opacity: reworking ? 0.5 : 1 }}
+                    >
+                      {reworking ? '…' : '↺ Rework'}
+                    </button>
+                  </>
+                )}
                 <button
-                  onClick={deleteTask}
-                  disabled={deleting}
-                  style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--red)', border: '1px solid var(--red)', borderRadius: '999px', padding: '10px 18px', cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.5 : 1 }}
+                  onClick={onClose}
+                  style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 18px', cursor: 'pointer' }}
                 >
-                  {deleting ? '…' : 'Delete task'}
+                  Close
                 </button>
-              )}
-              <button
-                onClick={onClose}
-                style={{ marginLeft: 'auto', fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 18px', cursor: 'pointer' }}
-              >
-                Close
-              </button>
+              </div>
             </div>
           </>
         )}
