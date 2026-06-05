@@ -77,10 +77,15 @@ export default function TaskDetailModal({
     if (!task) return;
     if (!confirm(`Delete "${task.deliverable}"? This cannot be undone.`)) return;
     setDeleting(true);
-    await supabase.from('tasks').delete().eq('id', task.id);
+    const res = await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
     setDeleting(false);
-    onClose();
-    onDeleted?.();
+    if (res.ok) {
+      onClose();
+      onDeleted?.();
+    } else {
+      const data = await res.json();
+      alert(`Delete failed: ${data.error ?? 'Unknown error'}`);
+    }
   }
 
   // Close on backdrop click
