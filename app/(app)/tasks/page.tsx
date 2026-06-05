@@ -61,10 +61,13 @@ export default async function TasksPage({
           .lt('deadline', new Date().toISOString())
           .is('submitted_at', null)
           .not('status', 'in', '("done","approved","cancelled")');
+      } else if (statusFilter === 'done') {
+        q = q.in('status', ['done', 'approved']);
       } else if (statusFilter) {
         q = q.eq('status', statusFilter);
       } else {
-        q = q.not('status', 'in', '("done","cancelled")');
+        // Active = in_progress only
+        q = q.eq('status', 'in_progress');
       }
 
       return q;
