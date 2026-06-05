@@ -28,7 +28,8 @@ export default async function AnalyticsPage() {
   const tier = (person as any)?.access_tier ?? 'staff';
   const viewAll = !!(person as any)?.view_all;
   const isLead = tier === 'admin' || tier === 'lead' || tier === 'viewer';
-  const canSeeAll = tier === 'admin' || viewAll;
+  // Leads always see full team table; staff/viewers without view_all see own row only
+  const canSeeAll = tier === 'admin' || tier === 'lead' || viewAll;
 
   let statsQuery = supabase.from('member_stats').select('*');
   if (!canSeeAll && person?.id) statsQuery = statsQuery.eq('person_id', person.id);
@@ -46,13 +47,12 @@ export default async function AnalyticsPage() {
 
   const month = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 
-  // Fetch brands for filter (leads/admins only)
-  const { data: brandsData } = canSeeAll
+  // Fetch brands + brand tasks for leads/admins/viewers
+  const { data: brandsData } = isLead
     ? await supabase.from('brands').select('id, name, slug').eq('status', 'active').order('name')
     : { data: [] };
 
-  // Fetch brand-level task stats for leads/admins
-  const { data: brandTasksData } = canSeeAll
+  const { data: brandTasksData } = isLead
     ? await supabase
         .from('tasks')
         .select('brand_id, estimated_hours, status, owner_id, brands(id, name), owner:people!tasks_owner_id_fkey(id, name)')

@@ -115,7 +115,7 @@ export default function AnalyticsClient({
         <div className="flex items-end justify-between no-print">
           <div>
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: '8px' }}>
-              {isLead ? 'Team Performance' : 'My Performance'}
+              {canSeeAll ? 'Team Performance' : 'My Performance'}
             </p>
             <h1 className="font-display text-5xl uppercase tracking-tight">Analytics</h1>
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', marginTop: '6px' }}>{month}</p>
@@ -153,8 +153,8 @@ export default function AnalyticsClient({
           ))}
         </div>
 
-        {/* Brand filter — leads/admins only */}
-        {canSeeAll && brands.length > 0 && (
+        {/* Brand filter — all leads/admins/viewers */}
+        {isLead && brands.length > 0 && (
           <section>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
               <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)' }}>Brand breakdown</p>
