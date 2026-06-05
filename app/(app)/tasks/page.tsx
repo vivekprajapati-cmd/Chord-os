@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import TaskCreateButton from '@/components/task-create-button';
 import TaskListClient from '@/components/task-list-client';
@@ -49,7 +50,6 @@ export default async function TasksPage({
         .order('deadline', { ascending: true, nullsFirst: false })
         .limit(100);
 
-      // Review queue — show tasks where user is owner OR reviewer
       if (!canSeeAll && statusFilter === 'ready_for_review') {
         q = q.or(`owner_id.eq.${person?.id},reviewer_id.eq.${person?.id}`);
       } else if (!canSeeAll) {
@@ -57,7 +57,6 @@ export default async function TasksPage({
       }
 
       if (isDelayedFilter) {
-        // Overdue: past deadline, not submitted, not done/approved/cancelled
         q = q
           .lt('deadline', new Date().toISOString())
           .is('submitted_at', null)
@@ -85,13 +84,13 @@ export default async function TasksPage({
         <div className="flex items-center gap-3">
           <div className="flex gap-2">
             {[
-              { href: '/tasks',                         label: 'Active',       active: !statusFilter,                        activeColor: 'var(--coral)' },
-              { href: '/tasks?status=scheduled',        label: 'Scheduled',    active: statusFilter === 'scheduled',          activeColor: 'var(--coral)' },
-              { href: '/tasks?status=ready_for_review', label: 'Review queue', active: statusFilter === 'ready_for_review',  activeColor: 'var(--coral)' },
-              { href: '/tasks?status=delayed',          label: 'Delayed',      active: statusFilter === 'delayed',            activeColor: 'var(--red)' },
-              { href: '/tasks?status=done',             label: 'Done',         active: statusFilter === 'done',               activeColor: 'var(--coral)' },
+              { href: '/tasks',                         label: 'Active',       active: !statusFilter,                       activeColor: 'var(--coral)' },
+              { href: '/tasks?status=scheduled',        label: 'Scheduled',    active: statusFilter === 'scheduled',         activeColor: 'var(--coral)' },
+              { href: '/tasks?status=ready_for_review', label: 'Review queue', active: statusFilter === 'ready_for_review', activeColor: 'var(--coral)' },
+              { href: '/tasks?status=delayed',          label: 'Delayed',      active: statusFilter === 'delayed',           activeColor: 'var(--red)' },
+              { href: '/tasks?status=done',             label: 'Done',         active: statusFilter === 'done',              activeColor: 'var(--coral)' },
             ].map(({ href, label, active, activeColor }) => (
-              <a
+              <Link
                 key={href}
                 href={href}
                 style={{
@@ -108,7 +107,7 @@ export default async function TasksPage({
                 }}
               >
                 {label}
-              </a>
+              </Link>
             ))}
           </div>
           {canCreate && <TaskCreateButton brands={brands} people={people} />}
