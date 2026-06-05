@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import TaskDetailModal from '@/components/task-detail-modal';
 
 type Block = {
   id: string;
   start_at: string;
   end_at: string;
   status: string;
-  tasks: { deliverable: string; priority: string; estimated_hours: number; brands: { name: string } } | null;
+  task_id: string | null;
+  tasks: { id: string; deliverable: string; priority: string; estimated_hours: number; brands: { name: string } } | null;
 };
 
 type Person = {
@@ -28,6 +30,8 @@ export default function DashboardClient() {
   const [inProgressCount, setInProgressCount] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [canDelete, setCanDelete] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -43,6 +47,7 @@ export default function DashboardClient() {
 
       if (!p) return;
       setPerson(p);
+      setCanDelete(!!p.is_team_lead);
 
       const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
       const nowIST = new Date(Date.now() + IST_OFFSET_MS);
@@ -61,7 +66,7 @@ export default function DashboardClient() {
       ] = await Promise.all([
         supabase
           .from('blocks')
-          .select('id, start_at, end_at, status, tasks(deliverable, priority, estimated_hours, brands(name))')
+          .select('id, start_at, end_at, status, task_id, tasks(id, deliverable, priority, estimated_hours, brands(name))')
           .eq('person_id', p.id)
           .gte('start_at', todayStart.toISOString())
           .lte('start_at', todayEnd.toISOString())
@@ -69,7 +74,7 @@ export default function DashboardClient() {
           .order('start_at'),
         supabase
           .from('blocks')
-          .select('id, start_at, end_at, status, tasks(deliverable, priority, estimated_hours, brands(name))')
+          .select('id, start_at, end_at, status, task_id, tasks(id, deliverable, priority, estimated_hours, brands(name))')
           .eq('person_id', p.id)
           .gt('start_at', todayEnd.toISOString())
           .lte('start_at', weekEnd.toISOString())
@@ -175,11 +180,13 @@ export default function DashboardClient() {
               const dayLabel = !hasToday
                 ? new Date(block.start_at).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }) + ' · '
                 : '';
+              const taskId = (task as any)?.id ?? block.task_id;
               return (
-                <Link
+                <div
                   key={block.id}
-                  href="/calendar"
+                  onClick={() => taskId && setSelectedTaskId(taskId)}
                   className="flex items-center justify-between bg-[var(--paper)] border border-[var(--line)] rounded-xl p-4 hover:shadow-[4px_4px_0_var(--ink)] transition-shadow"
+                  style={{ cursor: taskId ? 'pointer' : 'default' }}
                 >
                   <div className="min-w-0">
                     <p className="text-xs font-mono text-[var(--gray)] uppercase">{(task as any)?.brands?.name}</p>
@@ -197,7 +204,7 @@ export default function DashboardClient() {
                     >{task?.priority}</span>
                     <span className="text-xs font-mono text-[var(--gray)] capitalize">{block.status}</span>
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>
@@ -219,6 +226,15 @@ export default function DashboardClient() {
             <p className="text-xs font-mono text-[var(--gray)] mt-1">Tasks → Review queue →</p>
           </Link>
         </section>
+      )}
+
+      {selectedTaskId && (
+        <TaskDetailModal
+          taskId={selectedTaskId}
+          onClose={() => setSelectedTaskId(null)}
+          canDelete={canDelete}
+          onDeleted={() => { setSelectedTaskId(null); window.location.reload(); }}
+        />
       )}
     </div>
   );

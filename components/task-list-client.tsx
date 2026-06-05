@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import TaskEditModal from './task-edit-modal';
+import TaskDetailModal from './task-detail-modal';
 import { createClient } from '@/lib/supabase/client';
 
 type Task = {
@@ -54,6 +55,7 @@ export default function TaskListClient({
   const supabase = createClient();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
   const [submittingTask, setSubmittingTask] = useState<Task | null>(null);
   const [submissionLink, setSubmissionLink] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -110,7 +112,8 @@ export default function TaskListClient({
               <div
                 key={task.id}
                 className="card-hover p-4 flex items-center justify-between"
-                style={{ transition: 'box-shadow 0.18s ease' }}
+                style={{ transition: 'box-shadow 0.18s ease', cursor: 'pointer' }}
+                onClick={() => setDetailTaskId(task.id)}
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
@@ -143,7 +146,7 @@ export default function TaskListClient({
                   {/* Submit button — shown for in_progress and scheduled tasks */}
                   {(task.status === 'in_progress' || task.status === 'scheduled') && (
                     <button
-                      onClick={() => { setSubmittingTask(task); setSubmissionLink(''); }}
+                      onClick={e => { e.stopPropagation(); setSubmittingTask(task); setSubmissionLink(''); }}
                       style={{
                         fontFamily: 'var(--f-mono)',
                         fontSize: '9px',
@@ -179,7 +182,7 @@ export default function TaskListClient({
                   )}
                   {canEdit && (
                     <button
-                      onClick={() => setEditingTask(task)}
+                      onClick={e => { e.stopPropagation(); setEditingTask(task); }}
                       style={{
                         fontFamily: 'var(--f-mono)',
                         fontSize: '9px',
@@ -207,6 +210,15 @@ export default function TaskListClient({
         <div className="bg-[var(--paper)] border border-[var(--line)] rounded-2xl p-10 text-center">
           <p className="text-[var(--gray)]">No tasks here.</p>
         </div>
+      )}
+
+      {detailTaskId && (
+        <TaskDetailModal
+          taskId={detailTaskId}
+          onClose={() => setDetailTaskId(null)}
+          canDelete={canEdit}
+          onDeleted={() => { setDetailTaskId(null); window.location.reload(); }}
+        />
       )}
 
       {editingTask && (

@@ -46,15 +46,31 @@ export default async function AnalyticsPage() {
 
   const month = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 
+  // Fetch brands for filter (leads/admins only)
+  const { data: brandsData } = canSeeAll
+    ? await supabase.from('brands').select('id, name, slug').eq('status', 'active').order('name')
+    : { data: [] };
+
+  // Fetch brand-level task stats for leads/admins
+  const { data: brandTasksData } = canSeeAll
+    ? await supabase
+        .from('tasks')
+        .select('brand_id, estimated_hours, status, owner_id, brands(id, name), owner:people!tasks_owner_id_fkey(id, name)')
+        .not('status', 'in', '(cancelled)')
+    : { data: [] };
+
   return (
     <AnalyticsClient
       members={members}
       isLead={isLead}
+      canSeeAll={canSeeAll}
       totalTasks={totalTasks}
       totalCompleted={totalCompleted}
       totalDelays={totalDelays}
       teamOnTimeRate={teamOnTimeRate}
       month={month}
+      brands={(brandsData ?? []) as { id: string; name: string; slug: string }[]}
+      brandTasks={(brandTasksData ?? []) as any[]}
     />
   );
 }
