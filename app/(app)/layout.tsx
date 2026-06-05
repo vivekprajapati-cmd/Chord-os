@@ -7,36 +7,29 @@ import SidebarUser from '@/components/sidebar-user';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) redirect('/login');
 
   const { data: person } = await supabase
     .from('people')
     .select('id, name, role, department, seniority, location, is_team_lead')
-    .eq('email', user.email!)
+    .eq('email', session.user.email!)
     .maybeSingle();
 
   const tier = (person?.is_team_lead ? 'admin' : 'staff') as 'admin' | 'poc' | 'staff';
-  const firstName = person?.name?.split(' ')[0] ?? user.email?.split('@')[0] ?? '';
+  const firstName = person?.name?.split(' ')[0] ?? session.user.email?.split('@')[0] ?? '';
 
   return (
     <div
       className="flex h-screen overflow-hidden"
       style={{ background: 'var(--cream)', fontFamily: 'var(--f-body)' }}
     >
-      {/* ── Sidebar — desktop only ── */}
       <aside
         className="hidden md:flex flex-col shrink-0 h-screen overflow-y-auto"
-        style={{
-          width: '220px',
-          borderRight: '1px solid var(--line)',
-          background: 'var(--cream)',
-        }}
+        style={{ width: '220px', borderRight: '1px solid var(--line)', background: 'var(--cream)' }}
       >
-        {/* Logo */}
         <div className="px-4 pt-8 pb-6" style={{ borderBottom: '1px solid var(--line)', textAlign: 'center' }}>
           <Link href="/dashboard" className="group block">
-            {/* Chord logo */}
             <img
               src="/chord-logo.png"
               alt="Chord"
@@ -54,7 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           person={{
             id: person?.id ?? '',
             name: person?.name ?? firstName,
-            email: user.email ?? '',
+            email: session.user.email ?? '',
             role: person?.role ?? '',
             department: person?.department ?? '',
             seniority: (person as any)?.seniority ?? 'Mid',
@@ -64,9 +57,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         />
       </aside>
 
-      {/* ── Main content ── */}
       <main className="flex-1 overflow-y-auto">
-        {/* Mobile top bar */}
         <div className="flex md:hidden items-center justify-between px-4 py-4 sticky top-0 z-30"
           style={{ background: 'var(--cream)', borderBottom: '1px solid var(--line)' }}>
           <MobileDrawer tier={tier} firstName={firstName} role={person?.role ?? person?.department ?? ''} />
