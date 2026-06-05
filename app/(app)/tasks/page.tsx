@@ -150,12 +150,8 @@ export default async function TasksPage({
       return q;
     })(),
     supabase.from('brands').select('id, name, slug').eq('status', 'active').order('name'),
-    // Leads only see their team in the assignee dropdown
-    isAdmin
-      ? supabase.from('people').select('id, name, department').order('name')
-      : isLead && teamMemberIds.length > 0
-        ? supabase.from('people').select('id, name, department').in('id', teamMemberIds).order('name')
-        : supabase.from('people').select('id, name, department').order('name'),
+    // All leads can assign to anyone
+    supabase.from('people').select('id, name, department').order('name'),
   ]);
 
   const tasks = (tasksResult.data ?? []) as unknown as Task[];
