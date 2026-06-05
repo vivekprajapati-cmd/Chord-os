@@ -13,6 +13,7 @@ type Task = {
   meeting_id: string | null;
   owner_id: string;
   reviewer_id: string | null;
+  submission_link: string | null;
   brands: { name: string } | null;
   owner: { name: string } | null;
 };
@@ -44,7 +45,7 @@ export default async function TasksPage({
     (() => {
       let q = supabase
         .from('tasks')
-        .select('id, deliverable, task_type, priority, status, estimated_hours, deadline, meeting_id, owner_id, reviewer_id, brands(name), owner:people!tasks_owner_id_fkey(name)')
+        .select('id, deliverable, task_type, priority, status, estimated_hours, deadline, meeting_id, owner_id, reviewer_id, submission_link, brands(name), owner:people!tasks_owner_id_fkey(name)')
         .order('priority', { ascending: true })
         .order('deadline', { ascending: true, nullsFirst: false })
         .limit(100);

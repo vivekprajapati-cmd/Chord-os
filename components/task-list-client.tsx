@@ -16,6 +16,7 @@ type Task = {
   meeting_id: string | null;
   owner_id: string;
   reviewer_id: string | null;
+  submission_link: string | null;
   brands: { name: string } | null;
   owner: { name: string } | null;
 };
@@ -160,9 +161,21 @@ export default function TaskListClient({
                     </button>
                   )}
                   {task.status === 'ready_for_review' && (
-                    <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', color: 'var(--gray)', letterSpacing: '0.06em' }}>
-                      ✓ In review
-                    </span>
+                    <>
+                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', color: 'var(--gray)', letterSpacing: '0.06em' }}>
+                        ✓ In review
+                      </span>
+                      {task.submission_link && (
+                        <a
+                          href={task.submission_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cobalt)', textDecoration: 'none', border: '1px solid var(--cobalt)', borderRadius: '999px', padding: '3px 10px' }}
+                        >
+                          View →
+                        </a>
+                      )}
+                    </>
                   )}
                   {canEdit && (
                     <button
