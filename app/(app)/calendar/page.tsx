@@ -43,13 +43,16 @@ export default async function CalendarPage() {
 
   if (!person) return <p className="text-[var(--gray)]">Person record not found. Contact admin.</p>;
 
-  // Fetch this week's blocks for this person
-  const weekStart = new Date();
-  weekStart.setHours(0, 0, 0, 0);
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1)); // Mon
-
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 7);
+  // Fetch this week's blocks — IST boundaries
+  const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+  const nowIST = new Date(Date.now() + IST_OFFSET_MS);
+  const istDateStr = nowIST.toISOString().split('T')[0];
+  const todayIST = new Date(`${istDateStr}T00:00:00+05:30`);
+  const dayOfWeek = todayIST.getDay(); // 0=Sun
+  const mondayIST = new Date(todayIST);
+  mondayIST.setDate(todayIST.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
+  const weekStart = mondayIST;
+  const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   const { data: blocks } = await supabase
     .from('blocks')

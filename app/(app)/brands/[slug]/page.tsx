@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import BrandEditButton from '@/components/brand-edit-button';
+import BrandDocuments from '@/components/brand-documents';
 
 type Brand = {
   id: string;
@@ -69,6 +70,13 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
 
   const recentMeetings = (brandMeetings ?? []) as unknown as Meeting[];
 
+  // Fetch brand documents
+  const { data: brandDocs } = await supabase
+    .from('brand_documents')
+    .select('id, name, file_path, file_type, file_size, created_at, uploaded_by:people!brand_documents_uploaded_by_id_fkey(name)')
+    .eq('brand_id', b.id)
+    .order('created_at', { ascending: false });
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -97,8 +105,8 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
               }} />
               <Link
                 href={`/brands/${slug}/meeting`}
-                className="text-xs font-mono uppercase tracking-[0.12em] px-5 py-2 rounded-full hover:opacity-90 transition shadow-[4px_4px_0_var(--gray)]"
-                style={{ background: 'var(--ink)', color: 'var(--cream)' }}
+                className="text-xs font-mono uppercase tracking-[0.12em] px-5 py-2 rounded-full hover:opacity-90 transition"
+                style={{ background: 'transparent', color: 'var(--ink)', border: '1px solid var(--line)' }}
               >
                 + Log meeting
               </Link>
@@ -242,6 +250,14 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           </div>
         </div>
       )}
+
+      {/* Brand documents */}
+      <BrandDocuments
+        brandId={b.id}
+        brandSlug={b.slug}
+        initialDocs={(brandDocs ?? []) as any}
+        canUpload={canLogMeeting}
+      />
 
       {/* Active tasks */}
       <BrandTasks brandId={b.id} supabase={supabase} />

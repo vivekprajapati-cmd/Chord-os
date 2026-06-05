@@ -63,6 +63,43 @@ export async function createCalendarEvent({
   return { success: true, eventId: data.id };
 }
 
+// Fetch total hours of Google Calendar events for a given day (IST)
+export async function getGoogleEventsHours({
+  refreshToken,
+  date, // YYYY-MM-DD in IST
+}: {
+  refreshToken: string;
+  date: string;
+}): Promise<number> {
+  const accessToken = await getAccessToken(refreshToken);
+  if (!accessToken) return 0;
+
+  const dayStart = new Date(`${date}T00:00:00+05:30`).toISOString();
+  const dayEnd = new Date(`${date}T23:59:59+05:30`).toISOString();
+
+  const url = new URL(CALENDAR_URL);
+  url.searchParams.set('timeMin', dayStart);
+  url.searchParams.set('timeMax', dayEnd);
+  url.searchParams.set('singleEvents', 'true');
+  url.searchParams.set('orderBy', 'startTime');
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!res.ok) return 0;
+
+  const data = await res.json();
+  const events: { start?: { dateTime?: string }; end?: { dateTime?: string } }[] = data.items ?? [];
+
+  const totalMs = events.reduce((acc, e) => {
+    if (!e.start?.dateTime || !e.end?.dateTime) return acc;
+    return acc + (new Date(e.end.dateTime).getTime() - new Date(e.start.dateTime).getTime());
+  }, 0);
+
+  return Math.round((totalMs / 3600000) * 10) / 10; // hours, 1 decimal
+}
+
 export async function deleteCalendarEvent({
   refreshToken,
   eventId,

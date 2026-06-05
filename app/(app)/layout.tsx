@@ -43,7 +43,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               style={{ height: '80px', width: 'auto', display: 'block', margin: '0 auto', mixBlendMode: 'multiply' }}
             />
             <span style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gray)', marginTop: '8px' }}>
-              Ops workspace
+              Workspace
             </span>
           </Link>
         </div>

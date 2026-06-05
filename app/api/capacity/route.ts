@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getGoogleEventsHours } from '@/lib/google-calendar';
 
 export async function GET(req: Request) {
   const supabase = await createClient();
@@ -14,10 +15,10 @@ export async function GET(req: Request) {
   const dayStart = new Date(`${date}T00:00:00+05:30`).toISOString();
   const dayEnd = new Date(`${date}T23:59:59+05:30`).toISOString();
 
-  // Get person's daily hours limit
+  // Get person's daily hours limit + Google refresh token
   const { data: person } = await supabase
     .from('people')
-    .select('id, name, default_hours_per_day')
+    .select('id, name, default_hours_per_day, google_refresh_token')
     .eq(personId ? 'id' : 'email', personId ?? user.email!)
     .maybeSingle();
 
@@ -32,11 +33,21 @@ export async function GET(req: Request) {
     .lte('start_at', dayEnd)
     .neq('status', 'cancelled');
 
-  const blockedHours = (blocks ?? []).reduce((acc, b) => {
+  const taskBlockedHours = (blocks ?? []).reduce((acc, b) => {
     const hours = (b.tasks as any)?.estimated_hours ?? 0;
     return acc + hours;
   }, 0);
 
+  // Add Google Calendar event hours if connected
+  let googleHours = 0;
+  if ((person as any).google_refresh_token) {
+    googleHours = await getGoogleEventsHours({
+      refreshToken: (person as any).google_refresh_token,
+      date,
+    }).catch(() => 0);
+  }
+
+  const blockedHours = Math.round((taskBlockedHours + googleHours) * 10) / 10;
   const totalHours = person.default_hours_per_day ?? 9;
   const remainingHours = Math.max(0, totalHours - blockedHours);
   const utilizationPct = Math.round((blockedHours / totalHours) * 100);

@@ -44,7 +44,7 @@ export default function DemoLayout({ children }: { children: React.ReactNode }) 
               Harmony
             </span>
             <span style={{ display: 'block', fontFamily: 'var(--f-mono)', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gray)', marginTop: '2px' }}>
-              Ops workspace
+              Workspace
             </span>
           </Link>
         </div>

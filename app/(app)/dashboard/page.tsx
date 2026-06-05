@@ -16,14 +16,15 @@ export default async function DashboardPage() {
   const isLead = tier === 'admin';
   const canSeeAllTasks = isLead;
 
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const todayEnd = new Date();
-  todayEnd.setHours(23, 59, 59, 999);
+  // IST boundaries — UTC+5:30
+  const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+  const nowIST = new Date(Date.now() + IST_OFFSET_MS);
+  const istDateStr = nowIST.toISOString().split('T')[0]; // YYYY-MM-DD in IST
+  const todayStart = new Date(`${istDateStr}T00:00:00+05:30`);
+  const todayEnd = new Date(`${istDateStr}T23:59:59+05:30`);
 
   // Week end for upcoming blocks
-  const weekEnd = new Date();
-  weekEnd.setDate(weekEnd.getDate() + 7);
+  const weekEnd = new Date(todayEnd.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   const [
     { data: todayBlocks },
