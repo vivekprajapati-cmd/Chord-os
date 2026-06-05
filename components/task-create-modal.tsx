@@ -7,6 +7,16 @@ type Brand = { id: string; name: string; slug: string };
 type Person = { id: string; name: string; department: string };
 
 const TASK_TYPES = ['design', 'copy', 'video', 'seo', 'content', 'strategy', 'other'] as const;
+
+const SPECIFIC_TASK_TYPES = [
+  'Static', 'Carousel', 'Motion graphic frames', 'AI frames', 'AI video',
+  'Shoot prep', 'Shoot', 'Edit Video', 'Story', 'Calendar', 'Report',
+  'Brand tracker update', 'ORM tracker', 'Meeting', 'A+ content writing',
+  'A+ banner', 'A+ tile', 'A+ master', 'Brainstorming', 'Performance ad',
+  'Performance ad video', 'Website content', 'Website wireframe', 'Website page',
+  'Influencer scripting', 'Strategy plan', 'DVC scripts', 'Mainline ad assets',
+  'Adapts + minor changes', 'Shoot lineups', 'Other',
+] as const;
 const PRIORITIES = ['P0', 'P1', 'P2'] as const;
 
 const TASK_HOURS: Record<string, { min: number; max: number }> = {
@@ -69,6 +79,7 @@ export default function TaskCreateModal({
     owner_id: people[0]?.id ?? '',
     reviewer_id: '',
     deliverable: '',
+    task_name: 'Static',
     task_type: 'design' as typeof TASK_TYPES[number],
     estimated_hours: '',
     priority: 'P1' as typeof PRIORITIES[number],
@@ -97,15 +108,15 @@ export default function TaskCreateModal({
     if (!form.estimated_hours) { setError('Hours are required.'); return; }
 
     const hours = Number(form.estimated_hours);
-    const taskKey = form.task_type.toLowerCase();
-    const limits = TASK_HOURS[taskKey] ?? TASK_HOURS[form.task_type] ?? null;
+    const taskKey = form.task_name.toLowerCase();
+    const limits = TASK_HOURS[taskKey] ?? null;
     if (limits) {
       if (hours < limits.min) {
-        setError(`Hours too low for ${form.task_type}. Min: ${limits.min}h, Max: ${limits.max}h.`);
+        setError(`Hours too low for "${form.task_name}". Allowed: ${limits.min}h – ${limits.max}h.`);
         return;
       }
       if (hours > limits.max) {
-        setError(`Hours too high for ${form.task_type}. Min: ${limits.min}h, Max: ${limits.max}h.`);
+        setError(`Hours too high for "${form.task_name}". Allowed: ${limits.min}h – ${limits.max}h.`);
         return;
       }
     }
@@ -220,10 +231,22 @@ export default function TaskCreateModal({
             />
           </div>
 
-          {/* Type + Priority + Hours */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* Task name + Category */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={label}>Type</label>
+              <label className={label}>Task type</label>
+              <select
+                value={form.task_name}
+                onChange={e => setForm(f => ({ ...f, task_name: e.target.value }))}
+                className={input}
+              >
+                {SPECIFIC_TASK_TYPES.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={label}>Category</label>
               <select
                 value={form.task_type}
                 onChange={e => setForm(f => ({ ...f, task_type: e.target.value as typeof TASK_TYPES[number] }))}
@@ -234,6 +257,10 @@ export default function TaskCreateModal({
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Priority + Hours */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={label}>Priority</label>
               <select
@@ -247,7 +274,9 @@ export default function TaskCreateModal({
               </select>
             </div>
             <div>
-              <label className={label}>Hours</label>
+              <label className={label}>
+                Hours {(() => { const l = TASK_HOURS[form.task_name.toLowerCase()]; return l ? `(${l.min}h – ${l.max}h)` : ''; })()}
+              </label>
               <input
                 type="number"
                 min="0.5"
