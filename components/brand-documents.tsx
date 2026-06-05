@@ -87,7 +87,7 @@ export default function BrandDocuments({
       .single();
 
     if (dbErr || !doc) {
-      setError('Saved to storage but failed to record in DB.');
+      setError(`DB error: ${dbErr?.message ?? 'no doc returned'} | code: ${dbErr?.code}`);
     } else {
       setDocs(prev => [doc as unknown as Document, ...prev]);
     }
