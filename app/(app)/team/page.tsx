@@ -46,5 +46,5 @@ export default async function TeamPage() {
     capacityMap[b.person_id].blocks.push(b);
   });
 
-  return <TeamClient people={people as any} capacityMap={capacityMap} />;
+  return <TeamClient people={people as any} capacityMap={capacityMap as any} />;
 }
