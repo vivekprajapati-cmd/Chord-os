@@ -15,15 +15,18 @@ const BASE_NAV = [
 ];
 
 const LEAD_NAV = [
-  { href: '/chat',       label: 'Allocator',  num: '06' },
-  { href: '/team',       label: 'Team',       num: '07' },
-  { href: '/analytics',  label: 'Analytics',  num: '08' },
+  { href: '/chat',       label: 'Allocator',  num: '06', adminOnly: true },
+  { href: '/team',       label: 'Team',       num: '07', adminOnly: true },
+  { href: '/analytics',  label: 'Analytics',  num: '08', adminOnly: false },
 ];
 
 export default function MobileDrawer({ tier, firstName, role }: { tier: Tier; firstName: string; role: string }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const nav = [...BASE_NAV, ...(tier === 'admin' ? LEAD_NAV : [])];
+  const nav = [
+    ...BASE_NAV,
+    ...LEAD_NAV.filter(item => item.adminOnly ? tier === 'admin' : tier === 'admin' || tier === 'poc'),
+  ];
 
   function isActive(href: string) {
     if (href === '/dashboard') return pathname === href;

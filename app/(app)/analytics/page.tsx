@@ -21,14 +21,17 @@ export default async function AnalyticsPage() {
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, is_team_lead')
+    .select('id, is_team_lead, access_tier, view_all')
     .eq('email', user!.email!)
     .maybeSingle();
 
-  const isLead = !!person?.is_team_lead;
+  const tier = (person as any)?.access_tier ?? 'staff';
+  const viewAll = !!(person as any)?.view_all;
+  const isLead = tier === 'admin' || tier === 'lead' || tier === 'viewer';
+  const canSeeAll = tier === 'admin' || viewAll;
 
   let statsQuery = supabase.from('member_stats').select('*');
-  if (!isLead && person?.id) statsQuery = statsQuery.eq('person_id', person.id);
+  if (!canSeeAll && person?.id) statsQuery = statsQuery.eq('person_id', person.id);
   else statsQuery = statsQuery.order('department').order('name');
 
   const { data: stats } = await statsQuery;

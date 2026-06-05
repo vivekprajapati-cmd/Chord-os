@@ -18,8 +18,6 @@ type Task = {
   owner: { name: string } | null;
 };
 
-const STATUS_ORDER = ['in_progress', 'scheduled', 'ready_for_review', 'approved', 'done'];
-
 export default async function TasksPage({
   searchParams,
 }: {
@@ -31,12 +29,78 @@ export default async function TasksPage({
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, name, is_team_lead')
+    .select('id, name, access_tier, view_all, manager_id, is_team_lead')
     .eq('email', user!.email!)
     .maybeSingle();
 
-  const canSeeAll = !!person?.is_team_lead;
-  const canCreate = !!person?.is_team_lead;
+  const tier = (person as any)?.access_tier ?? 'staff';
+  const viewAll = !!(person as any)?.view_all;
+  const canCreate = tier === 'admin' || tier === 'lead';
+  const isAdmin = tier === 'admin';
+  const isLead = tier === 'lead';
+  const isViewer = tier === 'viewer';
+
+  // Build list of team member IDs this person can see/assign
+  let teamMemberIds: string[] = [];
+
+  if (isLead || isAdmin) {
+    // Fetch direct reports
+    const { data: directReports } = await supabase
+      .from('people')
+      .select('id, manager_id')
+      .eq('manager_id', person?.id);
+
+    const directIds = (directReports ?? []).map((p: any) => p.id);
+
+    // Fetch one level deeper (grandreports)
+    let grandIds: string[] = [];
+    if (directIds.length > 0) {
+      const { data: grandReports } = await supabase
+        .from('people')
+        .select('id')
+        .in('manager_id', directIds);
+      grandIds = (grandReports ?? []).map((p: any) => p.id);
+    }
+
+    teamMemberIds = [person!.id, ...directIds, ...grandIds];
+  }
+
+  // For viewers scoped to Pierre + Nimesh's teams
+  let viewerScopeIds: string[] = [];
+  if (isViewer && !viewAll) {
+    // Fetch Pierre and Nimesh's team members
+    const { data: pierreNimesh } = await supabase
+      .from('people')
+      .select('id')
+      .ilike('name', '%Pierre%');
+    const { data: nimeshPeople } = await supabase
+      .from('people')
+      .select('id')
+      .ilike('name', '%Nimesh%');
+
+    const topIds = [
+      ...(pierreNimesh ?? []).map((p: any) => p.id),
+      ...(nimeshPeople ?? []).map((p: any) => p.id),
+    ];
+
+    if (topIds.length > 0) {
+      const { data: scopedTeam } = await supabase
+        .from('people')
+        .select('id')
+        .in('manager_id', topIds);
+
+      const level2Ids = (scopedTeam ?? []).map((p: any) => p.id);
+      let level3Ids: string[] = [];
+      if (level2Ids.length > 0) {
+        const { data: level3 } = await supabase
+          .from('people')
+          .select('id')
+          .in('manager_id', level2Ids);
+        level3Ids = (level3 ?? []).map((p: any) => p.id);
+      }
+      viewerScopeIds = [...topIds, ...level2Ids, ...level3Ids];
+    }
+  }
 
   const statusFilter = params.status;
   const isDelayedFilter = statusFilter === 'delayed';
@@ -50,15 +114,29 @@ export default async function TasksPage({
         .order('deadline', { ascending: true, nullsFirst: false })
         .limit(100);
 
-      // Review queue — show tasks where user is owner OR reviewer
-      if (!canSeeAll && statusFilter === 'ready_for_review') {
-        q = q.or(`owner_id.eq.${person?.id},reviewer_id.eq.${person?.id}`);
-      } else if (!canSeeAll) {
-        q = q.eq('owner_id', person?.id);
+      // Visibility scoping
+      if (isAdmin || viewAll) {
+        // See all — no filter
+      } else if (isLead) {
+        // See team tasks + tasks they assigned + tasks they review
+        if (teamMemberIds.length > 0) {
+          q = q.in('owner_id', teamMemberIds);
+        }
+      } else if (isViewer && !viewAll) {
+        // Scoped to Pierre + Nimesh's teams
+        if (viewerScopeIds.length > 0) {
+          q = q.in('owner_id', viewerScopeIds);
+        }
+      } else {
+        // Staff — own tasks only (+ reviewer)
+        if (statusFilter === 'ready_for_review') {
+          q = q.or(`owner_id.eq.${person?.id},reviewer_id.eq.${person?.id}`);
+        } else {
+          q = q.eq('owner_id', person?.id);
+        }
       }
 
       if (isDelayedFilter) {
-        // Overdue: past deadline, not submitted, not done/approved/cancelled
         q = q
           .lt('deadline', new Date().toISOString())
           .is('submitted_at', null)
@@ -72,7 +150,12 @@ export default async function TasksPage({
       return q;
     })(),
     supabase.from('brands').select('id, name, slug').eq('status', 'active').order('name'),
-    supabase.from('people').select('id, name, department').order('name'),
+    // Leads only see their team in the assignee dropdown
+    isAdmin
+      ? supabase.from('people').select('id, name, department').order('name')
+      : isLead && teamMemberIds.length > 0
+        ? supabase.from('people').select('id, name, department').in('id', teamMemberIds).order('name')
+        : supabase.from('people').select('id, name, department').order('name'),
   ]);
 
   const tasks = (tasksResult.data ?? []) as unknown as Task[];
@@ -86,11 +169,11 @@ export default async function TasksPage({
         <div className="flex items-center gap-3">
           <div className="flex gap-2">
             {[
-              { href: '/tasks',                         label: 'Active',       active: !statusFilter,                        activeColor: 'var(--coral)' },
-              { href: '/tasks?status=scheduled',        label: 'Scheduled',    active: statusFilter === 'scheduled',          activeColor: 'var(--coral)' },
-              { href: '/tasks?status=ready_for_review', label: 'Review queue', active: statusFilter === 'ready_for_review',  activeColor: 'var(--coral)' },
-              { href: '/tasks?status=delayed',          label: 'Delayed',      active: statusFilter === 'delayed',            activeColor: 'var(--red)' },
-              { href: '/tasks?status=done',             label: 'Done',         active: statusFilter === 'done',               activeColor: 'var(--coral)' },
+              { href: '/tasks',                         label: 'Active',       active: !statusFilter,                       activeColor: 'var(--coral)' },
+              { href: '/tasks?status=scheduled',        label: 'Scheduled',    active: statusFilter === 'scheduled',         activeColor: 'var(--coral)' },
+              { href: '/tasks?status=ready_for_review', label: 'Review queue', active: statusFilter === 'ready_for_review', activeColor: 'var(--coral)' },
+              { href: '/tasks?status=delayed',          label: 'Delayed',      active: statusFilter === 'delayed',           activeColor: 'var(--red)' },
+              { href: '/tasks?status=done',             label: 'Done',         active: statusFilter === 'done',              activeColor: 'var(--coral)' },
             ].map(({ href, label, active, activeColor }) => (
               <a
                 key={href}
@@ -116,7 +199,13 @@ export default async function TasksPage({
         </div>
       </div>
 
-      <TaskListClient tasks={tasks} people={people} canEdit={canSeeAll} statusFilter={statusFilter} currentUserName={person?.name ?? ''} />
+      <TaskListClient
+        tasks={tasks}
+        people={people}
+        canEdit={canCreate}
+        statusFilter={statusFilter}
+        currentUserName={person?.name ?? ''}
+      />
     </div>
   );
 }

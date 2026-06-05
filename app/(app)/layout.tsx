@@ -12,11 +12,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, name, role, department, seniority, location, is_team_lead')
+    .select('id, name, role, department, seniority, location, is_team_lead, access_tier, view_all')
     .eq('email', session.user.email!)
     .maybeSingle();
 
-  const tier = (person?.is_team_lead ? 'admin' : 'staff') as 'admin' | 'poc' | 'staff';
+  const accessTier = (person as any)?.access_tier ?? 'staff';
+  const tier = (accessTier === 'admin' || accessTier === 'lead' ? 'admin' : accessTier === 'viewer' ? 'poc' : 'staff') as 'admin' | 'poc' | 'staff';
   const firstName = person?.name?.split(' ')[0] ?? session.user.email?.split('@')[0] ?? '';
 
   return (

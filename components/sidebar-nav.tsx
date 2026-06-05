@@ -57,10 +57,10 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
     <nav className="flex-1 px-3 py-4 space-y-0.5">
       {NAV.map(({ href, label, num }) => navLink(href, label, num))}
 
-      {/* Leads only */}
+      {/* Leads + viewers */}
       {tier === 'admin' && navLink('/chat', 'Allocator', '07')}
       {tier === 'admin' && navLink('/team', 'Team', '08')}
-      {tier === 'admin' && navLink('/analytics', 'Analytics', '09')}
+      {(tier === 'admin' || tier === 'poc') && navLink('/analytics', 'Analytics', '09')}
     </nav>
   );
 }
