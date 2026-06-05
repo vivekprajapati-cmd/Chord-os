@@ -187,7 +187,7 @@ export default function TaskListClient({
             ))}
           </div>
         ) : (
-          STATUS_ORDER.filter(s => (grouped[s]?.length ?? 0) > 0).map(status => (
+          <>{STATUS_ORDER.filter(s => (grouped[s]?.length ?? 0) > 0).map(status => (
             <section key={status}>
               <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)] mb-2">
                 {STATUS_LABEL[status]} ({grouped[status].length})
@@ -230,7 +230,7 @@ export default function TaskListClient({
                 ))}
               </div>
             </section>
-          ))
+          ))}</>
         )}
 
       {tasks.length === 0 && (
