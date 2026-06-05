@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { notifySlack } from '@/lib/slack';
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -103,6 +104,22 @@ export async function POST(req: Request) {
     task_id: task.id,
     details: { deliverable, owner_id, priority, hours: estimated_hours },
   });
+
+  // Slack notification
+  const [{ data: brandData }, { data: ownerData }, { data: assignerData }, { data: reviewerData }] = await Promise.all([
+    supabase.from('brands').select('name').eq('id', brand_id).maybeSingle(),
+    supabase.from('people').select('name').eq('id', owner_id).maybeSingle(),
+    supabase.from('people').select('name').eq('id', person.id).maybeSingle(),
+    reviewer_id ? supabase.from('people').select('name').eq('id', reviewer_id).maybeSingle() : Promise.resolve({ data: null }),
+  ]);
+
+  const deadlineStr = deadline
+    ? new Date(deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })
+    : 'No deadline';
+
+  await notifySlack(
+    `📋 *New task assigned* — ${ownerData?.name ?? 'Someone'} · *${brandData?.name ?? ''}* · "${deliverable}" · ${priority} · Due: ${deadlineStr} · Assigned by ${assignerData?.name ?? 'lead'}${reviewerData?.name ? ` · Reviewer: ${reviewerData.name}` : ''}`
+  );
 
   return NextResponse.json({ id: task.id });
 }
