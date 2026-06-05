@@ -97,14 +97,15 @@ export default function TaskListClient({
     return acc;
   }, {});
 
-  // When a specific filter is active, render flat list — no sub-grouping
-  const isFiltered = !!statusFilter && statusFilter !== 'delayed';
-
   return (
     <>
-      {isFiltered ? (
-        <div className="space-y-2">
-          {tasks.map(task => (
+      {STATUS_ORDER.filter(s => (grouped[s]?.length ?? 0) > 0).map(status => (
+        <section key={status}>
+          <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)] mb-2">
+            {STATUS_LABEL[status]} ({grouped[status].length})
+          </p>
+          <div className="space-y-2">
+            {grouped[status].map(task => (
               <div
                 key={task.id}
                 className="card-hover p-4 flex items-center justify-between"
@@ -138,7 +139,6 @@ export default function TaskListClient({
                   <span className="text-xs font-mono uppercase text-[var(--gray)] w-16 text-right capitalize">
                     {task.task_type}
                   </span>
-                  {/* Submit button — shown for in_progress and scheduled tasks */}
                   {(task.status === 'in_progress' || task.status === 'scheduled') && (
                     <button
                       onClick={() => { setSubmittingTask(task); setSubmissionLink(''); }}
@@ -186,52 +186,8 @@ export default function TaskListClient({
               </div>
             ))}
           </div>
-        ) : (
-          <>{STATUS_ORDER.filter(s => (grouped[s]?.length ?? 0) > 0).map(status => (
-            <section key={status}>
-              <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)] mb-2">
-                {STATUS_LABEL[status]} ({grouped[status].length})
-              </p>
-              <div className="space-y-2">
-                {grouped[status].map(task => (
-                  <div
-                    key={task.id}
-                    className="card-hover p-4 flex items-center justify-between"
-                    style={{ transition: 'box-shadow 0.18s ease' }}
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="text-xs font-mono uppercase text-[var(--gray)]">{task.brands?.name}</p>
-                        {task.meeting_id && (
-                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'rgba(34,38,217,0.07)', color: '#2226D9', border: '1px solid rgba(34,38,217,0.2)', borderRadius: '999px', padding: '1px 7px' }}>Briefing</span>
-                        )}
-                      </div>
-                      <p className="font-medium truncate">{task.deliverable}</p>
-                      <p className="text-xs text-[var(--gray)]">
-                        {task.owner?.name}
-                        {task.estimated_hours ? ` · ${task.estimated_hours}h` : ''}
-                        {task.deadline && ` · due ${new Date(task.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 ml-4 shrink-0">
-                      <span className="text-xs font-mono uppercase px-2 py-0.5 rounded" style={PRIORITY_STYLE[task.priority] ?? {}}>{task.priority}</span>
-                      <span className="text-xs font-mono uppercase text-[var(--gray)] w-16 text-right capitalize">{task.task_type}</span>
-                      {(task.status === 'in_progress' || task.status === 'scheduled') && (
-                        <button onClick={() => { setSubmittingTask(task); setSubmissionLink(''); }} style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', border: '1px solid var(--coral)', borderRadius: '999px', padding: '3px 10px', background: 'transparent', color: 'var(--coral)', cursor: 'pointer' }}>Submit</button>
-                      )}
-                      {task.status === 'ready_for_review' && (
-                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', color: 'var(--gray)', letterSpacing: '0.06em' }}>✓ In review</span>
-                      )}
-                      {canEdit && (
-                        <button onClick={() => setEditingTask(task)} style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', border: '1px solid var(--line)', borderRadius: '999px', padding: '3px 10px', background: 'transparent', color: 'var(--gray)', cursor: 'pointer' }}>Edit</button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ))}</>
-        )}
+        </section>
+      ))}
 
       {tasks.length === 0 && (
         <div className="bg-[var(--paper)] border border-[var(--line)] rounded-2xl p-10 text-center">
@@ -248,7 +204,6 @@ export default function TaskListClient({
         />
       )}
 
-      {/* Submission modal */}
       {submittingTask && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
           <div style={{ width: '100%', maxWidth: '480px', background: 'var(--cream)', border: '1.5px solid var(--ink)', borderRadius: '18px', boxShadow: '10px 10px 0 var(--coral)', overflow: 'hidden' }}>
