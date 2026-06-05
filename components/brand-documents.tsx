@@ -83,7 +83,7 @@ export default function BrandDocuments({
         file_size: file.size,
         uploaded_by_id: person?.id ?? null,
       })
-      .select('id, name, file_path, file_type, file_size, created_at, uploaded_by:people!brand_documents_uploaded_by_id_fkey(name)')
+      .select('id, name, file_path, file_type, file_size, created_at')
       .single();
 
     if (dbErr || !doc) {
