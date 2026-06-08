@@ -456,8 +456,8 @@ export default function TaskDetailModal({
                 )}
               </div>
               <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', flexShrink: 0 }}>
-                {/* Approve / Rework / Reject — reviewer only, ready_for_review only */}
-                {task && task.status === 'ready_for_review' && currentUserId === task.reviewer_id && (
+                {/* Approve / Rework / Reject — reviewer OR admin/lead, ready_for_review only */}
+                {task && task.status === 'ready_for_review' && (currentUserId === task.reviewer_id || canDelete) && (
                   <>
                     {!reviewAction ? (
                       <>

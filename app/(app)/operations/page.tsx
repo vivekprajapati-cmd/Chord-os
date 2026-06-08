@@ -13,13 +13,15 @@ export default async function OperationsPage() {
 
   const isAdmin = (person as any)?.access_tier === 'admin';
 
-  const { data: setting } = await supabase
-    .from('app_settings')
-    .select('value')
-    .eq('key', 'ops_embed_url')
-    .maybeSingle();
+  const { data: links } = await supabase
+    .from('ops_links')
+    .select('id, title, url, sort_order')
+    .order('sort_order', { ascending: true });
 
-  const embedUrl = (setting as any)?.value ?? '';
-
-  return <OperationsClient initialUrl={embedUrl} isAdmin={isAdmin} />;
+  return (
+    <OperationsClient
+      initialLinks={(links ?? []) as { id: string; title: string; url: string; sort_order: number }[]}
+      isAdmin={isAdmin}
+    />
+  );
 }
