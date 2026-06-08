@@ -409,13 +409,13 @@ export default function TaskDetailModal({
             )}
 
             {/* Footer */}
-            <div style={{ padding: '16px 32px', borderTop: '1px solid var(--line)', display: 'flex', gap: '10px', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ padding: '16px 32px', borderTop: '1px solid var(--line)', display: 'flex', gap: '10px', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'nowrap', overflowX: 'auto' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
                 {canDelete && (
                   <button
                     onClick={deleteTask}
                     disabled={deleting}
-                    style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--red)', border: '1px solid var(--red)', borderRadius: '999px', padding: '10px 18px', cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.5 : 1 }}
+                    style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--red)', border: '1px solid var(--red)', borderRadius: '999px', padding: '8px 14px', cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.5 : 1 }}
                   >
                     {deleting ? '…' : 'Delete'}
                   </button>
@@ -423,7 +423,7 @@ export default function TaskDetailModal({
                 {canDelete && !showReassign && (
                   <button
                     onClick={() => { setShowReassign(true); setNewOwnerId(task?.owner_id ?? ''); }}
-                    style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 18px', cursor: 'pointer' }}
+                    style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '8px 14px', cursor: 'pointer' }}
                   >
                     Reassign
                   </button>
@@ -455,7 +455,7 @@ export default function TaskDetailModal({
                   </>
                 )}
               </div>
-              <div style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}>
+              <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', flexShrink: 0 }}>
                 {/* Approve / Rework / Reject — reviewer only, ready_for_review only */}
                 {task && task.status === 'ready_for_review' && currentUserId === task.reviewer_id && (
                   <>
@@ -464,19 +464,19 @@ export default function TaskDetailModal({
                         <button
                           onClick={approve}
                           disabled={approving}
-                          style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: '#2a9d5c', color: '#fff', border: '1px solid #2a9d5c', borderRadius: '999px', padding: '10px 18px', cursor: approving ? 'not-allowed' : 'pointer', opacity: approving ? 0.5 : 1 }}
+                          style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: '#2a9d5c', color: '#fff', border: '1px solid #2a9d5c', borderRadius: '999px', padding: '8px 14px', cursor: approving ? 'not-allowed' : 'pointer', opacity: approving ? 0.5 : 1 }}
                         >
                           {approving ? '…' : '✓ Approve'}
                         </button>
                         <button
                           onClick={() => { setReviewAction('rework'); setFeedbackNotes(''); }}
-                          style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--ink)', color: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 18px', cursor: 'pointer' }}
+                          style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--ink)', color: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '8px 14px', cursor: 'pointer' }}
                         >
                           ↺ Rework
                         </button>
                         <button
                           onClick={() => { setReviewAction('reject'); setFeedbackNotes(''); }}
-                          style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--red)', color: '#fff', border: '1px solid var(--red)', borderRadius: '999px', padding: '10px 18px', cursor: 'pointer' }}
+                          style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--red)', color: '#fff', border: '1px solid var(--red)', borderRadius: '999px', padding: '8px 14px', cursor: 'pointer' }}
                         >
                           ✕ Reject
                         </button>
@@ -502,7 +502,7 @@ export default function TaskDetailModal({
                 )}
                 <button
                   onClick={onClose}
-                  style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 18px', cursor: 'pointer' }}
+                  style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '8px 14px', cursor: 'pointer' }}
                 >
                   Close
                 </button>
