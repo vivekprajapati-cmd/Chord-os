@@ -12,6 +12,7 @@ const BASE_NAV = [
   { href: '/tasks',      label: 'Tasks',      num: '03' },
   { href: '/calendar',   label: 'Calendar',   num: '04' },
   { href: '/brands',     label: 'Brands',     num: '05' },
+  { href: '/operations', label: 'Operations', num: '06' },
 ];
 
 const LEAD_NAV = [

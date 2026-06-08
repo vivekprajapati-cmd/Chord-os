@@ -11,6 +11,7 @@ const NAV = [
   { href: '/tasks',      label: 'Tasks',       num: '03' },
   { href: '/calendar',   label: 'Calendar',    num: '04' },
   { href: '/brands',     label: 'Brands',      num: '05' },
+  { href: '/operations', label: 'Operations',  num: '06' },
 ];
 
 export default function SidebarNav({ tier }: { tier: Tier }) {
