@@ -81,12 +81,19 @@ export default function TaskCreateModal({
     deliverable: '',
     task_name: 'Static',
     task_type: 'design' as typeof TASK_TYPES[number],
-    estimated_hours: '',
     priority: 'P1' as typeof PRIORITIES[number],
     start_date: '',
     deadline: '',
     notes: '',
   });
+
+  // Auto-calculate hours from start/end
+  const calculatedHours = (() => {
+    if (!form.start_date || !form.deadline) return null;
+    const diff = new Date(form.deadline).getTime() - new Date(form.start_date).getTime();
+    if (diff <= 0) return null;
+    return Math.round((diff / 3600000) * 10) / 10;
+  })();
 
   // Close on backdrop click
   function handleOverlayClick(e: React.MouseEvent) {
@@ -105,21 +112,9 @@ export default function TaskCreateModal({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.deliverable.trim()) { setError('Deliverable is required.'); return; }
-    if (!form.estimated_hours) { setError('Hours are required.'); return; }
+    if (!form.start_date || !form.deadline) { setError('Start and end date/time are required.'); return; }
+    if (new Date(form.deadline) <= new Date(form.start_date)) { setError('End time must be after start time.'); return; }
 
-    const hours = Number(form.estimated_hours);
-    const taskKey = form.task_name.toLowerCase();
-    const limits = TASK_HOURS[taskKey] ?? null;
-    if (limits) {
-      if (hours < limits.min) {
-        setError(`Hours too low for "${form.task_name}". Allowed: ${limits.min}h – ${limits.max}h.`);
-        return;
-      }
-      if (hours > limits.max) {
-        setError(`Hours too high for "${form.task_name}". Allowed: ${limits.min}h – ${limits.max}h.`);
-        return;
-      }
-    }
     setLoading(true);
     setError('');
     try {
@@ -128,10 +123,7 @@ export default function TaskCreateModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
-          estimated_hours: Number(form.estimated_hours),
           reviewer_id: form.reviewer_id || undefined,
-          start_date: form.start_date || undefined,
-          deadline: form.deadline || undefined,
           notes: form.notes || undefined,
         }),
       });
@@ -259,40 +251,24 @@ export default function TaskCreateModal({
             </div>
           </div>
 
-          {/* Priority + Hours */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={label}>Priority</label>
-              <select
-                value={form.priority}
-                onChange={e => setForm(f => ({ ...f, priority: e.target.value as typeof PRIORITIES[number] }))}
-                className={input}
-              >
-                {PRIORITIES.map(p => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={label}>
-                Hours {(() => { const l = TASK_HOURS[form.task_name.toLowerCase()]; return l ? `(${l.min}h – ${l.max}h)` : ''; })()}
-              </label>
-              <input
-                type="number"
-                min="0.5"
-                step="0.5"
-                placeholder="3"
-                value={form.estimated_hours}
-                onChange={e => setForm(f => ({ ...f, estimated_hours: e.target.value }))}
-                className={input}
-              />
-            </div>
+          {/* Priority */}
+          <div>
+            <label className={label}>Priority</label>
+            <select
+              value={form.priority}
+              onChange={e => setForm(f => ({ ...f, priority: e.target.value as typeof PRIORITIES[number] }))}
+              className={input}
+            >
+              {PRIORITIES.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
           </div>
 
           {/* Start + End date */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={label}>Start date</label>
+              <label className={label}>Start date & time *</label>
               <input
                 type="datetime-local"
                 value={form.start_date}
@@ -301,7 +277,7 @@ export default function TaskCreateModal({
               />
             </div>
             <div>
-              <label className={label}>End / deadline</label>
+              <label className={label}>End date & time *</label>
               <input
                 type="datetime-local"
                 value={form.deadline}
@@ -310,6 +286,23 @@ export default function TaskCreateModal({
               />
             </div>
           </div>
+
+          {/* Calculated hours display */}
+          {calculatedHours !== null && (
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', letterSpacing: '0.08em' }}>
+              DURATION: <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{calculatedHours}h</span>
+              {(() => {
+                const l = TASK_HOURS[form.task_name.toLowerCase()];
+                if (!l) return null;
+                const ok = calculatedHours >= l.min && calculatedHours <= l.max;
+                return (
+                  <span style={{ marginLeft: 8, color: ok ? 'var(--green, #2a9d5c)' : 'var(--red)' }}>
+                    {ok ? `within range (${l.min}h–${l.max}h)` : `outside expected range (${l.min}h–${l.max}h)`}
+                  </span>
+                );
+              })()}
+            </p>
+          )}
 
           {/* Notes */}
           <div>
