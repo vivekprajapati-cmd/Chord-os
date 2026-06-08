@@ -1,6 +1,15 @@
 'use client';
 
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useCallback } from 'react';
+import { createClient } from '@/lib/supabase/client';
+
+type BlockInfo = {
+  id: string;
+  start_at: string;
+  end_at: string;
+  status: string;
+  tasks: { deliverable: string; estimated_hours: number | null; brands: { name: string } | null } | null;
+};
 
 type MemberStat = {
   person_id: string;
@@ -43,8 +52,58 @@ type Props = {
 export default function AnalyticsClient({
   members, isLead, canSeeAll, totalTasks, totalCompleted, totalDelays, teamOnTimeRate, month, brands, brandTasks
 }: Props) {
+  const supabase = createClient();
   const printRef = useRef<HTMLDivElement>(null);
   const [selectedBrandId, setSelectedBrandId] = useState<string>('');
+  const [expandedPersonId, setExpandedPersonId] = useState<string | null>(null);
+  const [personBlocks, setPersonBlocks] = useState<Record<string, BlockInfo[]>>({});
+  const [loadingBlocks, setLoadingBlocks] = useState<string | null>(null);
+
+  const togglePerson = useCallback(async (personId: string) => {
+    if (expandedPersonId === personId) { setExpandedPersonId(null); return; }
+    setExpandedPersonId(personId);
+    if (personBlocks[personId]) return; // already fetched
+    setLoadingBlocks(personId);
+    const { data } = await supabase
+      .from('blocks')
+      .select('id, start_at, end_at, status, tasks(deliverable, estimated_hours, brands(name))')
+      .eq('person_id', personId)
+      .not('status', 'in', '("done","cancelled")')
+      .order('start_at', { ascending: true });
+    setPersonBlocks(prev => ({ ...prev, [personId]: (data ?? []) as unknown as BlockInfo[] }));
+    setLoadingBlocks(null);
+  }, [expandedPersonId, personBlocks, supabase]);
+
+  function renderBlocks(personId: string) {
+    if (loadingBlocks === personId) {
+      return <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>Loading…</p>;
+    }
+    const blocks = personBlocks[personId] ?? [];
+    if (blocks.length === 0) {
+      return <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>No active blocks.</p>;
+    }
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {blocks.map(b => {
+          const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' });
+          const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+          return (
+            <div key={b.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: '10px' }}>
+              <div>
+                <p style={{ fontSize: '13px', fontWeight: 500 }}>{b.tasks?.deliverable ?? 'Unnamed task'}</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', marginTop: '2px' }}>
+                  {b.tasks?.brands?.name ?? ''}{b.tasks?.brands?.name ? ' · ' : ''}{fmtDate(b.start_at)}, {fmtTime(b.start_at)} – {fmtTime(b.end_at)}{b.tasks?.estimated_hours ? ` · ${b.tasks.estimated_hours}h` : ''}
+                </p>
+              </div>
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', color: 'var(--gray)', border: '1px solid var(--line)', borderRadius: '999px', padding: '2px 8px', marginLeft: '12px', whiteSpace: 'nowrap' }}>
+                {b.status}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   async function exportExcel() {
     const xlsx = await import('xlsx');
@@ -192,13 +251,30 @@ export default function AnalyticsClient({
                         <p key={h} style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cream)' }}>{h}</p>
                       ))}
                     </div>
-                    {brandStats.people.map((p, i) => (
-                      <div key={p.name} style={{ display: 'grid', gridTemplateColumns: '1.5fr 80px 80px', padding: '12px 20px', borderBottom: i < brandStats.people.length - 1 ? '1px solid var(--line)' : 'none' }}>
-                        <p style={{ fontSize: '13px', fontWeight: 500 }}>{p.name}</p>
-                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px' }}>{p.tasks}</p>
-                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--cobalt)' }}>{p.hours}h</p>
-                      </div>
-                    ))}
+                    {brandStats.people.map((p, i) => {
+                      const personId = Object.keys(
+                        brandTasks.filter(t => t.owner?.name === p.name).reduce((acc: any, t) => { acc[t.owner_id] = true; return acc; }, {})
+                      )[0] ?? '';
+                      return (
+                        <div key={p.name} style={{ borderBottom: i < brandStats.people.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                          <div
+                            style={{ display: 'grid', gridTemplateColumns: '1.5fr 80px 80px', padding: '12px 20px', cursor: personId ? 'pointer' : 'default' }}
+                            onClick={() => personId && togglePerson(personId)}
+                          >
+                            <p style={{ fontSize: '13px', fontWeight: 500, color: personId ? 'var(--cobalt)' : 'inherit', textDecoration: personId ? 'underline dotted' : 'none' }}>
+                              {p.name} {personId && (expandedPersonId === personId ? '▲' : '▼')}
+                            </p>
+                            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px' }}>{p.tasks}</p>
+                            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--cobalt)' }}>{p.hours}h</p>
+                          </div>
+                          {personId && expandedPersonId === personId && (
+                            <div style={{ padding: '12px 20px', borderTop: '1px solid var(--line)', background: 'var(--paper)' }}>
+                              {renderBlocks(personId)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -218,21 +294,31 @@ export default function AnalyticsClient({
                   ))}
                 </div>
                 {members.map((m, i) => (
-                  <div key={m.person_id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 70px 70px 70px 80px 70px 80px', padding: '12px 20px', borderBottom: i < members.length - 1 ? '1px solid var(--line)' : 'none', background: (m.total_delays ?? 0) >= 3 ? 'rgba(255,59,47,0.04)' : 'transparent' }}>
-                    <p style={{ fontSize: '13px', fontWeight: 500 }}>{m.name}</p>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', textTransform: 'uppercase' }}>{m.department}</p>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--cobalt)' }}>{m.active_tasks ?? 0}</p>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px' }}>{m.total_tasks ?? 0}</p>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)' }}>{m.completed_tasks ?? 0}</p>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: (m.on_time_rate ?? 100) < 70 ? 'var(--red)' : 'inherit' }}>
-                      {m.on_time_rate !== null ? `${m.on_time_rate}%` : '—'}
-                    </p>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: (m.total_delays ?? 0) >= 3 ? 'var(--red)' : 'inherit', fontWeight: (m.total_delays ?? 0) >= 3 ? 600 : 400 }}>
-                      {m.total_delays ?? 0}
-                    </p>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)' }}>
-                      {m.avg_turnaround_hours !== null ? `${m.avg_turnaround_hours}h` : '—'}
-                    </p>
+                  <div key={m.person_id} style={{ borderBottom: i < members.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                    <div
+                      style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 70px 70px 70px 80px 70px 80px', padding: '12px 20px', background: (m.total_delays ?? 0) >= 3 ? 'rgba(255,59,47,0.04)' : 'transparent', cursor: 'pointer' }}
+                      onClick={() => togglePerson(m.person_id)}
+                    >
+                      <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--cobalt)', textDecoration: 'underline', textDecorationStyle: 'dotted' }}>{m.name} {expandedPersonId === m.person_id ? '▲' : '▼'}</p>
+                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', textTransform: 'uppercase' }}>{m.department}</p>
+                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--cobalt)' }}>{m.active_tasks ?? 0}</p>
+                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px' }}>{m.total_tasks ?? 0}</p>
+                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)' }}>{m.completed_tasks ?? 0}</p>
+                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: (m.on_time_rate ?? 100) < 70 ? 'var(--red)' : 'inherit' }}>
+                        {m.on_time_rate !== null ? `${m.on_time_rate}%` : '—'}
+                      </p>
+                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: (m.total_delays ?? 0) >= 3 ? 'var(--red)' : 'inherit', fontWeight: (m.total_delays ?? 0) >= 3 ? 600 : 400 }}>
+                        {m.total_delays ?? 0}
+                      </p>
+                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)' }}>
+                        {m.avg_turnaround_hours !== null ? `${m.avg_turnaround_hours}h` : '—'}
+                      </p>
+                    </div>
+                    {expandedPersonId === m.person_id && (
+                      <div style={{ padding: '12px 20px', borderTop: '1px solid var(--line)', background: 'var(--paper)' }}>
+                        {renderBlocks(m.person_id)}
+                      </div>
+                    )}
                   </div>
                 ))}
                 {members.length === 0 && (
