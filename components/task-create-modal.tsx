@@ -81,6 +81,16 @@ function toDatetimeLocal(iso: string | null): string {
   return new Date(iso).toISOString().slice(0, 16);
 }
 
+const RECURRENCE_PATTERNS = [
+  { value: 'weekdays', label: 'Mon – Fri' },
+  { value: 'daily',    label: 'Every day' },
+  { value: 'weekly',   label: 'Weekly' },
+  { value: 'custom',   label: 'Custom' },
+] as const;
+type RecurrencePattern = typeof RECURRENCE_PATTERNS[number]['value'];
+
+const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
 export default function TaskCreateModal({
   brands,
   people,
@@ -102,6 +112,14 @@ export default function TaskCreateModal({
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const isEdit = !!editTask;
+
+  // Recurrence state (create-only)
+  const [recurring, setRecurring] = useState(false);
+  const [recPattern, setRecPattern] = useState<RecurrencePattern>('weekdays');
+  const [customDays, setCustomDays] = useState<boolean[]>([true, true, true, true, true, false, false]); // Mon–Fri
+  const [endType, setEndType] = useState<'occurrences' | 'end_date'>('occurrences');
+  const [occurrences, setOccurrences] = useState('5');
+  const [recEndDate, setRecEndDate] = useState('');
 
   const [form, setForm] = useState({
     brand_id: editTask?.brand_id ?? brands[0]?.id ?? '',
@@ -196,11 +214,38 @@ export default function TaskCreateModal({
       }
     }
 
+    // Recurrence validation
+    if (!isEdit && recurring) {
+      if (endType === 'occurrences') {
+        const n = parseInt(occurrences);
+        if (isNaN(n) || n < 1 || n > 60) { setError('Occurrences must be between 1 and 60.'); return; }
+      } else {
+        if (!recEndDate) { setError('Select an end date for the recurring task.'); return; }
+        if (new Date(recEndDate) < new Date(form.start_date.slice(0, 10))) {
+          setError('End date must be on or after the start date.'); return;
+        }
+      }
+      if (recPattern === 'custom' && !customDays.some(Boolean)) {
+        setError('Select at least one day for the custom schedule.'); return;
+      }
+    }
+
     setLoading(true);
     setError('');
     try {
       const url = isEdit ? `/api/tasks/${editTask!.id}` : '/api/tasks';
       const method = isEdit ? 'PATCH' : 'POST';
+
+      const recurrencePayload = (!isEdit && recurring) ? {
+        recurrence: {
+          pattern: recPattern,
+          customDays: recPattern === 'custom' ? customDays.map((on, i) => on ? i : -1).filter(i => i >= 0) : undefined,
+          endType,
+          occurrences: endType === 'occurrences' ? parseInt(occurrences) : undefined,
+          endDate: endType === 'end_date' ? recEndDate : undefined,
+        }
+      } : {};
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -209,6 +254,7 @@ export default function TaskCreateModal({
           reviewer_id: form.reviewer_id || undefined,
           notes: form.notes || undefined,
           ownerName: people.find(p => p.id === form.owner_id)?.name,
+          ...recurrencePayload,
         }),
       });
       const data = await res.json();
@@ -404,6 +450,161 @@ export default function TaskCreateModal({
               className={`${input} resize-none`}
             />
           </div>
+
+          {/* Recurring — create only */}
+          {!isEdit && (
+            <div>
+              {/* Toggle row */}
+              <button
+                type="button"
+                onClick={() => setRecurring(r => !r)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                }}
+              >
+                {/* Toggle pill */}
+                <div style={{
+                  width: '36px', height: '20px', borderRadius: '999px', position: 'relative', flexShrink: 0,
+                  background: recurring ? 'var(--ink)' : 'var(--line)', transition: 'background 0.2s',
+                }}>
+                  <div style={{
+                    position: 'absolute', top: '3px', width: '14px', height: '14px', borderRadius: '50%',
+                    background: '#fff', transition: 'left 0.2s',
+                    left: recurring ? '19px' : '3px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  }} />
+                </div>
+                <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: recurring ? 'var(--ink)' : 'var(--gray)' }}>
+                  Recurring task
+                </span>
+              </button>
+
+              {/* Recurrence panel */}
+              {recurring && (
+                <div style={{ marginTop: '14px', padding: '16px', background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: '14px' }} className="space-y-4">
+
+                  {/* Pattern pills */}
+                  <div>
+                    <p className={label}>Repeat</p>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {RECURRENCE_PATTERNS.map(p => (
+                        <button
+                          key={p.value}
+                          type="button"
+                          onClick={() => setRecPattern(p.value)}
+                          style={{
+                            fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em',
+                            padding: '6px 14px', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.15s',
+                            background: recPattern === p.value ? 'var(--ink)' : 'transparent',
+                            color: recPattern === p.value ? 'var(--cream)' : 'var(--gray)',
+                            border: `1px solid ${recPattern === p.value ? 'var(--ink)' : 'var(--line)'}`,
+                          }}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Custom day picker */}
+                  {recPattern === 'custom' && (
+                    <div>
+                      <p className={label}>On these days</p>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        {DAY_LABELS.map((day, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => setCustomDays(d => d.map((v, j) => j === i ? !v : v))}
+                            style={{
+                              width: '34px', height: '34px', borderRadius: '50%', cursor: 'pointer',
+                              fontFamily: 'var(--f-mono)', fontSize: '11px', fontWeight: 700, transition: 'all 0.15s',
+                              background: customDays[i] ? 'var(--ink)' : 'transparent',
+                              color: customDays[i] ? 'var(--cream)' : 'var(--gray)',
+                              border: `1px solid ${customDays[i] ? 'var(--ink)' : 'var(--line)'}`,
+                            }}
+                          >
+                            {day}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* End condition */}
+                  <div>
+                    <p className={label}>Ends</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {/* Occurrences */}
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          checked={endType === 'occurrences'}
+                          onChange={() => setEndType('occurrences')}
+                          style={{ accentColor: 'var(--ink)' }}
+                        />
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>After</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="60"
+                          value={occurrences}
+                          onChange={e => setOccurrences(e.target.value)}
+                          disabled={endType !== 'occurrences'}
+                          style={{
+                            width: '60px', fontFamily: 'var(--f-mono)', fontSize: '11px', textAlign: 'center',
+                            background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '8px',
+                            padding: '4px 8px', outline: 'none',
+                            opacity: endType !== 'occurrences' ? 0.4 : 1,
+                          }}
+                        />
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>occurrences</span>
+                      </label>
+                      {/* End date */}
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          checked={endType === 'end_date'}
+                          onChange={() => setEndType('end_date')}
+                          style={{ accentColor: 'var(--ink)' }}
+                        />
+                        <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>On date</span>
+                        <input
+                          type="date"
+                          value={recEndDate}
+                          onChange={e => setRecEndDate(e.target.value)}
+                          disabled={endType !== 'end_date'}
+                          style={{
+                            fontFamily: 'var(--f-mono)', fontSize: '11px',
+                            background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '8px',
+                            padding: '4px 10px', outline: 'none',
+                            opacity: endType !== 'end_date' ? 0.4 : 1,
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Preview */}
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', borderTop: '1px solid var(--line)', paddingTop: '10px' }}>
+                    {(() => {
+                      const patternLabel = recPattern === 'custom'
+                        ? customDays.map((on, i) => on ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i] : '').filter(Boolean).join(', ')
+                        : RECURRENCE_PATTERNS.find(p => p.value === recPattern)?.label ?? '';
+                      const endLabel = endType === 'occurrences'
+                        ? `${occurrences || '?'} times`
+                        : recEndDate ? `until ${new Date(recEndDate + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : 'no end date set';
+                      const timeLabel = form.start_date && form.deadline
+                        ? `${form.start_date.slice(11, 16)} – ${form.deadline.slice(11, 16)}`
+                        : 'no time set';
+                      return `${patternLabel} · ${timeLabel} · ${endLabel}`;
+                    })()}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {error && (
             <p className="text-xs font-mono text-[var(--red)]">{error}</p>
