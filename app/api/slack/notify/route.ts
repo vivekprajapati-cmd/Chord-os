@@ -10,7 +10,9 @@ export async function POST(req: Request) {
   if (type === 'task_approved') {
     message = `✅ *Approved* — "${task.deliverable}" (${task.brand}) approved by ${approver ?? reviewer ?? 'manager'}. Ready to ship.`;
   } else if (type === 'task_rework_requested') {
-    message = `🔄 *Rework requested (Round ${round ?? 1})* — ${reviewer} requested changes on "${task.deliverable}" (${task.brand}) from *${person ?? 'assignee'}*.\nNotes: ${notes ?? 'No notes provided.'}`;
+    message = `🔄 *Rework requested (Round ${round ?? 1})* — ${reviewer} requested changes on "${task.deliverable}" (${task.brand}) from *${person ?? 'assignee'}*.\nFeedback: ${notes ?? 'No notes provided.'}`;
+  } else if (type === 'task_rejected') {
+    message = `❌ *Rejected — redo from scratch (Round ${round ?? 1})* — ${reviewer} rejected "${task.deliverable}" (${task.brand}) by *${person ?? 'assignee'}*.\nReason: ${notes ?? 'No reason provided.'}`;
   } else if (type === 'task_reassigned') {
     message = `🔁 *Reassigned* — "${task.deliverable}" moved from *${from}* to *${to}* by ${by}`;
   } else if (type === 'task_acknowledged') {

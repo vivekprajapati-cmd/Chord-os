@@ -121,6 +121,8 @@ export default function TaskCreateModal({
   const [occurrences, setOccurrences] = useState('5');
   const [recEndDate, setRecEndDate] = useState('');
 
+  const [quantity, setQuantity] = useState(1);
+
   const [form, setForm] = useState({
     brand_id: editTask?.brand_id ?? brands[0]?.id ?? '',
     owner_id: editTask?.owner_id ?? (isStaff ? currentPersonId : (people[0]?.id ?? '')),
@@ -203,12 +205,14 @@ export default function TaskCreateModal({
     if (!isNaN(hours) && hours > 0) {
       const limits = TASK_HOURS[form.task_name.toLowerCase()];
       if (limits) {
-        if (hours < limits.min) {
-          setError(`Duration too short for "${form.task_name}". Minimum is ${limits.min}h.`);
+        const scaledMin = Math.round(limits.min * quantity * 10) / 10;
+        const scaledMax = Math.round(limits.max * quantity * 10) / 10;
+        if (hours < scaledMin) {
+          setError(`Duration too short for ${quantity > 1 ? `${quantity}× ` : ''}"${form.task_name}". Minimum is ${scaledMin}h.`);
           return;
         }
-        if (hours > limits.max) {
-          setError(`Duration too long for "${form.task_name}". Maximum is ${limits.max}h.`);
+        if (hours > scaledMax) {
+          setError(`Duration too long for ${quantity > 1 ? `${quantity}× ` : ''}"${form.task_name}". Maximum is ${scaledMax}h.`);
           return;
         }
       }
@@ -387,8 +391,8 @@ export default function TaskCreateModal({
             </div>
           </div>
 
-          {/* Priority + Hours */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Priority + Quantity + Hours */}
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className={label}>Priority</label>
               <select
@@ -402,8 +406,26 @@ export default function TaskCreateModal({
               </select>
             </div>
             <div>
+              <label className={label}>Quantity (assets)</label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                placeholder="1"
+                value={quantity}
+                onChange={e => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                className={input}
+              />
+            </div>
+            <div>
               <label className={label}>
-                Hours {(() => { const l = TASK_HOURS[form.task_name.toLowerCase()]; return l ? `(${l.min}h–${l.max}h)` : ''; })()}
+                Hours{(() => {
+                  const l = TASK_HOURS[form.task_name.toLowerCase()];
+                  if (!l) return '';
+                  const mn = Math.round(l.min * quantity * 10) / 10;
+                  const mx = Math.round(l.max * quantity * 10) / 10;
+                  return ` (${mn}h–${mx}h)`;
+                })()}
               </label>
               <input
                 type="number"

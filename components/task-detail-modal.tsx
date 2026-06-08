@@ -44,8 +44,8 @@ export default function TaskDetailModal({
   const [currentUserName, setCurrentUserName] = useState('');
   const [approving, setApproving] = useState(false);
   const [reworking, setReworking] = useState(false);
-  const [reworkNotes, setReworkNotes] = useState('');
-  const [showReworkInput, setShowReworkInput] = useState(false);
+  const [feedbackNotes, setFeedbackNotes] = useState('');
+  const [reviewAction, setReviewAction] = useState<'rework' | 'reject' | null>(null);
   const [submissionLink, setSubmissionLink] = useState('');
   const [savingLink, setSavingLink] = useState(false);
   const [people, setPeople] = useState<Person[]>([]);
@@ -123,28 +123,28 @@ export default function TaskDetailModal({
     onDeleted?.();
   }
 
-  async function requestRework() {
-    if (!reworkNotes.trim()) { setShowReworkInput(true); return; }
-    if (!task) return;
+  async function submitReview() {
+    if (!feedbackNotes.trim() || !task || !reviewAction) return;
     setReworking(true);
     const newRound = (task.revision_round ?? 0) + 1;
-    await supabase.from('tasks').update({ status: 'scheduled', revision_round: newRound }).eq('id', task.id);
+    await supabase.from('tasks').update({ status: 'in_progress', revision_round: newRound }).eq('id', task.id);
     await supabase.from('task_revisions').insert({
       task_id: task.id,
       round: newRound,
       submission_link: task.submission_link,
-      feedback_notes: reworkNotes.trim(),
+      feedback_notes: feedbackNotes.trim(),
       reviewed_by_id: currentUserId,
     });
     await fetch('/api/slack/notify', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        type: 'task_rework_requested',
+        type: reviewAction === 'reject' ? 'task_rejected' : 'task_rework_requested',
         task: { deliverable: task.deliverable, brand: task.brands?.name },
         reviewer: currentUserName,
         person: task.owner?.name,
         round: newRound,
-        notes: reworkNotes.trim(),
+        notes: feedbackNotes.trim(),
       }),
     });
     setReworking(false);
@@ -391,14 +391,19 @@ export default function TaskDetailModal({
               )}
             </div>
 
-            {/* Rework notes input */}
-            {showReworkInput && (
-              <div style={{ padding: '0 32px 12px', display: 'flex', gap: '8px' }}>
-                <input
-                  value={reworkNotes}
-                  onChange={e => setReworkNotes(e.target.value)}
-                  placeholder="What needs to change? (required)"
-                  style={{ flex: 1, background: 'var(--paper)', border: '1px solid var(--red)', borderRadius: '999px', padding: '10px 16px', fontSize: '13px', outline: 'none', fontFamily: 'inherit' }}
+            {/* Feedback input — shown when rework or reject is selected */}
+            {reviewAction && (
+              <div style={{ padding: '0 32px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: reviewAction === 'reject' ? 'var(--red)' : 'var(--gray)' }}>
+                  {reviewAction === 'reject' ? 'Rejection reason (required)' : 'Rework feedback (required)'}
+                </p>
+                <textarea
+                  autoFocus
+                  rows={3}
+                  value={feedbackNotes}
+                  onChange={e => setFeedbackNotes(e.target.value)}
+                  placeholder={reviewAction === 'reject' ? 'What is wrong? What needs to be redone from scratch?' : 'What specifically needs to change?'}
+                  style={{ background: 'var(--paper)', border: `1px solid ${reviewAction === 'reject' ? 'var(--red)' : 'var(--ink)'}`, borderRadius: '12px', padding: '12px 14px', fontSize: '13px', outline: 'none', fontFamily: 'inherit', resize: 'none', lineHeight: 1.5 }}
                 />
               </div>
             )}
@@ -451,23 +456,48 @@ export default function TaskDetailModal({
                 )}
               </div>
               <div style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}>
-                {/* Approve + Rework — reviewer only, ready_for_review status */}
+                {/* Approve / Rework / Reject — reviewer only, ready_for_review only */}
                 {task && task.status === 'ready_for_review' && currentUserId === task.reviewer_id && (
                   <>
-                    <button
-                      onClick={approve}
-                      disabled={approving}
-                      style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--coral)', color: '#fff', border: '1px solid var(--coral)', borderRadius: '999px', padding: '10px 18px', cursor: approving ? 'not-allowed' : 'pointer', opacity: approving ? 0.5 : 1 }}
-                    >
-                      {approving ? '…' : '✓ Approve'}
-                    </button>
-                    <button
-                      onClick={requestRework}
-                      disabled={reworking}
-                      style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--red)', color: '#fff', border: '1px solid var(--red)', borderRadius: '999px', padding: '10px 18px', cursor: reworking ? 'not-allowed' : 'pointer', opacity: reworking ? 0.5 : 1 }}
-                    >
-                      {reworking ? '…' : '↺ Rework'}
-                    </button>
+                    {!reviewAction ? (
+                      <>
+                        <button
+                          onClick={approve}
+                          disabled={approving}
+                          style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: '#2a9d5c', color: '#fff', border: '1px solid #2a9d5c', borderRadius: '999px', padding: '10px 18px', cursor: approving ? 'not-allowed' : 'pointer', opacity: approving ? 0.5 : 1 }}
+                        >
+                          {approving ? '…' : '✓ Approve'}
+                        </button>
+                        <button
+                          onClick={() => { setReviewAction('rework'); setFeedbackNotes(''); }}
+                          style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--ink)', color: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 18px', cursor: 'pointer' }}
+                        >
+                          ↺ Rework
+                        </button>
+                        <button
+                          onClick={() => { setReviewAction('reject'); setFeedbackNotes(''); }}
+                          style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--red)', color: '#fff', border: '1px solid var(--red)', borderRadius: '999px', padding: '10px 18px', cursor: 'pointer' }}
+                        >
+                          ✕ Reject
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={submitReview}
+                          disabled={reworking || !feedbackNotes.trim()}
+                          style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: reviewAction === 'reject' ? 'var(--red)' : 'var(--ink)', color: '#fff', border: `1px solid ${reviewAction === 'reject' ? 'var(--red)' : 'var(--ink)'}`, borderRadius: '999px', padding: '10px 18px', cursor: reworking || !feedbackNotes.trim() ? 'not-allowed' : 'pointer', opacity: reworking || !feedbackNotes.trim() ? 0.4 : 1 }}
+                        >
+                          {reworking ? '…' : reviewAction === 'reject' ? 'Confirm reject' : 'Send rework'}
+                        </button>
+                        <button
+                          onClick={() => { setReviewAction(null); setFeedbackNotes(''); }}
+                          style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--gray)', border: '1px solid var(--line)', borderRadius: '999px', padding: '10px 14px', cursor: 'pointer' }}
+                        >
+                          ×
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
                 <button
