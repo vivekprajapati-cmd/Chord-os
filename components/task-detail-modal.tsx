@@ -23,6 +23,8 @@ type TaskDetail = {
   references: { id: string; ref_type: string; url: string | null; caption: string | null }[];
 };
 
+type Person = { id: string; name: string; department: string };
+
 export default function TaskDetailModal({
   taskId,
   onClose,
@@ -46,6 +48,10 @@ export default function TaskDetailModal({
   const [showReworkInput, setShowReworkInput] = useState(false);
   const [submissionLink, setSubmissionLink] = useState('');
   const [savingLink, setSavingLink] = useState(false);
+  const [people, setPeople] = useState<Person[]>([]);
+  const [showReassign, setShowReassign] = useState(false);
+  const [newOwnerId, setNewOwnerId] = useState('');
+  const [reassigning, setReassigning] = useState(false);
 
   useEffect(() => {
     async function fetchTask() {
@@ -82,8 +88,14 @@ export default function TaskDetailModal({
       setCurrentUserName(person?.name ?? '');
     }
 
+    async function fetchPeople() {
+      const { data } = await supabase.from('people').select('id, name, department').order('name');
+      setPeople((data ?? []) as Person[]);
+    }
+
     fetchTask();
     fetchUser();
+    fetchPeople();
   }, [taskId]);
 
   async function saveLink() {
@@ -152,6 +164,25 @@ export default function TaskDetailModal({
     } else {
       const data = await res.json();
       alert(`Delete failed: ${data.error ?? 'Unknown error'}`);
+    }
+  }
+
+  async function reassign() {
+    if (!newOwnerId || !task) return;
+    if (newOwnerId === task.owner_id) { setShowReassign(false); return; }
+    setReassigning(true);
+    const res = await fetch(`/api/tasks/${task.id}/reassign`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ new_owner_id: newOwnerId }),
+    });
+    setReassigning(false);
+    if (res.ok) {
+      onClose();
+      onDeleted?.();
+    } else {
+      const d = await res.json();
+      alert(d.error ?? 'Reassign failed.');
     }
   }
 
@@ -256,7 +287,7 @@ export default function TaskDetailModal({
                     <div>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '4px' }}>Start</p>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px' }}>
-                        {new Date(task.start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {new Date(task.start_date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })}
                       </p>
                     </div>
                   )}
@@ -264,7 +295,7 @@ export default function TaskDetailModal({
                     <div>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '4px' }}>Deadline</p>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px' }}>
-                        {new Date(task.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {new Date(task.deadline).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })}
                       </p>
                     </div>
                   )}
@@ -374,15 +405,49 @@ export default function TaskDetailModal({
 
             {/* Footer */}
             <div style={{ padding: '16px 32px', borderTop: '1px solid var(--line)', display: 'flex', gap: '10px', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                 {canDelete && (
                   <button
                     onClick={deleteTask}
                     disabled={deleting}
                     style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--red)', border: '1px solid var(--red)', borderRadius: '999px', padding: '10px 18px', cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.5 : 1 }}
                   >
-                    {deleting ? '…' : 'Delete task'}
+                    {deleting ? '…' : 'Delete'}
                   </button>
+                )}
+                {canDelete && !showReassign && (
+                  <button
+                    onClick={() => { setShowReassign(true); setNewOwnerId(task?.owner_id ?? ''); }}
+                    style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--ink)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 18px', cursor: 'pointer' }}
+                  >
+                    Reassign
+                  </button>
+                )}
+                {canDelete && showReassign && (
+                  <>
+                    <select
+                      value={newOwnerId}
+                      onChange={e => setNewOwnerId(e.target.value)}
+                      style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', background: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: '10px', padding: '8px 12px', outline: 'none', maxWidth: '180px' }}
+                    >
+                      {people.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={reassign}
+                      disabled={reassigning}
+                      style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--ink)', color: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '10px 18px', cursor: reassigning ? 'not-allowed' : 'pointer', opacity: reassigning ? 0.5 : 1 }}
+                    >
+                      {reassigning ? '…' : 'Confirm'}
+                    </button>
+                    <button
+                      onClick={() => setShowReassign(false)}
+                      style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'transparent', color: 'var(--gray)', border: '1px solid var(--line)', borderRadius: '999px', padding: '10px 14px', cursor: 'pointer' }}
+                    >
+                      ×
+                    </button>
+                  </>
                 )}
               </div>
               <div style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}>
