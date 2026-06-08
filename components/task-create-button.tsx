@@ -9,9 +9,13 @@ type Person = { id: string; name: string; department: string };
 export default function TaskCreateButton({
   brands,
   people,
+  isStaff = false,
+  currentPersonId = '',
 }: {
   brands: Brand[];
   people: Person[];
+  isStaff?: boolean;
+  currentPersonId?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -28,6 +32,8 @@ export default function TaskCreateButton({
         <TaskCreateModal
           brands={brands}
           people={people}
+          isStaff={isStaff}
+          currentPersonId={currentPersonId}
           onClose={() => setOpen(false)}
         />
       )}

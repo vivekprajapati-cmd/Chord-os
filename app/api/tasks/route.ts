@@ -9,19 +9,25 @@ export async function POST(req: Request) {
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, is_team_lead')
+    .select('id, name, access_tier, is_team_lead')
     .eq('email', user.email!)
     .maybeSingle();
 
-  if (!person?.is_team_lead) {
-    return NextResponse.json({ error: 'Only team leads can create tasks.' }, { status: 403 });
-  }
+  if (!person) return NextResponse.json({ error: 'Person not found.' }, { status: 403 });
+
+  const tier = (person as any).access_tier ?? 'staff';
+  const isStaff = tier === 'staff' || tier === 'viewer';
 
   const body = await req.json();
   const { brand_id, owner_id, reviewer_id, deliverable, task_type, task_name, priority, start_date, deadline, notes } = body;
 
   if (!brand_id || !owner_id || !deliverable || !task_type) {
     return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
+  }
+
+  // Staff can only create tasks for themselves
+  if (isStaff && owner_id !== person.id) {
+    return NextResponse.json({ error: 'Staff can only create tasks for themselves.' }, { status: 403 });
   }
 
   // Calculate hours from start/end times if both provided

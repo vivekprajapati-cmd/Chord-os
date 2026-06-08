@@ -64,10 +64,14 @@ export default function TaskCreateModal({
   brands,
   people,
   onClose,
+  isStaff = false,
+  currentPersonId = '',
 }: {
   brands: Brand[];
   people: Person[];
   onClose: () => void;
+  isStaff?: boolean;
+  currentPersonId?: string;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -76,7 +80,7 @@ export default function TaskCreateModal({
 
   const [form, setForm] = useState({
     brand_id: brands[0]?.id ?? '',
-    owner_id: people[0]?.id ?? '',
+    owner_id: isStaff ? currentPersonId : (people[0]?.id ?? ''),
     reviewer_id: '',
     deliverable: '',
     task_name: 'Static',
@@ -199,15 +203,21 @@ export default function TaskCreateModal({
             </div>
             <div>
               <label className={label}>Assign to</label>
-              <select
-                value={form.owner_id}
-                onChange={e => setForm(f => ({ ...f, owner_id: e.target.value }))}
-                className={input}
-              >
-                {people.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} — {p.department}</option>
-                ))}
-              </select>
+              {isStaff ? (
+                <div className={input} style={{ opacity: 0.6, cursor: 'not-allowed' }}>
+                  {people.find(p => p.id === currentPersonId)?.name ?? 'You'}
+                </div>
+              ) : (
+                <select
+                  value={form.owner_id}
+                  onChange={e => setForm(f => ({ ...f, owner_id: e.target.value }))}
+                  className={input}
+                >
+                  {people.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} — {p.department}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
