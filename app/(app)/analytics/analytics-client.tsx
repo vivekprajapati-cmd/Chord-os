@@ -8,7 +8,7 @@ type BlockInfo = {
   start_at: string;
   end_at: string;
   status: string;
-  tasks: { deliverable: string; estimated_hours: number | null; brands: { name: string } | null } | null;
+  tasks: { deliverable: string; estimated_hours: number | null; brand_id: string | null; brands: { name: string } | null } | null;
 };
 
 type MemberStat = {
@@ -66,7 +66,7 @@ export default function AnalyticsClient({
     setLoadingBlocks(personId);
     const { data } = await supabase
       .from('blocks')
-      .select('id, start_at, end_at, status, tasks(deliverable, estimated_hours, brands(name))')
+      .select('id, start_at, end_at, status, tasks(deliverable, estimated_hours, brand_id, brands(name))')
       .eq('person_id', personId)
       .not('status', 'in', '("done","cancelled")')
       .order('start_at', { ascending: true });
@@ -78,7 +78,10 @@ export default function AnalyticsClient({
     if (loadingBlocks === personId) {
       return <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>Loading…</p>;
     }
-    const blocks = personBlocks[personId] ?? [];
+    const allBlocks = personBlocks[personId] ?? [];
+    const blocks = selectedBrandId
+      ? allBlocks.filter(b => b.tasks?.brand_id === selectedBrandId)
+      : allBlocks;
     if (blocks.length === 0) {
       return <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>No active blocks.</p>;
     }
