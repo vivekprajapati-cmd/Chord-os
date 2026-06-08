@@ -115,6 +115,21 @@ export default function TaskCreateModal({
     if (!form.start_date || !form.deadline) { setError('Start and end date/time are required.'); return; }
     if (new Date(form.deadline) <= new Date(form.start_date)) { setError('End time must be after start time.'); return; }
 
+    const hours = calculatedHours;
+    if (hours !== null) {
+      const limits = TASK_HOURS[form.task_name.toLowerCase()];
+      if (limits) {
+        if (hours < limits.min) {
+          setError(`Duration too short for "${form.task_name}". Minimum is ${limits.min}h.`);
+          return;
+        }
+        if (hours > limits.max) {
+          setError(`Duration too long for "${form.task_name}". Maximum is ${limits.max}h.`);
+          return;
+        }
+      }
+    }
+
     setLoading(true);
     setError('');
     try {
