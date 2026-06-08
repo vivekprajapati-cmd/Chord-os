@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import TaskCreateModal from './task-create-modal';
 import TaskDetailModal from './task-detail-modal';
+import TaskTeamView from './task-team-view';
 import { createClient } from '@/lib/supabase/client';
 
 type Task = {
@@ -66,6 +67,7 @@ export default function TaskListClient({
   const [submittingTask, setSubmittingTask] = useState<Task | null>(null);
   const [submissionLink, setSubmissionLink] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [viewMode, setViewMode] = useState<'status' | 'team'>('status');
 
   function handleSaved() {
     window.location.reload();
@@ -107,8 +109,32 @@ export default function TaskListClient({
     return acc;
   }, {});
 
+  const toggleStyle = (active: boolean): React.CSSProperties => ({
+    fontFamily: 'var(--f-mono)',
+    fontSize: '10px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    padding: '5px 14px',
+    borderRadius: '999px',
+    border: `1px solid ${active ? 'var(--ink)' : 'var(--line)'}`,
+    background: active ? 'var(--ink)' : 'transparent',
+    color: active ? 'var(--cream)' : 'var(--gray)',
+    cursor: 'pointer',
+  });
+
   return (
     <>
+      {/* View toggle */}
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
+        <button style={toggleStyle(viewMode === 'status')} onClick={() => setViewMode('status')}>By Status</button>
+        <button style={toggleStyle(viewMode === 'team')} onClick={() => setViewMode('team')}>By Team</button>
+      </div>
+
+      {viewMode === 'team' && (
+        <TaskTeamView tasks={tasks} people={people} brands={brands} canEdit={canEdit} />
+      )}
+
+      {viewMode === 'status' && <>
       {STATUS_ORDER.filter(s => (grouped[s]?.length ?? 0) > 0).map(status => (
         <section key={status}>
           <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)] mb-2">
@@ -218,6 +244,7 @@ export default function TaskListClient({
           <p className="text-[var(--gray)]">No tasks here.</p>
         </div>
       )}
+      </>}
 
       {detailTaskId && (
         <TaskDetailModal
