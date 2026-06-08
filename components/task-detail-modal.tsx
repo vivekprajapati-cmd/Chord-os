@@ -287,7 +287,7 @@ export default function TaskDetailModal({
                     <div>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '4px' }}>Start</p>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px' }}>
-                        {new Date(task.start_date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })}
+                        {new Date(task.start_date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' })}
                       </p>
                     </div>
                   )}
@@ -295,7 +295,7 @@ export default function TaskDetailModal({
                     <div>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '4px' }}>Deadline</p>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px' }}>
-                        {new Date(task.deadline).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })}
+                        {new Date(task.deadline).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' })}
                       </p>
                     </div>
                   )}

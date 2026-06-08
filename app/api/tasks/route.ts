@@ -30,16 +30,15 @@ export async function POST(req: Request) {
   let endAt: string | null = null;
 
   if (start_date && deadline) {
-    // datetime-local has no tz — treat as IST (UTC+5:30)
-    const toUTC = (dt: string) => new Date(dt + '+05:30').toISOString();
-    const startMs = new Date(start_date + '+05:30').getTime();
-    const endMs = new Date(deadline + '+05:30').getTime();
+    // Store exactly what the user typed — no timezone conversion
+    const startMs = new Date(start_date).getTime();
+    const endMs = new Date(deadline).getTime();
     if (endMs <= startMs) {
       return NextResponse.json({ error: 'End time must be after start time.' }, { status: 400 });
     }
     estimated_hours = Math.round(((endMs - startMs) / 3600000) * 10) / 10;
-    startAt = toUTC(start_date);
-    endAt = toUTC(deadline);
+    startAt = new Date(start_date).toISOString();
+    endAt = new Date(deadline).toISOString();
   }
 
   // Conflict detection — only if we have a time slot, only for the assigned person

@@ -130,7 +130,7 @@ export default function TaskListClient({
                   <p className="text-xs text-[var(--gray)]">
                     {task.owner?.name}
                     {task.estimated_hours ? ` · ${task.estimated_hours}h` : ''}
-                    {task.deadline && ` · due ${new Date(task.deadline).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })}`}
+                    {task.deadline && ` · due ${new Date(task.deadline).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' })}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 ml-4 shrink-0">
