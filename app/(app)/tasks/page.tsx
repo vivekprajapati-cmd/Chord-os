@@ -6,14 +6,18 @@ type Task = {
   id: string;
   deliverable: string;
   task_type: string;
+  task_name: string | null;
   priority: string;
   status: string;
   estimated_hours: number | null;
+  start_date: string | null;
   deadline: string | null;
   meeting_id: string | null;
   owner_id: string;
   reviewer_id: string | null;
   submission_link: string | null;
+  notes: string | null;
+  brand_id: string;
   brands: { name: string } | null;
   owner: { name: string } | null;
 };
@@ -110,7 +114,7 @@ export default async function TasksPage({
     (() => {
       let q = supabase
         .from('tasks')
-        .select('id, deliverable, task_type, priority, status, estimated_hours, deadline, meeting_id, owner_id, reviewer_id, submission_link, brands(name), owner:people!tasks_owner_id_fkey(name)')
+        .select('id, deliverable, task_type, task_name, priority, status, estimated_hours, start_date, deadline, meeting_id, owner_id, reviewer_id, submission_link, notes, brand_id, brands(name), owner:people!tasks_owner_id_fkey(name)')
         .order('priority', { ascending: true })
         .order('deadline', { ascending: true, nullsFirst: false })
         .limit(100);
@@ -199,6 +203,7 @@ export default async function TasksPage({
       <TaskListClient
         tasks={tasks}
         people={people}
+        brands={brands}
         canEdit={canCreate}
         statusFilter={statusFilter}
         currentUserName={person?.name ?? ''}

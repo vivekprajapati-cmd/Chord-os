@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { CSSProperties } from 'react';
-import TaskEditModal from './task-edit-modal';
+import TaskCreateModal from './task-create-modal';
 import TaskDetailModal from './task-detail-modal';
 import { createClient } from '@/lib/supabase/client';
 
@@ -10,19 +10,24 @@ type Task = {
   id: string;
   deliverable: string;
   task_type: string;
+  task_name: string | null;
   priority: string;
   status: string;
   estimated_hours: number | null;
+  start_date: string | null;
   deadline: string | null;
   meeting_id: string | null;
   owner_id: string;
   reviewer_id: string | null;
   submission_link: string | null;
+  notes: string | null;
+  brand_id: string;
   brands: { name: string } | null;
   owner: { name: string } | null;
 };
 
-type Person = { id: string; name: string; department: string };
+type Person = { id: string; name: string; department: string }
+type Brand = { id: string; name: string; slug: string };
 
 const PRIORITY_STYLE: Record<string, CSSProperties> = {
   P0: { background: 'var(--red)', color: '#fff' },
@@ -42,12 +47,14 @@ const STATUS_LABEL: Record<string, string> = {
 export default function TaskListClient({
   tasks: initialTasks,
   people,
+  brands,
   canEdit,
   statusFilter,
   currentUserName,
 }: {
   tasks: Task[];
   people: Person[];
+  brands: Brand[];
   canEdit: boolean;
   statusFilter?: string;
   currentUserName?: string;
@@ -222,11 +229,11 @@ export default function TaskListClient({
       )}
 
       {editingTask && (
-        <TaskEditModal
-          task={editingTask}
+        <TaskCreateModal
+          brands={brands}
           people={people}
-          onClose={() => setEditingTask(null)}
-          onSaved={handleSaved}
+          editTask={editingTask}
+          onClose={() => { setEditingTask(null); handleSaved(); }}
         />
       )}
 

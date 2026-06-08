@@ -5,6 +5,21 @@ import { useRouter } from 'next/navigation';
 
 type Brand = { id: string; name: string; slug: string };
 type Person = { id: string; name: string; department: string };
+type EditTask = {
+  id: string;
+  brand_id: string;
+  owner_id: string;
+  reviewer_id: string | null;
+  deliverable: string;
+  task_name: string | null;
+  task_type: string;
+  priority: string;
+  estimated_hours: number | null;
+  start_date: string | null;
+  deadline: string | null;
+  notes: string | null;
+  owner?: { name: string } | null;
+};
 
 const TASK_TYPES = ['design', 'copy', 'video', 'seo', 'content', 'strategy', 'other'] as const;
 
@@ -60,36 +75,46 @@ const TASK_HOURS: Record<string, { min: number; max: number }> = {
   'other':                   { min: 0.5, max: 8 },
 };
 
+// Convert ISO string back to datetime-local format (YYYY-MM-DDTHH:mm)
+function toDatetimeLocal(iso: string | null): string {
+  if (!iso) return '';
+  return new Date(iso).toISOString().slice(0, 16);
+}
+
 export default function TaskCreateModal({
   brands,
   people,
   onClose,
   isStaff = false,
   currentPersonId = '',
+  editTask,
 }: {
   brands: Brand[];
   people: Person[];
   onClose: () => void;
   isStaff?: boolean;
   currentPersonId?: string;
+  editTask?: EditTask;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const overlayRef = useRef<HTMLDivElement>(null);
 
+  const isEdit = !!editTask;
+
   const [form, setForm] = useState({
-    brand_id: brands[0]?.id ?? '',
-    owner_id: isStaff ? currentPersonId : (people[0]?.id ?? ''),
-    reviewer_id: '',
-    deliverable: '',
-    task_name: 'Static',
-    task_type: 'design' as typeof TASK_TYPES[number],
-    priority: 'P1' as typeof PRIORITIES[number],
-    estimated_hours: '',
-    start_date: '',
-    deadline: '',
-    notes: '',
+    brand_id: editTask?.brand_id ?? brands[0]?.id ?? '',
+    owner_id: editTask?.owner_id ?? (isStaff ? currentPersonId : (people[0]?.id ?? '')),
+    reviewer_id: editTask?.reviewer_id ?? '',
+    deliverable: editTask?.deliverable ?? '',
+    task_name: editTask?.task_name ?? 'Static',
+    task_type: (editTask?.task_type ?? 'design') as typeof TASK_TYPES[number],
+    priority: (editTask?.priority ?? 'P1') as typeof PRIORITIES[number],
+    estimated_hours: editTask?.estimated_hours?.toString() ?? '',
+    start_date: toDatetimeLocal(editTask?.start_date ?? null),
+    deadline: toDatetimeLocal(editTask?.deadline ?? null),
+    notes: editTask?.notes ?? '',
   });
 
   // Add minutes to a datetime-local string
@@ -174,13 +199,16 @@ export default function TaskCreateModal({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/tasks', {
-        method: 'POST',
+      const url = isEdit ? `/api/tasks/${editTask!.id}` : '/api/tasks';
+      const method = isEdit ? 'PATCH' : 'POST';
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
           reviewer_id: form.reviewer_id || undefined,
           notes: form.notes || undefined,
+          ownerName: people.find(p => p.id === form.owner_id)?.name,
         }),
       });
       const data = await res.json();
@@ -213,7 +241,7 @@ export default function TaskCreateModal({
             className="uppercase tracking-tight"
             style={{ fontFamily: 'var(--f-display)', fontSize: '28px' }}
           >
-            Assign Task
+            {isEdit ? 'Edit Task' : 'Assign Task'}
           </h2>
           <button
             onClick={onClose}
@@ -396,7 +424,7 @@ export default function TaskCreateModal({
               className="px-6 py-2.5 rounded-full text-xs font-mono uppercase tracking-[0.12em] hover:opacity-90 disabled:opacity-50 transition shadow-[4px_4px_0_var(--gray)]"
               style={{ background: 'var(--ink)', color: 'var(--cream)' }}
             >
-              {loading ? 'Assigning…' : '+ Assign'}
+              {loading ? (isEdit ? 'Saving…' : 'Assigning…') : (isEdit ? 'Save changes' : '+ Assign')}
             </button>
           </div>
         </form>
