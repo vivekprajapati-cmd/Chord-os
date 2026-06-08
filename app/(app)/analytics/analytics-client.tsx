@@ -261,7 +261,7 @@ export default function AnalyticsClient({
                             style={{ display: 'grid', gridTemplateColumns: '1.5fr 80px 80px', padding: '12px 20px', cursor: personId ? 'pointer' : 'default' }}
                             onClick={() => personId && togglePerson(personId)}
                           >
-                            <p style={{ fontSize: '13px', fontWeight: 500, color: personId ? 'var(--cobalt)' : 'inherit', textDecoration: personId ? 'underline dotted' : 'none' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 500 }}>
                               {p.name} {personId && (expandedPersonId === personId ? '▲' : '▼')}
                             </p>
                             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px' }}>{p.tasks}</p>
@@ -299,7 +299,7 @@ export default function AnalyticsClient({
                       style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 70px 70px 70px 80px 70px 80px', padding: '12px 20px', background: (m.total_delays ?? 0) >= 3 ? 'rgba(255,59,47,0.04)' : 'transparent', cursor: 'pointer' }}
                       onClick={() => togglePerson(m.person_id)}
                     >
-                      <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--cobalt)', textDecoration: 'underline', textDecorationStyle: 'dotted' }}>{m.name} {expandedPersonId === m.person_id ? '▲' : '▼'}</p>
+                      <p style={{ fontSize: '13px', fontWeight: 500 }}>{m.name} {expandedPersonId === m.person_id ? '▲' : '▼'}</p>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', textTransform: 'uppercase' }}>{m.department}</p>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--cobalt)' }}>{m.active_tasks ?? 0}</p>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px' }}>{m.total_tasks ?? 0}</p>
