@@ -43,27 +43,35 @@ export async function POST(req: Request) {
 
   // Conflict detection — only if we have a time slot, only for the assigned person
   if (startAt && endAt) {
-    const { data: conflicts } = await supabase
+    const { data: overlapping } = await supabase
       .from('blocks')
-      .select('id, start_at, end_at, task_id, tasks!inner(deliverable, status, brands(name))')
+      .select('id, start_at, end_at, task_id')
       .eq('person_id', owner_id)
-      .not('tasks.status', 'in', '("done","approved","cancelled")')
       .lt('start_at', endAt)
       .gt('end_at', startAt);
 
-    if ((conflicts ?? []).length > 0) {
-      const existing = conflicts![0] as any;
-      const existingTask = existing.tasks?.deliverable ?? 'another task';
-      const existingBrand = existing.tasks?.brands?.name ?? '';
-      const IST_OFFSET = 5.5 * 60 * 60 * 1000;
-      const fmtTime = (iso: string) => new Date(new Date(iso).getTime() + IST_OFFSET)
-        .toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' });
-      const fmtDate = (iso: string) => new Date(new Date(iso).getTime() + IST_OFFSET)
-        .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
-      const blockedSlot = `${fmtDate(existing.start_at)}, ${fmtTime(existing.start_at)} – ${fmtTime(existing.end_at)} IST`;
-      return NextResponse.json({
-        error: `Conflict: "${existingTask}"${existingBrand ? ` (${existingBrand})` : ''} is already blocked from ${blockedSlot}. Pick a different time slot.`
-      }, { status: 409 });
+    if ((overlapping ?? []).length > 0) {
+      // Check task statuses in JS — exclude done/approved/cancelled
+      const taskIds = (overlapping ?? []).map((b: any) => b.task_id).filter(Boolean);
+      const { data: conflictTasks } = taskIds.length > 0
+        ? await supabase.from('tasks').select('id, deliverable, status, brands(name)').in('id', taskIds)
+        : { data: [] };
+
+      const activeTasks = (conflictTasks ?? []).filter(
+        (t: any) => !['done', 'approved', 'cancelled'].includes(t.status)
+      );
+
+      if (activeTasks.length > 0) {
+        const block = (overlapping ?? []).find((b: any) => b.task_id === (activeTasks[0] as any).id) as any;
+        const existingTask = (activeTasks[0] as any).deliverable ?? 'another task';
+        const existingBrand = (activeTasks[0] as any).brands?.name ?? '';
+        const fmtTime = (iso: string) => new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' });
+        const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+        const blockedSlot = `${fmtDate(block.start_at)}, ${fmtTime(block.start_at)} – ${fmtTime(block.end_at)}`;
+        return NextResponse.json({
+          error: `Conflict: "${existingTask}"${existingBrand ? ` (${existingBrand})` : ''} is already blocked from ${blockedSlot}. Pick a different time slot.`
+        }, { status: 409 });
+      }
     }
   }
 
