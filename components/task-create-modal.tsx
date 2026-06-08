@@ -86,18 +86,55 @@ export default function TaskCreateModal({
     task_name: 'Static',
     task_type: 'design' as typeof TASK_TYPES[number],
     priority: 'P1' as typeof PRIORITIES[number],
+    estimated_hours: '',
     start_date: '',
     deadline: '',
     notes: '',
   });
 
-  // Auto-calculate hours from start/end
-  const calculatedHours = (() => {
-    if (!form.start_date || !form.deadline) return null;
-    const diff = new Date(form.deadline).getTime() - new Date(form.start_date).getTime();
-    if (diff <= 0) return null;
-    return Math.round((diff / 3600000) * 10) / 10;
-  })();
+  // Add minutes to a datetime-local string
+  function addHours(dt: string, hours: number): string {
+    const ms = new Date(dt).getTime() + hours * 3600000;
+    const d = new Date(ms);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function diffHours(start: string, end: string): string {
+    const diff = new Date(end).getTime() - new Date(start).getTime();
+    if (diff <= 0) return '';
+    return String(Math.round((diff / 3600000) * 10) / 10);
+  }
+
+  function onHoursChange(val: string) {
+    const h = parseFloat(val);
+    if (form.start_date && !isNaN(h) && h > 0) {
+      setForm(f => ({ ...f, estimated_hours: val, deadline: addHours(f.start_date, h) }));
+    } else {
+      setForm(f => ({ ...f, estimated_hours: val }));
+    }
+  }
+
+  function onStartChange(val: string) {
+    const h = parseFloat(form.estimated_hours);
+    if (!isNaN(h) && h > 0) {
+      // hours set → derive end
+      setForm(f => ({ ...f, start_date: val, deadline: addHours(val, h) }));
+    } else if (form.deadline) {
+      // end set → derive hours
+      setForm(f => ({ ...f, start_date: val, estimated_hours: diffHours(val, f.deadline) }));
+    } else {
+      setForm(f => ({ ...f, start_date: val }));
+    }
+  }
+
+  function onEndChange(val: string) {
+    if (form.start_date) {
+      setForm(f => ({ ...f, deadline: val, estimated_hours: diffHours(f.start_date, val) }));
+    } else {
+      setForm(f => ({ ...f, deadline: val }));
+    }
+  }
 
   // Close on backdrop click
   function handleOverlayClick(e: React.MouseEvent) {
@@ -119,8 +156,8 @@ export default function TaskCreateModal({
     if (!form.start_date || !form.deadline) { setError('Start and end date/time are required.'); return; }
     if (new Date(form.deadline) <= new Date(form.start_date)) { setError('End time must be after start time.'); return; }
 
-    const hours = calculatedHours;
-    if (hours !== null) {
+    const hours = parseFloat(form.estimated_hours);
+    if (!isNaN(hours) && hours > 0) {
       const limits = TASK_HOURS[form.task_name.toLowerCase()];
       if (limits) {
         if (hours < limits.min) {
@@ -276,18 +313,34 @@ export default function TaskCreateModal({
             </div>
           </div>
 
-          {/* Priority */}
-          <div>
-            <label className={label}>Priority</label>
-            <select
-              value={form.priority}
-              onChange={e => setForm(f => ({ ...f, priority: e.target.value as typeof PRIORITIES[number] }))}
-              className={input}
-            >
-              {PRIORITIES.map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
+          {/* Priority + Hours */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={label}>Priority</label>
+              <select
+                value={form.priority}
+                onChange={e => setForm(f => ({ ...f, priority: e.target.value as typeof PRIORITIES[number] }))}
+                className={input}
+              >
+                {PRIORITIES.map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={label}>
+                Hours {(() => { const l = TASK_HOURS[form.task_name.toLowerCase()]; return l ? `(${l.min}h–${l.max}h)` : ''; })()}
+              </label>
+              <input
+                type="number"
+                min="0.5"
+                step="0.5"
+                placeholder="e.g. 2"
+                value={form.estimated_hours}
+                onChange={e => onHoursChange(e.target.value)}
+                className={input}
+              />
+            </div>
           </div>
 
           {/* Start + End date */}
@@ -297,7 +350,7 @@ export default function TaskCreateModal({
               <input
                 type="datetime-local"
                 value={form.start_date}
-                onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))}
+                onChange={e => onStartChange(e.target.value)}
                 className={input}
               />
             </div>
@@ -306,28 +359,11 @@ export default function TaskCreateModal({
               <input
                 type="datetime-local"
                 value={form.deadline}
-                onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))}
+                onChange={e => onEndChange(e.target.value)}
                 className={input}
               />
             </div>
           </div>
-
-          {/* Calculated hours display */}
-          {calculatedHours !== null && (
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', letterSpacing: '0.08em' }}>
-              DURATION: <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{calculatedHours}h</span>
-              {(() => {
-                const l = TASK_HOURS[form.task_name.toLowerCase()];
-                if (!l) return null;
-                const ok = calculatedHours >= l.min && calculatedHours <= l.max;
-                return (
-                  <span style={{ marginLeft: 8, color: ok ? 'var(--green, #2a9d5c)' : 'var(--red)' }}>
-                    {ok ? `within range (${l.min}h–${l.max}h)` : `outside expected range (${l.min}h–${l.max}h)`}
-                  </span>
-                );
-              })()}
-            </p>
-          )}
 
           {/* Notes */}
           <div>
