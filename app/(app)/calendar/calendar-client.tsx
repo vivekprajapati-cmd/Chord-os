@@ -435,6 +435,29 @@ export default function CalendarClient({
               </button>
             );
           })}
+          {/* Daily stats chip */}
+          {(() => {
+            const dayH = Math.round((dayHours[activeDay?.toDateString() ?? ''] ?? 0) * 10) / 10;
+            const dayCapacity = selectedPersonHours;
+            const dayPct = dayCapacity > 0 ? Math.round((dayH / dayCapacity) * 100) : 0;
+            const dayOver = dayH > dayCapacity;
+            return (
+              <div style={{
+                display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start',
+                padding: '10px 16px', borderRadius: '12px', border: `1px solid ${dayOver ? 'rgba(229,93,74,0.4)' : 'var(--line)'}`, background: 'var(--paper)', minWidth: '100px',
+              }}>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: '4px' }}>Day total</p>
+                <p style={{ fontFamily: 'var(--f-display)', fontSize: '20px', lineHeight: 1, color: dayOver ? 'var(--coral)' : 'var(--ink)' }}>
+                  {dayH}h
+                </p>
+                <div style={{ width: '100%', height: '3px', background: 'var(--line)', borderRadius: '999px', overflow: 'hidden', marginTop: '6px' }}>
+                  <div style={{ width: `${Math.min(100, dayPct)}%`, height: '100%', background: dayOver ? 'var(--coral)' : 'var(--cobalt)', borderRadius: '999px' }} />
+                </div>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', marginTop: '3px' }}>{dayPct}% of {dayCapacity}h</p>
+              </div>
+            );
+          })()}
+
           {/* Weekly stats chip */}
           <div style={{
             display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start',
