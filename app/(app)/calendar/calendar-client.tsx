@@ -151,7 +151,7 @@ export default function CalendarClient({
     setMounted(true);
     const todayIdx = days.findIndex(d => isSameDay(d, new Date()));
     if (todayIdx >= 0) setSelectedDay(todayIdx);
-    fetch('/api/capacity')
+    fetch(`/api/capacity?person_id=${myPersonId}`)
       .then(r => r.json())
       .then(data => setCapacity(data))
       .catch(() => {});
@@ -253,6 +253,10 @@ export default function CalendarClient({
     setSelectedPersonId(pid);
     setSelectedPersonName(member?.name ?? '');
     setSelectedPersonHours(member?.default_hours_per_day ?? defaultHoursPerDay);
+    fetch(`/api/capacity?person_id=${pid}`)
+      .then(r => r.json())
+      .then(data => setCapacity(data))
+      .catch(() => {});
   }
 
   // ── Derived values ────────────────────────────────────────────────────────
@@ -303,8 +307,8 @@ export default function CalendarClient({
               Calendar · {weekLabel}
             </p>
             <h1 className="font-display text-5xl uppercase tracking-tight">{selectedPersonName}</h1>
-            {/* Capacity bar — only for self */}
-            {selectedPersonId === myPersonId && capacity && (
+            {/* Capacity bar */}
+            {capacity && (
               <div className="flex items-center gap-3 mt-2">
                 <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>
                   Today: <strong style={{ color: capacity.remaining_hours === 0 ? 'var(--coral)' : 'var(--ink)' }}>{capacity.remaining_hours}h remaining</strong> of {capacity.total_hours}h
