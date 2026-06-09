@@ -59,8 +59,9 @@ function deriveDateRange(period: string | undefined, from: string | undefined, t
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams: { period?: string; from?: string; to?: string };
+  searchParams: Promise<{ period?: string; from?: string; to?: string }>;
 }) {
+  const { period, from, to } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -76,11 +77,7 @@ export default async function AnalyticsPage({
   const canSeeAll = tier === 'admin' || tier === 'lead' || viewAll;
 
   // ── Derive date range ──────────────────────────────────────────────────────
-  const { from: dateFrom, to: dateTo, label: periodLabel } = deriveDateRange(
-    searchParams.period,
-    searchParams.from,
-    searchParams.to,
-  );
+  const { from: dateFrom, to: dateTo, label: periodLabel } = deriveDateRange(period, from, to);
 
   const rangeStart = new Date(`${dateFrom}T00:00:00+05:30`).toISOString();
   const rangeEnd = new Date(`${dateTo}T23:59:59+05:30`).toISOString();
@@ -164,9 +161,9 @@ export default async function AnalyticsPage({
       month={periodLabel}
       brands={(brandsData ?? []) as { id: string; name: string; slug: string }[]}
       brandTasks={(brandTasksData ?? []) as any[]}
-      currentPeriod={searchParams.period ?? 'monthly'}
-      currentFrom={searchParams.from ?? ''}
-      currentTo={searchParams.to ?? ''}
+      currentPeriod={period ?? 'monthly'}
+      currentFrom={from ?? ''}
+      currentTo={to ?? ''}
     />
   );
 }
