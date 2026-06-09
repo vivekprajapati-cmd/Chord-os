@@ -7,11 +7,10 @@ type Tier = 'admin' | 'poc' | 'staff';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', num: '01' },
-  { href: '/briefings',  label: 'Briefings',  num: '02' },
-  { href: '/tasks',      label: 'Tasks',       num: '03' },
-  { href: '/calendar',   label: 'Calendar',    num: '04' },
-  { href: '/brands',     label: 'Brands',      num: '05' },
-  { href: '/operations', label: 'Operations',  num: '06' },
+  { href: '/tasks',      label: 'Tasks',      num: '02' },
+  { href: '/calendar',   label: 'Calendar',   num: '03' },
+  { href: '/brands',     label: 'Brands',     num: '04' },
+  { href: '/operations', label: 'Operations', num: '05' },
 ];
 
 export default function SidebarNav({ tier }: { tier: Tier }) {
@@ -59,9 +58,9 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
       {NAV.map(({ href, label, num }) => navLink(href, label, num))}
 
       {/* Leads + viewers */}
-      {tier === 'admin' && navLink('/chat', 'Allocator', '07')}
-      {tier === 'admin' && navLink('/team', 'Team', '08')}
-      {(tier === 'admin' || tier === 'poc') && navLink('/analytics', 'Analytics', '09')}
+      {tier === 'admin' && navLink('/chat', 'Allocator', '06')}
+      {tier === 'admin' && navLink('/team', 'Team', '07')}
+      {(tier === 'admin' || tier === 'poc') && navLink('/analytics', 'Analytics', '08')}
     </nav>
   );
 }

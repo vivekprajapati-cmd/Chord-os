@@ -8,11 +8,10 @@ type Tier = 'admin' | 'poc' | 'staff';
 
 const BASE_NAV = [
   { href: '/dashboard', label: 'Dashboard', num: '01' },
-  { href: '/briefings',  label: 'Briefings',  num: '02' },
-  { href: '/tasks',      label: 'Tasks',      num: '03' },
-  { href: '/calendar',   label: 'Calendar',   num: '04' },
-  { href: '/brands',     label: 'Brands',     num: '05' },
-  { href: '/operations', label: 'Operations', num: '06' },
+  { href: '/tasks',      label: 'Tasks',      num: '02' },
+  { href: '/calendar',   label: 'Calendar',   num: '03' },
+  { href: '/brands',     label: 'Brands',     num: '04' },
+  { href: '/operations', label: 'Operations', num: '05' },
 ];
 
 const LEAD_NAV = [
