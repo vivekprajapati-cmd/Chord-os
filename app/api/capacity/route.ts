@@ -24,18 +24,22 @@ export async function GET(req: Request) {
 
   if (!person) return NextResponse.json({ error: 'Person not found' }, { status: 404 });
 
-  // Get blocks for that day
+  // Get blocks for that day — use actual block duration, not estimated_hours
   const { data: blocks } = await supabase
     .from('blocks')
-    .select('id, start_at, end_at, status, tasks(estimated_hours)')
+    .select('id, start_at, end_at, status')
     .eq('person_id', person.id)
-    .gte('start_at', dayStart)
-    .lte('start_at', dayEnd)
+    .lt('start_at', dayEnd)
+    .gt('end_at', dayStart)
     .neq('status', 'cancelled');
 
+  const dayStartMs = new Date(dayStart).getTime();
+  const dayEndMs = new Date(dayEnd).getTime();
+
   const taskBlockedHours = (blocks ?? []).reduce((acc, b) => {
-    const hours = (b.tasks as any)?.estimated_hours ?? 0;
-    return acc + hours;
+    const overlapStart = Math.max(new Date(b.start_at).getTime(), dayStartMs);
+    const overlapEnd = Math.min(new Date(b.end_at).getTime(), dayEndMs);
+    return acc + Math.max(0, (overlapEnd - overlapStart) / 3600000);
   }, 0);
 
   // Add Google Calendar event hours if connected

@@ -261,11 +261,18 @@ export default function TaskDetailModal({
                   <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>
                     {task.task_type}
                   </span>
-                  {task.estimated_hours && (
-                    <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>
-                      {task.estimated_hours}h
-                    </span>
-                  )}
+                  {task.estimated_hours && (() => {
+                    const recurringMatch = task.notes?.match(/Recurring:.*?(\d+)\s+occurrence/i);
+                    const occurrences = recurringMatch ? parseInt(recurringMatch[1]) : null;
+                    const slotHours = occurrences && occurrences > 1
+                      ? Math.round((task.estimated_hours / occurrences) * 10) / 10
+                      : task.estimated_hours;
+                    return (
+                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>
+                        {slotHours}h{occurrences && occurrences > 1 ? ' / slot' : ''}
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
               <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '28px', color: 'var(--gray)', cursor: 'pointer', padding: 0, flexShrink: 0 }}>×</button>
