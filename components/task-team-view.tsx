@@ -16,6 +16,8 @@ type Task = {
   owner_id: string;
   reviewer_id: string | null;
   submission_link: string | null;
+  meeting_id: string | null;
+  notes: string | null;
   brand_id: string;
   brands: { name: string } | null;
   owner: { name: string } | null;
