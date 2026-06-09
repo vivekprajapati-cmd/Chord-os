@@ -286,10 +286,10 @@ async function BrandPerformance({
   const accent = accentColor ?? 'var(--ink)';
 
   const summaryCards = [
-    { label: 'Total Allocated', value: overall.total },
-    { label: 'Completed',       value: overall.completed },
-    { label: 'Pending',         value: overall.pending },
-    { label: 'Completion',      value: `${overall.pct}%` },
+    { label: 'Total Allocated',  value: overall.total },
+    { label: 'Completed',        value: overall.completed },
+    { label: 'Pending Backlog',  value: overall.pendingBacklog },
+    { label: 'Completion',       value: `${overall.pct}%` },
   ];
 
   return (
