@@ -258,12 +258,11 @@ const DEPT_MAP: { label: string; types: string[] }[] = [
 const FY_START = '2025-04-01T00:00:00+05:30';
 
 function computeStats(tasks: any[]) {
-  const total     = tasks.length;
-  const completed = tasks.filter(t => t.status === 'approved').length;
-  const pending   = tasks.filter(t => ['in_progress', 'review', 'rework', 'scheduled'].includes(t.status)).length;
-  const backlog   = tasks.filter(t => t.status === 'pending').length;
-  const pct       = total > 0 ? Math.round((completed / total) * 100) : 0;
-  return { total, completed, pending, backlog, pct };
+  const total          = tasks.length;
+  const completed      = tasks.filter(t => t.status === 'approved').length;
+  const pendingBacklog = total - completed;
+  const pct            = total > 0 ? Math.round((completed / total) * 100) : 0;
+  return { total, completed, pendingBacklog, pct };
 }
 
 async function BrandPerformance({
@@ -316,8 +315,8 @@ async function BrandPerformance({
       {fyTasks.length > 0 && (
         <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '14px', overflow: 'hidden' }}>
           {/* Table header */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(5, 1fr)', padding: '10px 20px', background: 'var(--ink)' }}>
-            {['Department', 'Assigned', 'Completed', 'Pending', 'Backlog', '%'].map(h => (
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', padding: '10px 20px', background: 'var(--ink)' }}>
+            {['Department', 'Assigned', 'Completed', 'Pending Backlog', '%'].map(h => (
               <p key={h} style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cream)' }}>{h}</p>
             ))}
           </div>
@@ -330,7 +329,7 @@ async function BrandPerformance({
               <div
                 key={label}
                 style={{
-                  display: 'grid', gridTemplateColumns: '1.4fr repeat(5, 1fr)',
+                  display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)',
                   padding: '12px 20px',
                   borderBottom: isLast ? 'none' : '1px solid var(--line)',
                   background: i % 2 === 0 ? 'transparent' : 'rgba(13,13,11,0.02)',
@@ -339,8 +338,7 @@ async function BrandPerformance({
                 <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', fontWeight: 600 }}>{label}</p>
                 <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px' }}>{s.total}</p>
                 <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: s.completed > 0 ? '#1a7a45' : 'var(--gray)' }}>{s.completed}</p>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: s.pending > 0 ? '#2226D9' : 'var(--gray)' }}>{s.pending}</p>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: s.backlog > 0 ? 'var(--coral)' : 'var(--gray)' }}>{s.backlog}</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: s.pendingBacklog > 0 ? 'var(--coral)' : 'var(--gray)' }}>{s.pendingBacklog}</p>
                 <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 600, color: s.pct >= 80 ? '#1a7a45' : s.pct >= 40 ? '#7a5c00' : 'var(--gray)' }}>
                   {s.total > 0 ? `${s.pct}%` : '—'}
                 </p>
@@ -348,12 +346,11 @@ async function BrandPerformance({
             );
           })}
           {/* Total row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(5, 1fr)', padding: '12px 20px', borderTop: `2px solid var(--ink)`, background: 'rgba(13,13,11,0.03)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(4, 1fr)', padding: '12px 20px', borderTop: `2px solid var(--ink)`, background: 'rgba(13,13,11,0.03)' }}>
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total</p>
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700 }}>{overall.total}</p>
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700, color: '#1a7a45' }}>{overall.completed}</p>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700, color: '#2226D9' }}>{overall.pending}</p>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700, color: 'var(--coral)' }}>{overall.backlog}</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700, color: 'var(--coral)' }}>{overall.pendingBacklog}</p>
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700 }}>{overall.pct}%</p>
           </div>
         </div>
