@@ -76,25 +76,16 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
             {b.tier}
           </span>
           {canLogMeeting && (
-            <>
-              <BrandEditButton brand={{
-                id: b.id,
-                slug: b.slug,
-                name: b.name,
-                category: b.category,
-                tier: b.tier,
-                voice_summary: b.voice_summary,
-                colors: b.colors ?? {},
-                typography: b.typography ?? {},
-              }} />
-              <Link
-                href={`/brands/${slug}/meeting`}
-                className="text-xs font-mono uppercase tracking-[0.12em] px-5 py-2 rounded-full hover:opacity-90 transition"
-                style={{ background: 'transparent', color: 'var(--ink)', border: '1px solid var(--line)' }}
-              >
-                + Log meeting
-              </Link>
-            </>
+            <BrandEditButton brand={{
+              id: b.id,
+              slug: b.slug,
+              name: b.name,
+              category: b.category,
+              tier: b.tier,
+              voice_summary: b.voice_summary,
+              colors: b.colors ?? {},
+              typography: b.typography ?? {},
+            }} />
           )}
         </div>
       </div>

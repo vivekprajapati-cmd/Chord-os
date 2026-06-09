@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import SidebarNav from '@/components/sidebar-nav';
 import MobileDrawer from '@/components/mobile-drawer';
 import SidebarUser from '@/components/sidebar-user';
+import BackButton from '@/components/back-button';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -71,6 +72,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
 
         <div style={{ maxWidth: '960px', padding: 'clamp(20px, 4vw, 52px) clamp(16px, 4vw, 48px) 80px' }}>
+          <BackButton />
           {children}
         </div>
       </main>
