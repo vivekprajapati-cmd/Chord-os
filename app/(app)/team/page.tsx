@@ -30,19 +30,25 @@ export default async function TeamPage() {
     supabase
       .from('blocks')
       .select('person_id, start_at, end_at, status, tasks(id, deliverable, estimated_hours, brands(name))')
-      .gte('start_at', dayStart)
-      .lte('start_at', dayEnd)
+      .lt('start_at', dayEnd)
+      .gt('end_at', dayStart)
       .neq('status', 'cancelled'),
   ]);
 
   const people = peopleResult.data ?? [];
   const blocks = blocksResult.data ?? [];
 
-  // Build capacity map per person
+  const dayStartMs = new Date(dayStart).getTime();
+  const dayEndMs = new Date(dayEnd).getTime();
+
+  // Build capacity map per person — count only the portion of each block that falls within today
   const capacityMap: Record<string, { blocked: number; blocks: typeof blocks }> = {};
   (blocks as any[]).forEach(b => {
     if (!capacityMap[b.person_id]) capacityMap[b.person_id] = { blocked: 0, blocks: [] };
-    capacityMap[b.person_id].blocked += b.tasks?.estimated_hours ?? 0;
+    const overlapStart = Math.max(new Date(b.start_at).getTime(), dayStartMs);
+    const overlapEnd = Math.min(new Date(b.end_at).getTime(), dayEndMs);
+    const overlapHours = Math.max(0, (overlapEnd - overlapStart) / 3600000);
+    capacityMap[b.person_id].blocked += overlapHours;
     capacityMap[b.person_id].blocks.push(b);
   });
 
