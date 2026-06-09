@@ -67,6 +67,54 @@ function generateSlots(
   return slots;
 }
 
+// ─── P0 conflict check ────────────────────────────────────────────────────────
+async function checkP0Conflict(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  owner_id: string,
+  brand_id: string,
+  startAt: string,
+  endAt: string,
+  excludeTaskId?: string
+): Promise<{ type: 'employee' | 'brand'; task: Record<string, any> } | null> {
+  const activeStatuses = ['scheduled', 'in_progress', 'pending', 'review', 'rework'];
+
+  // Check 1: same employee already has an active P0 overlapping this window
+  let empQ = supabase
+    .from('tasks')
+    .select('id, deliverable, status, priority, start_date, deadline, brands(id, name), owner:people!tasks_owner_id_fkey(id, name)')
+    .eq('owner_id', owner_id)
+    .eq('priority', 'P0')
+    .in('status', activeStatuses)
+    .lt('start_date', endAt)
+    .gt('deadline', startAt);
+
+  if (excludeTaskId) empQ = empQ.neq('id', excludeTaskId);
+  const { data: empConflicts } = await empQ;
+
+  if (empConflicts && empConflicts.length > 0) {
+    return { type: 'employee', task: empConflicts[0] as any };
+  }
+
+  // Check 2: same brand already has an active P0 overlapping this window
+  let brandQ = supabase
+    .from('tasks')
+    .select('id, deliverable, status, priority, start_date, deadline, brands(id, name), owner:people!tasks_owner_id_fkey(id, name)')
+    .eq('brand_id', brand_id)
+    .eq('priority', 'P0')
+    .in('status', activeStatuses)
+    .lt('start_date', endAt)
+    .gt('deadline', startAt);
+
+  if (excludeTaskId) brandQ = brandQ.neq('id', excludeTaskId);
+  const { data: brandConflicts } = await brandQ;
+
+  if (brandConflicts && brandConflicts.length > 0) {
+    return { type: 'brand', task: brandConflicts[0] as any };
+  }
+
+  return null;
+}
+
 // ─── Conflict check (shared helper) ──────────────────────────────────────────
 async function checkConflict(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -127,7 +175,7 @@ export async function POST(req: Request) {
   const isStaff = tier === 'staff' || tier === 'viewer' || tier === 'operations';
 
   const body = await req.json();
-  const { brand_id, owner_id, reviewer_id, deliverable, task_type, task_name, priority, start_date, deadline, notes, recurrence } = body;
+  const { brand_id, owner_id, reviewer_id, deliverable, task_type, task_name, priority, start_date, deadline, notes, recurrence, force } = body;
 
   if (!brand_id || !owner_id || !deliverable || !task_type) {
     return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
@@ -151,6 +199,32 @@ export async function POST(req: Request) {
     estimated_hours = Math.round(((endMs - startMs) / 3600000) * 10) / 10;
     startAt = new Date(start_date).toISOString();
     endAt = new Date(deadline).toISOString();
+  }
+
+  // ── P0 conflict gate ────────────────────────────────────────────────────
+  if (priority === 'P0' && !force && startAt && endAt) {
+    const p0Hit = await checkP0Conflict(supabase, owner_id, brand_id, startAt, endAt);
+    if (p0Hit) {
+      const t = p0Hit.task as any;
+      const fmt = (iso: string | null, opts: Intl.DateTimeFormatOptions) =>
+        iso ? new Date(iso).toLocaleString('en-IN', { ...opts, timeZone: 'UTC' }) : '—';
+      return NextResponse.json({
+        warning: true,
+        conflict_type: p0Hit.type,
+        conflicting_task: {
+          id: t.id,
+          deliverable: t.deliverable,
+          brand: (t.brands as any)?.name ?? null,
+          owner: (t.owner as any)?.name ?? null,
+          start: t.start_date
+            ? fmt(t.start_date, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true })
+            : null,
+          end: t.deadline
+            ? fmt(t.deadline, { hour: '2-digit', minute: '2-digit', hour12: true })
+            : null,
+        },
+      }, { status: 409 });
+    }
   }
 
   // ── Recurring path ───────────────────────────────────────────────────────

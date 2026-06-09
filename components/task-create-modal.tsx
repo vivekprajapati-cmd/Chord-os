@@ -32,7 +32,15 @@ const SPECIFIC_TASK_TYPES = [
   'Influencer scripting', 'Strategy plan', 'DVC scripts', 'Mainline ad assets',
   'Adapts + minor changes', 'Shoot lineups', 'Other',
 ] as const;
-const PRIORITIES = ['P0', 'P1', 'P2'] as const;
+const PRIORITIES = ['P0', 'P1', 'P2', 'P3', 'P4'] as const;
+
+const PRIORITY_LABELS: Record<string, string> = {
+  P0: 'P0 — Critical',
+  P1: 'P1 — High',
+  P2: 'P2 — Medium',
+  P3: 'P3 — Low',
+  P4: 'P4 — Backlog',
+};
 
 const TASK_HOURS: Record<string, { min: number; max: number }> = {
   'static':                  { min: 0.5, max: 2 },
@@ -109,6 +117,11 @@ export default function TaskCreateModal({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [p0Warning, setP0Warning] = useState<{
+    conflict_type: 'employee' | 'brand';
+    conflicting_task: { id: string; deliverable: string; brand: string | null; owner: string | null; start: string | null; end: string | null };
+    pendingBody: Record<string, any>;
+  } | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const isEdit = !!editTask;
@@ -234,35 +247,67 @@ export default function TaskCreateModal({
       }
     }
 
+    const recurrencePayload = (!isEdit && recurring) ? {
+      recurrence: {
+        pattern: recPattern,
+        customDays: recPattern === 'custom' ? customDays.map((on, i) => on ? i : -1).filter(i => i >= 0) : undefined,
+        endType,
+        occurrences: endType === 'occurrences' ? parseInt(occurrences) : undefined,
+        endDate: endType === 'end_date' ? recEndDate : undefined,
+      }
+    } : {};
+
+    const body = {
+      ...form,
+      reviewer_id: form.reviewer_id || undefined,
+      notes: form.notes || undefined,
+      ownerName: people.find(p => p.id === form.owner_id)?.name,
+      ...recurrencePayload,
+    };
+
     setLoading(true);
     setError('');
     try {
       const url = isEdit ? `/api/tasks/${editTask!.id}` : '/api/tasks';
       const method = isEdit ? 'PATCH' : 'POST';
 
-      const recurrencePayload = (!isEdit && recurring) ? {
-        recurrence: {
-          pattern: recPattern,
-          customDays: recPattern === 'custom' ? customDays.map((on, i) => on ? i : -1).filter(i => i >= 0) : undefined,
-          endType,
-          occurrences: endType === 'occurrences' ? parseInt(occurrences) : undefined,
-          endDate: endType === 'end_date' ? recEndDate : undefined,
-        }
-      } : {};
-
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          reviewer_id: form.reviewer_id || undefined,
-          notes: form.notes || undefined,
-          ownerName: people.find(p => p.id === form.owner_id)?.name,
-          ...recurrencePayload,
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
+
+      // P0 conflict warning — show inline, don't close modal
+      if (res.status === 409 && data.warning) {
+        setP0Warning({ conflict_type: data.conflict_type, conflicting_task: data.conflicting_task, pendingBody: body });
+        return;
+      }
+
       if (!res.ok) { setError(data.error ?? 'Something went wrong.'); return; }
+      router.refresh();
+      onClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveWithForce() {
+    if (!p0Warning) return;
+    setLoading(true);
+    setError('');
+    try {
+      const url = isEdit ? `/api/tasks/${editTask!.id}` : '/api/tasks';
+      const method = isEdit ? 'PATCH' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...p0Warning.pendingBody, force: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? 'Something went wrong.'); setP0Warning(null); return; }
       router.refresh();
       onClose();
     } catch (err: unknown) {
@@ -401,7 +446,7 @@ export default function TaskCreateModal({
                 className={input}
               >
                 {PRIORITIES.map(p => (
-                  <option key={p} value={p}>{p}</option>
+                  <option key={p} value={p}>{PRIORITY_LABELS[p] ?? p}</option>
                 ))}
               </select>
             </div>
@@ -625,6 +670,68 @@ export default function TaskCreateModal({
                   </p>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* P0 conflict warning panel */}
+          {p0Warning && (
+            <div style={{
+              border: '1.5px solid #E8A020',
+              borderRadius: '14px',
+              padding: '16px 18px',
+              background: '#FFF8EC',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>⚠</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#7A4800', marginBottom: '4px' }}>
+                    P0 conflict — {p0Warning.conflict_type === 'employee' ? 'Employee already has an active P0' : 'Brand already has an active P0'}
+                  </p>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: '#4A3000', lineHeight: 1.6 }}>
+                    <strong>{p0Warning.conflicting_task.deliverable}</strong>
+                    {p0Warning.conflicting_task.brand && <span style={{ color: '#7A5800' }}> · {p0Warning.conflicting_task.brand}</span>}
+                  </p>
+                  {p0Warning.conflicting_task.owner && (
+                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: '#7A5800', marginTop: '2px' }}>
+                      Assigned to: {p0Warning.conflicting_task.owner}
+                    </p>
+                  )}
+                  {p0Warning.conflicting_task.start && (
+                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: '#7A5800', marginTop: '2px' }}>
+                      {p0Warning.conflicting_task.start}{p0Warning.conflicting_task.end ? ` – ${p0Warning.conflicting_task.end}` : ''}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', paddingTop: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => setP0Warning(null)}
+                  style={{
+                    fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em',
+                    padding: '7px 16px', borderRadius: '999px', cursor: 'pointer',
+                    background: 'transparent', border: '1px solid #E8A020', color: '#7A4800',
+                  }}
+                >
+                  Go back
+                </button>
+                <button
+                  type="button"
+                  onClick={saveWithForce}
+                  disabled={loading}
+                  style={{
+                    fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em',
+                    padding: '7px 16px', borderRadius: '999px', cursor: 'pointer',
+                    background: '#E8A020', border: '1px solid #E8A020', color: '#fff',
+                    opacity: loading ? 0.6 : 1,
+                  }}
+                >
+                  {loading ? 'Saving…' : 'Save anyway'}
+                </button>
+              </div>
             </div>
           )}
 
