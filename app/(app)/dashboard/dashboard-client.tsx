@@ -175,8 +175,8 @@ export default function DashboardClient() {
           <div className="bg-[var(--paper)] border border-[var(--line)] rounded-2xl p-8 text-center">
             <p className="text-[var(--gray)] text-sm">No blocks this week.</p>
             {isLead && (
-              <Link href="/chat" className="text-xs font-mono uppercase text-[var(--cobalt)] mt-2 block hover:opacity-70 transition-opacity">
-                Assign work via Allocator →
+              <Link href="/tasks" className="text-xs font-mono uppercase text-[var(--cobalt)] mt-2 block hover:opacity-70 transition-opacity">
+                Assign work via Tasks →
               </Link>
             )}
           </div>
