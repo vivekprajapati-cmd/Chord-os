@@ -10,6 +10,10 @@ const jetbrains = JetBrains_Mono({ variable: '--font-jetbrains', subsets: ['lati
 export const metadata: Metadata = {
   title: 'Harmony',
   description: 'Operations + AI workspace for Chord and 1702 Digital',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+  },
   manifest: '/manifest.json',
   viewport: {
     width: 'device-width',
