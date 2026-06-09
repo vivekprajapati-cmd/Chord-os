@@ -74,30 +74,12 @@ export default async function CalendarPage() {
       .order('name');
     teamMembers = (data ?? []) as TeamMember[];
   } else if (isLead) {
-    const { data: directs } = await supabase
+    const { data } = await supabase
       .from('people')
       .select('id, name, department, default_hours_per_day')
-      .eq('manager_id', person.id);
-    const directIds = (directs ?? []).map((p: any) => p.id);
-    let grands: any[] = [];
-    if (directIds.length > 0) {
-      const { data } = await supabase
-        .from('people')
-        .select('id, name, department, default_hours_per_day')
-        .in('manager_id', directIds);
-      grands = data ?? [];
-    }
-    // Self first, then direct reports, then their reports
-    teamMembers = [
-      {
-        id: (person as any).id,
-        name: (person as any).name,
-        department: (person as any).department ?? '',
-        default_hours_per_day: (person as any).default_hours_per_day,
-      },
-      ...(directs ?? []),
-      ...grands,
-    ] as TeamMember[];
+      .order('department')
+      .order('name');
+    teamMembers = (data ?? []) as TeamMember[];
   }
 
   // Fetch this week's blocks for the logged-in user (initial load)
