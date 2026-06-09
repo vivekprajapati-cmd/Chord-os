@@ -45,11 +45,17 @@ export default function TaskTeamView({
   tasks,
   people,
   canEdit,
+  onSubmit,
+  onEdit,
+  onDetail,
 }: {
   tasks: Task[];
   people: Person[];
   brands: Brand[];
   canEdit: boolean;
+  onSubmit?: (task: Task) => void;
+  onEdit?: (task: Task) => void;
+  onDetail?: (id: string) => void;
 }) {
   const [expandedDept, setExpandedDept] = useState<string | null>(null);
   const [detailTaskId, setDetailTaskId] = useState<string | null>(null);
@@ -153,7 +159,7 @@ export default function TaskTeamView({
                     deptTasks.map((task, i) => (
                       <div
                         key={task.id}
-                        onClick={() => setDetailTaskId(task.id)}
+                        onClick={() => onDetail ? onDetail(task.id) : setDetailTaskId(task.id)}
                         style={{ padding: '12px 20px', borderBottom: i < deptTasks.length - 1 ? '1px solid var(--line)' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', background: 'var(--cream)' }}
                         className="hover:bg-[var(--paper)] transition-colors"
                       >
@@ -175,6 +181,22 @@ export default function TaskTeamView({
                           <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', color: 'var(--gray)', border: '1px solid var(--line)', borderRadius: '999px', padding: '2px 8px' }}>
                             {STATUS_LABEL[task.status] ?? task.status}
                           </span>
+                          {(task.status === 'in_progress' || task.status === 'scheduled') && onSubmit && (
+                            <button
+                              onClick={e => { e.stopPropagation(); onSubmit(task); }}
+                              style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', border: '1px solid var(--coral)', borderRadius: '999px', padding: '3px 10px', background: 'transparent', color: 'var(--coral)', cursor: 'pointer' }}
+                            >
+                              Submit
+                            </button>
+                          )}
+                          {canEdit && onEdit && (
+                            <button
+                              onClick={e => { e.stopPropagation(); onEdit(task); }}
+                              style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', border: '1px solid var(--line)', borderRadius: '999px', padding: '3px 10px', background: 'transparent', color: 'var(--gray)', cursor: 'pointer' }}
+                            >
+                              Edit
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))
