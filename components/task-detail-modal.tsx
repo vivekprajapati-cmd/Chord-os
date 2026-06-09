@@ -17,6 +17,7 @@ type TaskDetail = {
   revision_round: number;
   owner_id: string;
   reviewer_id: string | null;
+  flexible: boolean | null;
   brands: { id: string; name: string; colors: Record<string, string>; voice_summary: string | null } | null;
   owner: { id: string; name: string } | null;
   reviewer: { id: string; name: string } | null;
@@ -78,7 +79,7 @@ export default function TaskDetailModal({
         .select(`
           id, deliverable, task_type, priority, status, estimated_hours,
           deadline, start_date, notes, submission_link, revision_round,
-          owner_id, reviewer_id,
+          owner_id, reviewer_id, flexible,
           brands(id, name, colors, voice_summary),
           owner:people!tasks_owner_id_fkey(id, name),
           reviewer:people!tasks_reviewer_id_fkey(id, name),
@@ -313,7 +314,9 @@ export default function TaskDetailModal({
                     <div>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '4px' }}>Start</p>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px' }}>
-                        {new Date(task.start_date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' })}
+                        {task.flexible
+                          ? new Date(task.start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+                          : new Date(task.start_date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' })}
                       </p>
                     </div>
                   )}
@@ -321,7 +324,9 @@ export default function TaskDetailModal({
                     <div>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '4px' }}>Deadline</p>
                       <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px' }}>
-                        {new Date(task.deadline).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' })}
+                        {task.flexible
+                          ? new Date(task.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+                          : new Date(task.deadline).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' })}
                       </p>
                     </div>
                   )}

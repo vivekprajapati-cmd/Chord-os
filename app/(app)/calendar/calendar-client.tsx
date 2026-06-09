@@ -510,7 +510,10 @@ export default function CalendarClient({
 
                       {/* Flexible task chips */}
                       {(() => {
-                        const dayStr = d.toISOString().split('T')[0];
+                        const yy = d.getFullYear();
+                        const mm = String(d.getMonth() + 1).padStart(2, '0');
+                        const dd = String(d.getDate()).padStart(2, '0');
+                        const dayStr = `${yy}-${mm}-${dd}`;
                         const dayFlex = flexibleTasks.filter(t => {
                           const start = t.start_date.slice(0, 10);
                           const end = t.deadline.slice(0, 10);
