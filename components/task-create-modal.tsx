@@ -103,6 +103,7 @@ export default function TaskCreateModal({
   brands,
   people,
   onClose,
+  onSaved,
   isStaff = false,
   currentPersonId = '',
   editTask,
@@ -110,6 +111,7 @@ export default function TaskCreateModal({
   brands: Brand[];
   people: Person[];
   onClose: () => void;
+  onSaved?: () => void;
   isStaff?: boolean;
   currentPersonId?: string;
   editTask?: EditTask;
@@ -293,7 +295,7 @@ export default function TaskCreateModal({
 
       if (!res.ok) { setError(data.error ?? 'Something went wrong.'); return; }
       router.refresh();
-      onClose();
+      onSaved ? onSaved() : onClose();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Network error');
     } finally {
@@ -316,7 +318,7 @@ export default function TaskCreateModal({
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? 'Something went wrong.'); setP0Warning(null); return; }
       router.refresh();
-      onClose();
+      onSaved ? onSaved() : onClose();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Network error');
     } finally {

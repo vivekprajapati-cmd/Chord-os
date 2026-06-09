@@ -293,7 +293,8 @@ export default function TaskListClient({
           brands={brands}
           people={people}
           editTask={editingTask}
-          onClose={() => { setEditingTask(null); handleSaved(); }}
+          onClose={() => setEditingTask(null)}
+          onSaved={() => { setEditingTask(null); handleSaved(); }}
         />
       )}
 
