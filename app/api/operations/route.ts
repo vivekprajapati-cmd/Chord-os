@@ -8,27 +8,34 @@ async function getAdmin(supabase: Awaited<ReturnType<typeof createClient>>, emai
 
 // POST — add a new link
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-  const person = await getAdmin(supabase, user.email!);
-  if (person?.access_tier !== 'admin') return NextResponse.json({ error: 'Admin only.' }, { status: 403 });
+    const person = await getAdmin(supabase, user.email);
+    if (!person) return NextResponse.json({ error: 'Person not found.' }, { status: 403 });
+    if (person.access_tier !== 'admin') return NextResponse.json({ error: 'Admin only.' }, { status: 403 });
 
-  const { title, url } = await req.json();
-  if (!title?.trim() || !url?.trim()) return NextResponse.json({ error: 'Title and URL required.' }, { status: 400 });
+    const body = await req.json();
+    const { title, url } = body;
+    if (!title?.trim() || !url?.trim()) return NextResponse.json({ error: 'Title and URL required.' }, { status: 400 });
 
-  // Get current max sort_order
-  const { data: existing } = await supabase.from('ops_links').select('sort_order').order('sort_order', { ascending: false }).limit(1);
-  const nextOrder = ((existing?.[0] as any)?.sort_order ?? -1) + 1;
+    // Get current max sort_order
+    const { data: existing } = await supabase.from('ops_links').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+    const nextOrder = ((existing?.[0] as any)?.sort_order ?? -1) + 1;
 
-  const { data, error } = await supabase.from('ops_links')
-    .insert({ title: title.trim(), url: url.trim(), added_by_id: person.id, sort_order: nextOrder })
-    .select('id, title, url, sort_order')
-    .single();
+    const { data, error } = await supabase.from('ops_links')
+      .insert({ title: title.trim(), url: url.trim(), added_by_id: person.id, sort_order: nextOrder })
+      .select('id, title, url, sort_order')
+      .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data);
+  } catch (err: any) {
+    console.error('[ops POST]', err);
+    return NextResponse.json({ error: err?.message ?? 'Server error' }, { status: 500 });
+  }
 }
 
 // PATCH — edit a link

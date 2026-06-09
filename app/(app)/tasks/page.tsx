@@ -123,9 +123,11 @@ export default async function TasksPage({
       if (isAdmin || viewAll) {
         // See all — no filter
       } else if (isLead) {
-        // See team tasks + tasks they assigned + tasks they review
+        // See team tasks + tasks they review
         if (teamMemberIds.length > 0) {
-          q = q.in('owner_id', teamMemberIds);
+          q = q.or(`owner_id.in.(${teamMemberIds.join(',')}),reviewer_id.eq.${person?.id}`);
+        } else {
+          q = q.eq('reviewer_id', person?.id);
         }
       } else if (isViewer && !viewAll) {
         // Scoped to Pierre + Nimesh's teams

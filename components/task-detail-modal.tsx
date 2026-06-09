@@ -108,7 +108,12 @@ export default function TaskDetailModal({
   async function approve() {
     if (!task) return;
     setApproving(true);
-    await supabase.from('tasks').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', task.id);
+    await supabase.from('tasks').update({
+      status: 'approved',
+      approved_at: new Date().toISOString(),
+      approved_by_id: currentUserId,
+      reviewed_at: new Date().toISOString(),
+    }).eq('id', task.id);
     await fetch('/api/slack/notify', {
       method: 'POST',
       body: JSON.stringify({
@@ -127,7 +132,12 @@ export default function TaskDetailModal({
     if (!feedbackNotes.trim() || !task || !reviewAction) return;
     setReworking(true);
     const newRound = (task.revision_round ?? 0) + 1;
-    await supabase.from('tasks').update({ status: 'in_progress', revision_round: newRound }).eq('id', task.id);
+    await supabase.from('tasks').update({
+      status: 'in_progress',
+      revision_round: newRound,
+      approved_by_id: currentUserId,
+      reviewed_at: new Date().toISOString(),
+    }).eq('id', task.id);
     await supabase.from('task_revisions').insert({
       task_id: task.id,
       round: newRound,
