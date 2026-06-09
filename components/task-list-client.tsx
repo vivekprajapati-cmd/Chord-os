@@ -68,6 +68,8 @@ export default function TaskListClient({
   const [submissionLink, setSubmissionLink] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState<'status' | 'team'>('status');
+  const [search, setSearch] = useState('');
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
 
   function handleSaved() {
     window.location.reload();
@@ -104,10 +106,23 @@ export default function TaskListClient({
     window.location.reload();
   }
 
+  const searchLower = search.toLowerCase();
+  const filteredTasks = searchLower
+    ? tasks.filter(t =>
+        t.deliverable.toLowerCase().includes(searchLower) ||
+        (t.brands?.name ?? '').toLowerCase().includes(searchLower) ||
+        (t.owner?.name ?? '').toLowerCase().includes(searchLower)
+      )
+    : tasks;
+
   const grouped = STATUS_ORDER.reduce<Record<string, Task[]>>((acc, s) => {
-    acc[s] = tasks.filter(t => t.status === s);
+    acc[s] = filteredTasks.filter(t => t.status === s);
     return acc;
   }, {});
+
+  // People who have at least one task
+  const peopleWithTasks = people.filter(p => tasks.some(t => t.owner_id === p.id));
+  const teamTasks = filteredTasks.filter(t => !selectedPersonId || t.owner_id === selectedPersonId);
 
   const toggleStyle = (active: boolean): React.CSSProperties => ({
     fontFamily: 'var(--f-mono)',
@@ -124,18 +139,120 @@ export default function TaskListClient({
 
   return (
     <>
-      {/* View toggle */}
-      <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
-        <button style={toggleStyle(viewMode === 'status')} onClick={() => setViewMode('status')}>By Status</button>
-        <button style={toggleStyle(viewMode === 'team')} onClick={() => setViewMode('team')}>By Team</button>
+      {/* Search + view toggle row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search tasks, brands, people…"
+          style={{
+            flex: '1 1 200px', minWidth: '180px', maxWidth: '320px',
+            background: 'var(--paper)', border: '1px solid var(--line)',
+            borderRadius: '999px', padding: '7px 16px',
+            fontFamily: 'var(--f-mono)', fontSize: '11px', outline: 'none', color: 'var(--ink)',
+          }}
+        />
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button style={toggleStyle(viewMode === 'status')} onClick={() => setViewMode('status')}>By Status</button>
+          <button style={toggleStyle(viewMode === 'team')} onClick={() => { setViewMode('team'); setSelectedPersonId(null); }}>By Team</button>
+        </div>
       </div>
 
       {viewMode === 'team' && (
-        <TaskTeamView tasks={tasks} people={people} brands={brands} canEdit={canEdit} />
+        <>
+          {/* Person pills */}
+          {peopleWithTasks.length > 0 && (
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
+              <button
+                onClick={() => setSelectedPersonId(null)}
+                style={{
+                  fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase',
+                  letterSpacing: '0.06em', padding: '6px 14px', borderRadius: '999px',
+                  border: `1px solid ${!selectedPersonId ? 'var(--ink)' : 'var(--line)'}`,
+                  background: !selectedPersonId ? 'var(--ink)' : 'transparent',
+                  color: !selectedPersonId ? 'var(--cream)' : 'var(--gray)',
+                  cursor: 'pointer',
+                }}
+              >
+                All
+              </button>
+              {peopleWithTasks.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setSelectedPersonId(p.id === selectedPersonId ? null : p.id)}
+                  style={{
+                    fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase',
+                    letterSpacing: '0.06em', padding: '6px 14px', borderRadius: '999px',
+                    border: `1px solid ${selectedPersonId === p.id ? 'var(--coral)' : 'var(--line)'}`,
+                    background: selectedPersonId === p.id ? 'var(--coral)' : 'transparent',
+                    color: selectedPersonId === p.id ? '#fff' : 'var(--gray)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {p.name.split(' ')[0]}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Tasks grouped by status under team filter */}
+          {STATUS_ORDER.filter(s => teamTasks.some(t => t.status === s)).map(status => (
+            <section key={status} style={{ marginBottom: '20px' }}>
+              <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)] mb-2">
+                {STATUS_LABEL[status]} ({teamTasks.filter(t => t.status === status).length})
+              </p>
+              <div className="space-y-2">
+                {teamTasks.filter(t => t.status === status).map(task => (
+                  <div
+                    key={task.id}
+                    className="card-hover p-4 flex items-center justify-between"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => setDetailTaskId(task.id)}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-xs font-mono uppercase text-[var(--gray)]">{task.brands?.name}</p>
+                      </div>
+                      <p className="font-medium truncate">{task.deliverable}</p>
+                      <p className="text-xs text-[var(--gray)]">
+                        {task.owner?.name}
+                        {task.estimated_hours ? ` · ${task.estimated_hours}h` : ''}
+                        {task.deadline && ` · due ${new Date(task.deadline).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'UTC' })}`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4 shrink-0">
+                      <span className="text-xs font-mono uppercase px-2 py-0.5 rounded" style={PRIORITY_STYLE[task.priority] ?? {}}>
+                        {task.priority}
+                      </span>
+                      <span className="text-xs font-mono uppercase text-[var(--gray)] w-16 text-right capitalize">
+                        {task.task_type}
+                      </span>
+                      {canEdit && (
+                        <button
+                          onClick={e => { e.stopPropagation(); setEditingTask(task); }}
+                          style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', border: '1px solid var(--line)', borderRadius: '999px', padding: '3px 10px', background: 'transparent', color: 'var(--gray)', cursor: 'pointer' }}
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+
+          {teamTasks.length === 0 && (
+            <div className="bg-[var(--paper)] border border-[var(--line)] rounded-2xl p-10 text-center">
+              <p className="text-[var(--gray)]">No tasks found.</p>
+            </div>
+          )}
+        </>
       )}
 
       {viewMode === 'status' && <>
       {STATUS_ORDER.filter(s => (grouped[s]?.length ?? 0) > 0).map(status => (
+
         <section key={status}>
           <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)] mb-2">
             {STATUS_LABEL[status]} ({grouped[status].length})
@@ -239,9 +356,9 @@ export default function TaskListClient({
         </section>
       ))}
 
-      {tasks.length === 0 && (
+      {filteredTasks.length === 0 && (
         <div className="bg-[var(--paper)] border border-[var(--line)] rounded-2xl p-10 text-center">
-          <p className="text-[var(--gray)]">No tasks here.</p>
+          <p className="text-[var(--gray)]">{search ? 'No tasks match your search.' : 'No tasks here.'}</p>
         </div>
       )}
       </>}
