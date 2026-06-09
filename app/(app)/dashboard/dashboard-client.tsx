@@ -109,7 +109,16 @@ export default function DashboardClient() {
   const blocksToShow = hasToday ? todayBlocks : upcomingBlocks;
   const blocksLabel = hasToday ? "Today's blocks" : "Coming up";
   const defaultHours = person?.default_hours_per_day ?? 9;
-  const blockedHoursToday = todayBlocks.reduce((acc, b) => acc + ((b.tasks as any)?.estimated_hours ?? 0), 0);
+  const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+  const nowIST = new Date(Date.now() + IST_OFFSET_MS);
+  const istDateStr = nowIST.toISOString().split('T')[0];
+  const dayStartMs = new Date(`${istDateStr}T00:00:00+05:30`).getTime();
+  const dayEndMs = new Date(`${istDateStr}T23:59:59+05:30`).getTime();
+  const blockedHoursToday = Math.round(todayBlocks.reduce((acc, b) => {
+    const overlapStart = Math.max(new Date(b.start_at).getTime(), dayStartMs);
+    const overlapEnd = Math.min(new Date(b.end_at).getTime(), dayEndMs);
+    return acc + Math.max(0, (overlapEnd - overlapStart) / 3600000);
+  }, 0) * 10) / 10;
   const remainingHoursToday = Math.max(0, defaultHours - blockedHoursToday);
 
   if (loading) {

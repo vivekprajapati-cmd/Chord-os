@@ -93,12 +93,18 @@ export default async function CalendarPage() {
   // Fetch this week's blocks for the logged-in user (initial load)
   const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
   const nowIST = new Date(Date.now() + IST_OFFSET_MS);
-  const istDateStr = nowIST.toISOString().split('T')[0];
-  const todayIST = new Date(`${istDateStr}T00:00:00+05:30`);
-  const dayOfWeek = todayIST.getDay();
-  const mondayIST = new Date(todayIST);
-  mondayIST.setDate(todayIST.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
-  const weekStart = mondayIST;
+  const istDateStr = nowIST.toISOString().split('T')[0]; // YYYY-MM-DD in IST
+
+  // Compute day-of-week using the IST calendar date (not its UTC representation)
+  const istDateUTC = new Date(istDateStr + 'T00:00:00Z');
+  const dayOfWeekIST = istDateUTC.getUTCDay(); // 0=Sun … 6=Sat, correct for IST date
+
+  // Monday of this IST week (as a plain calendar date at UTC midnight)
+  const mondayDateUTC = new Date(istDateUTC);
+  mondayDateUTC.setUTCDate(istDateUTC.getUTCDate() - (dayOfWeekIST === 0 ? 6 : dayOfWeekIST - 1));
+
+  // Week window: Monday 00:00 IST → Sunday 23:59 IST (expressed in UTC)
+  const weekStart = new Date(mondayDateUTC.getTime() - IST_OFFSET_MS); // Mon 00:00 IST = Sun 18:30 UTC
   const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   const { data: blocks } = await supabase
