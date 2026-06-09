@@ -22,14 +22,6 @@ type Brand = {
   account_lead: { name: string; role: string } | null;
 };
 
-type Meeting = {
-  id: string;
-  meeting_date: string;
-  ai_summary: string | null;
-  tasks_suggested: unknown[];
-  knowledge_delta: { rule: string; category: string }[];
-  logged_by: { name: string } | null;
-};
 
 const CATEGORY_STYLE: Record<string, { bg: string; color: string; border: string }> = {
   tone:    { bg: 'rgba(34,38,217,0.07)',  color: '#2226D9', border: 'rgba(34,38,217,0.2)'  },
@@ -60,15 +52,6 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
   const typography = b.typography ?? {};
   const knowledge = b.knowledge;
 
-  // Fetch meetings separately since the subquery above might not work cleanly
-  const { data: brandMeetings } = await supabase
-    .from('brand_meetings')
-    .select('id, meeting_date, ai_summary, tasks_suggested, knowledge_delta, logged_by:people!brand_meetings_logged_by_id_fkey(name)')
-    .eq('brand_id', b.id)
-    .order('meeting_date', { ascending: false })
-    .limit(5);
-
-  const recentMeetings = (brandMeetings ?? []) as unknown as Meeting[];
 
   // Fetch brand documents
   const { data: brandDocs } = await supabase
@@ -217,39 +200,6 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         )}
       </div>
 
-      {/* Recent meetings */}
-      {recentMeetings.length > 0 && (
-        <div>
-          <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)] mb-3">
-            Meeting history ({recentMeetings.length})
-          </p>
-          <div className="space-y-3">
-            {recentMeetings.map(m => (
-              <Link
-                key={m.id}
-                href={`/briefings?brand=${b.slug}`}
-                className="block bg-[var(--paper)] border border-[var(--line)] rounded-xl p-5 hover:shadow-[4px_4px_0_var(--ink)] transition-shadow"
-                style={{ textDecoration: 'none' }}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <p className="text-xs font-mono text-[var(--gray)]">
-                    {new Date(m.meeting_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    {m.logged_by?.name && ` · logged by ${(m.logged_by as { name: string }).name}`}
-                  </p>
-                  <div className="flex items-center gap-2 text-xs font-mono text-[var(--gray)]">
-                    <span>{(m.tasks_suggested as unknown[])?.length ?? 0} tasks</span>
-                    <span>{(m.knowledge_delta as unknown[])?.length ?? 0} rules</span>
-                  </div>
-                </div>
-                {m.ai_summary && (
-                  <p className="text-sm text-[var(--gray)] leading-relaxed">{m.ai_summary}</p>
-                )}
-                <p className="text-xs font-mono text-[var(--cobalt)] mt-2">View in briefings →</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Brand documents */}
       <BrandDocuments
@@ -274,43 +224,71 @@ async function BrandTasks({
 }) {
   const { data: tasks } = await supabase
     .from('tasks')
-    .select('id, deliverable, status, priority, deadline, brief, owner:people!tasks_owner_id_fkey(name)')
+    .select('id, deliverable, status, priority, deadline, task_type, owner:people!tasks_owner_id_fkey(name)')
     .eq('brand_id', brandId)
-    .in('status', ['scheduled', 'in_progress', 'ready_for_review'])
-    .order('deadline', { ascending: true })
-    .limit(20);
+    .neq('status', 'cancelled')
+    .order('deadline', { ascending: true });
+
+  const STATUS_COLOR: Record<string, { bg: string; color: string }> = {
+    scheduled:        { bg: 'rgba(13,13,11,0.06)',   color: 'var(--gray)' },
+    pending:          { bg: 'rgba(13,13,11,0.06)',   color: 'var(--gray)' },
+    in_progress:      { bg: 'rgba(34,38,217,0.08)',  color: '#2226D9' },
+    ready_for_review: { bg: 'rgba(233,196,106,0.2)', color: '#7a5c00' },
+    review:           { bg: 'rgba(233,196,106,0.2)', color: '#7a5c00' },
+    rework:           { bg: 'rgba(229,93,74,0.1)',   color: 'var(--coral)' },
+    approved:         { bg: 'rgba(42,157,92,0.1)',   color: '#1a7a45' },
+    done:             { bg: 'rgba(42,157,92,0.1)',   color: '#1a7a45' },
+  };
 
   return (
     <div>
-      <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)] mb-3">Active tasks</p>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)]">
+          All tasks {tasks && tasks.length > 0 ? `(${tasks.length})` : ''}
+        </p>
+      </div>
       {!tasks || tasks.length === 0 ? (
-        <p className="text-sm text-[var(--gray)]">No active tasks. Log a meeting to generate them.</p>
+        <p className="text-sm text-[var(--gray)]">No tasks found for this brand.</p>
       ) : (
         <div className="space-y-2">
-          {(tasks as any[]).map((t) => (
-            <div
-              key={t.id}
-              className="bg-[var(--paper)] border border-[var(--line)] rounded-xl p-4"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0 mr-3">
-                  <p className="font-medium">{t.deliverable}</p>
-                  <p className="text-xs text-[var(--gray)] mt-0.5">
-                    {t.owner?.name}
-                    {t.deadline && ` · due ${new Date(t.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`}
-                  </p>
-                  {t.brief && (
-                    <p className="text-xs text-[var(--gray)] mt-2 leading-relaxed border-l-2 border-[var(--line)] pl-3 italic">
-                      {t.brief.length > 160 ? t.brief.slice(0, 160) + '…' : t.brief}
+          {(tasks as any[]).map((t) => {
+            const sc = STATUS_COLOR[t.status] ?? STATUS_COLOR.scheduled;
+            return (
+              <div
+                key={t.id}
+                className="bg-[var(--paper)] border border-[var(--line)] rounded-xl p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">{t.deliverable}</p>
+                    <p className="text-xs text-[var(--gray)] font-mono mt-0.5">
+                      {t.owner?.name}
+                      {t.task_type && ` · ${t.task_type}`}
+                      {t.deadline && ` · due ${new Date(t.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })}`}
                     </p>
-                  )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className="text-xs font-mono uppercase px-2 py-0.5 rounded"
+                      style={sc}
+                    >
+                      {t.status.replace(/_/g, ' ')}
+                    </span>
+                    <span
+                      className="text-xs font-mono uppercase border rounded px-2 py-0.5"
+                      style={
+                        t.priority === 'P0' ? { background: 'var(--red)', color: '#fff', border: 'none' } :
+                        t.priority === 'P1' ? { background: 'var(--ink)', color: 'var(--cream)', border: 'none' } :
+                        { borderColor: 'var(--line)' }
+                      }
+                    >
+                      {t.priority}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-xs font-mono uppercase border border-[var(--ink)] rounded px-2 py-0.5 shrink-0">
-                  {t.priority}
-                </span>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
