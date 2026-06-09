@@ -191,14 +191,22 @@ export async function POST(req: Request) {
   let endAt: string | null = null;
 
   if (start_date && deadline) {
-    const startMs = new Date(start_date).getTime();
-    const endMs = new Date(deadline).getTime();
-    if (endMs <= startMs) {
+    // For flexible tasks, treat deadline as end of day IST (23:59:59)
+    const resolvedDeadline = flexible
+      ? new Date(`${deadline.slice(0, 10)}T23:59:59+05:30`).toISOString()
+      : deadline;
+    const resolvedStart = flexible
+      ? new Date(`${start_date.slice(0, 10)}T00:00:00+05:30`).toISOString()
+      : start_date;
+
+    const startMs = new Date(resolvedStart).getTime();
+    const endMs = new Date(resolvedDeadline).getTime();
+    if (!flexible && endMs <= startMs) {
       return NextResponse.json({ error: 'End time must be after start time.' }, { status: 400 });
     }
-    estimated_hours = Math.round(((endMs - startMs) / 3600000) * 10) / 10;
-    startAt = new Date(start_date).toISOString();
-    endAt = new Date(deadline).toISOString();
+    estimated_hours = flexible ? null : Math.round(((endMs - startMs) / 3600000) * 10) / 10;
+    startAt = resolvedStart;
+    endAt = resolvedDeadline;
   }
 
   // ── P0 conflict gate ────────────────────────────────────────────────────
