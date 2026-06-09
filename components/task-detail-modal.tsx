@@ -25,6 +25,24 @@ type TaskDetail = {
 
 type Person = { id: string; name: string; department: string };
 
+function HoursLabel({ hours, notes }: { hours: number; notes: string | null }) {
+  const recurringMatch = notes?.match(/Recurring:.*?(\d+)\s+occurrence/i);
+  const occurrences = recurringMatch ? parseInt(recurringMatch[1]) : null;
+  if (occurrences && occurrences > 1) {
+    const slotH = Math.round((hours / occurrences) * 10) / 10;
+    return (
+      <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>
+        {slotH}h / slot
+      </span>
+    );
+  }
+  return (
+    <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>
+      {hours}h
+    </span>
+  );
+}
+
 export default function TaskDetailModal({
   taskId,
   onClose,
@@ -261,18 +279,9 @@ export default function TaskDetailModal({
                   <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>
                     {task.task_type}
                   </span>
-                  {task.estimated_hours && (() => {
-                    const recurringMatch = task.notes?.match(/Recurring:.*?(\d+)\s+occurrence/i);
-                    const occurrences = recurringMatch ? parseInt(recurringMatch[1]) : null;
-                    const slotHours = occurrences && occurrences > 1
-                      ? Math.round((task.estimated_hours / occurrences) * 10) / 10
-                      : task.estimated_hours;
-                    return (
-                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>
-                        {slotHours}h{occurrences && occurrences > 1 ? ' / slot' : ''}
-                      </span>
-                    );
-                  })()}
+                  {task.estimated_hours != null && (
+                    <HoursLabel hours={task.estimated_hours} notes={task.notes} />
+                  )}
                 </div>
               </div>
               <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '28px', color: 'var(--gray)', cursor: 'pointer', padding: 0, flexShrink: 0 }}>×</button>
