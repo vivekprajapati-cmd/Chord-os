@@ -72,9 +72,6 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           <h1 className="font-display text-7xl uppercase tracking-tight">{b.name}</h1>
         </div>
         <div className="flex items-center gap-3 mt-2 flex-wrap">
-          <span className="text-xs font-mono uppercase border border-[var(--ink)] rounded-full px-3 py-1.5">
-            {b.tier}
-          </span>
           {canLogMeeting && (
             <BrandEditButton brand={{
               id: b.id,
