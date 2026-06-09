@@ -135,6 +135,7 @@ export default function TaskCreateModal({
   const [recEndDate, setRecEndDate] = useState('');
 
   const [quantity, setQuantity] = useState(1);
+  const [flexible, setFlexible] = useState(false);
 
   const [form, setForm] = useState({
     brand_id: editTask?.brand_id ?? brands[0]?.id ?? '',
@@ -211,8 +212,13 @@ export default function TaskCreateModal({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.deliverable.trim()) { setError('Deliverable is required.'); return; }
-    if (!form.start_date || !form.deadline) { setError('Start and end date/time are required.'); return; }
-    if (new Date(form.deadline) <= new Date(form.start_date)) { setError('End time must be after start time.'); return; }
+    if (flexible) {
+      if (!form.start_date || !form.deadline) { setError('Start date and deadline are required.'); return; }
+      if (new Date(form.deadline) < new Date(form.start_date)) { setError('Deadline must be on or after start date.'); return; }
+    } else {
+      if (!form.start_date || !form.deadline) { setError('Start and end date/time are required.'); return; }
+      if (new Date(form.deadline) <= new Date(form.start_date)) { setError('End time must be after start time.'); return; }
+    }
 
     const hours = parseFloat(form.estimated_hours);
     if (!isNaN(hours) && hours > 0) {
@@ -262,6 +268,7 @@ export default function TaskCreateModal({
       reviewer_id: form.reviewer_id || undefined,
       notes: form.notes || undefined,
       ownerName: people.find(p => p.id === form.owner_id)?.name,
+      flexible: flexible || undefined,
       ...recurrencePayload,
     };
 
@@ -437,7 +444,7 @@ export default function TaskCreateModal({
           </div>
 
           {/* Priority + Quantity + Hours */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className={`grid gap-4 ${flexible ? 'grid-cols-2' : 'grid-cols-3'}`}>
             <div>
               <label className={label}>Priority</label>
               <select
@@ -462,7 +469,7 @@ export default function TaskCreateModal({
                 className={input}
               />
             </div>
-            <div>
+            {!flexible && <div>
               <label className={label}>
                 Hours{(() => {
                   const l = TASK_HOURS[form.task_name.toLowerCase()];
@@ -481,26 +488,32 @@ export default function TaskCreateModal({
                 onChange={e => onHoursChange(e.target.value)}
                 className={input}
               />
-            </div>
+            </div>}
           </div>
 
           {/* Start + End date */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={label}>Start date & time *</label>
+              <label className={label}>{flexible ? 'Start date *' : 'Start date & time *'}</label>
               <input
-                type="datetime-local"
-                value={form.start_date}
-                onChange={e => onStartChange(e.target.value)}
+                type={flexible ? 'date' : 'datetime-local'}
+                value={flexible ? form.start_date.slice(0, 10) : form.start_date}
+                onChange={e => flexible
+                  ? setForm(f => ({ ...f, start_date: e.target.value }))
+                  : onStartChange(e.target.value)
+                }
                 className={input}
               />
             </div>
             <div>
-              <label className={label}>End date & time *</label>
+              <label className={label}>{flexible ? 'Deadline *' : 'End date & time *'}</label>
               <input
-                type="datetime-local"
-                value={form.deadline}
-                onChange={e => onEndChange(e.target.value)}
+                type={flexible ? 'date' : 'datetime-local'}
+                value={flexible ? form.deadline.slice(0, 10) : form.deadline}
+                onChange={e => flexible
+                  ? setForm(f => ({ ...f, deadline: e.target.value }))
+                  : onEndChange(e.target.value)
+                }
                 className={input}
               />
             </div>
@@ -518,8 +531,38 @@ export default function TaskCreateModal({
             />
           </div>
 
-          {/* Recurring — create only */}
+          {/* Flexible task toggle — create only */}
           {!isEdit && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setFlexible(f => !f)}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                <div style={{
+                  width: '36px', height: '20px', borderRadius: '999px', position: 'relative', flexShrink: 0,
+                  background: flexible ? 'var(--ink)' : 'var(--line)', transition: 'background 0.2s',
+                }}>
+                  <div style={{
+                    position: 'absolute', top: '3px', width: '14px', height: '14px', borderRadius: '50%',
+                    background: '#fff', transition: 'left 0.2s',
+                    left: flexible ? '19px' : '3px', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  }} />
+                </div>
+                <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: flexible ? 'var(--ink)' : 'var(--gray)' }}>
+                  Flexible task (no calendar block)
+                </span>
+              </button>
+              {flexible && (
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', marginTop: '6px', marginLeft: '46px' }}>
+                  No time slot will be blocked. Task appears as a deadline reminder on the calendar each day until due.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Recurring — create only */}
+          {!isEdit && !flexible && (
             <div>
               {/* Toggle row */}
               <button

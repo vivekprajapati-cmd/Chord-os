@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 type BlockInfo = {
@@ -47,17 +48,38 @@ type Props = {
   month: string;
   brands: Brand[];
   brandTasks: BrandTask[];
+  currentPeriod: string;
+  currentFrom: string;
+  currentTo: string;
 };
 
 export default function AnalyticsClient({
-  members, isLead, canSeeAll, totalTasks, totalCompleted, totalDelays, teamOnTimeRate, month, brands, brandTasks
+  members, isLead, canSeeAll, totalTasks, totalCompleted, totalDelays, teamOnTimeRate, month, brands, brandTasks,
+  currentPeriod, currentFrom, currentTo,
 }: Props) {
   const supabase = createClient();
+  const router = useRouter();
   const printRef = useRef<HTMLDivElement>(null);
   const [selectedBrandId, setSelectedBrandId] = useState<string>('');
+  const [customFrom, setCustomFrom] = useState(currentFrom);
+  const [customTo, setCustomTo] = useState(currentTo);
   const [expandedPersonId, setExpandedPersonId] = useState<string | null>(null);
   const [personBlocks, setPersonBlocks] = useState<Record<string, BlockInfo[]>>({});
   const [loadingBlocks, setLoadingBlocks] = useState<string | null>(null);
+
+  function setPeriod(period: string, from?: string, to?: string) {
+    const params = new URLSearchParams();
+    params.set('period', period);
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    router.push(`/analytics?${params.toString()}`);
+  }
+
+  function applyCustom() {
+    if (!customFrom || !customTo) return;
+    if (new Date(customTo) < new Date(customFrom)) return;
+    setPeriod('custom', customFrom, customTo);
+  }
 
   const togglePerson = useCallback(async (personId: string) => {
     if (expandedPersonId === personId) { setExpandedPersonId(null); return; }
@@ -213,6 +235,70 @@ export default function AnalyticsClient({
               <p style={{ fontFamily: 'var(--f-display)', fontSize: '40px', fontWeight: 400, textTransform: 'uppercase', lineHeight: 1, color: alert ? '#fff' : 'var(--ink)' }}>{value}</p>
             </div>
           ))}
+        </div>
+
+        {/* Period filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)', flexShrink: 0 }}>Period</p>
+
+          {/* Weekly / Monthly pills */}
+          {(['weekly', 'monthly'] as const).map(p => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              style={{
+                fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em',
+                padding: '6px 16px', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.15s',
+                background: currentPeriod === p ? 'var(--ink)' : 'transparent',
+                color: currentPeriod === p ? 'var(--cream)' : 'var(--gray)',
+                border: `1px solid ${currentPeriod === p ? 'var(--ink)' : 'var(--line)'}`,
+              }}
+            >
+              {p === 'weekly' ? 'This Week' : 'This Month'}
+            </button>
+          ))}
+
+          {/* Custom pill + inline inputs */}
+          <button
+            onClick={() => setPeriod('custom', customFrom || currentFrom, customTo || currentTo)}
+            style={{
+              fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em',
+              padding: '6px 16px', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.15s',
+              background: currentPeriod === 'custom' ? 'var(--ink)' : 'transparent',
+              color: currentPeriod === 'custom' ? 'var(--cream)' : 'var(--gray)',
+              border: `1px solid ${currentPeriod === 'custom' ? 'var(--ink)' : 'var(--line)'}`,
+            }}
+          >
+            Custom
+          </button>
+
+          {currentPeriod === 'custom' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <input
+                type="date"
+                value={customFrom}
+                onChange={e => setCustomFrom(e.target.value)}
+                style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '8px', padding: '5px 10px', outline: 'none', color: 'var(--ink)' }}
+              />
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>to</span>
+              <input
+                type="date"
+                value={customTo}
+                onChange={e => setCustomTo(e.target.value)}
+                style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '8px', padding: '5px 10px', outline: 'none', color: 'var(--ink)' }}
+              />
+              <button
+                onClick={applyCustom}
+                style={{
+                  fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em',
+                  padding: '6px 14px', borderRadius: '999px', cursor: 'pointer',
+                  background: 'var(--ink)', color: 'var(--cream)', border: '1px solid var(--ink)',
+                }}
+              >
+                Apply
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Brand filter — all leads/admins/viewers */}

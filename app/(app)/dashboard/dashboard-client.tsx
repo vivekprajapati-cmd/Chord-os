@@ -32,6 +32,7 @@ export default function DashboardClient() {
   const [loading, setLoading] = useState(true);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [canDelete, setCanDelete] = useState(false);
+  const [flexibleDue, setFlexibleDue] = useState<{ id: string; deliverable: string; deadline: string; priority: string; brands: { name: string } | null }[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -63,6 +64,7 @@ export default function DashboardClient() {
         { data: ub },
         { data: ip },
         { data: rv },
+        { data: ft },
       ] = await Promise.all([
         supabase
           .from('blocks')
@@ -85,12 +87,23 @@ export default function DashboardClient() {
         isLead
           ? supabase.from('tasks').select('id').eq('status', 'ready_for_review')
           : supabase.from('tasks').select('id').eq('owner_id', p.id).eq('status', 'ready_for_review'),
+        // Flexible tasks active today (start_date <= today AND deadline >= today)
+        supabase
+          .from('tasks')
+          .select('id, deliverable, deadline, priority, brands(name)')
+          .eq('owner_id', p.id)
+          .eq('flexible', true)
+          .not('status', 'in', '(done,approved,cancelled)')
+          .lte('start_date', todayEnd.toISOString())
+          .gte('deadline', todayStart.toISOString())
+          .order('deadline', { ascending: true }),
       ]);
 
       setTodayBlocks((tb ?? []) as unknown as Block[]);
       setUpcomingBlocks((ub ?? []) as unknown as Block[]);
       setInProgressCount(ip?.length ?? 0);
       setReviewCount(rv?.length ?? 0);
+      setFlexibleDue((ft ?? []) as any[]);
       setLoading(false);
     }
 
@@ -219,6 +232,55 @@ export default function DashboardClient() {
           </div>
         )}
       </section>
+
+      {/* Flexible tasks due today / this week */}
+      {flexibleDue.length > 0 && (
+        <section>
+          <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)] mb-3">
+            Flexible tasks — open deadlines
+          </p>
+          <div className="space-y-2">
+            {flexibleDue.map(t => {
+              const deadlineStr = new Date(t.deadline).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+              const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+              const todayIST = new Date(Date.now() + IST_OFFSET_MS).toISOString().split('T')[0];
+              const isDueToday = t.deadline.slice(0, 10) === todayIST;
+              const isOverdue = t.deadline.slice(0, 10) < todayIST;
+              return (
+                <div
+                  key={t.id}
+                  onClick={() => setSelectedTaskId(t.id)}
+                  className="flex items-center justify-between bg-[var(--paper)] border rounded-xl p-4 hover:shadow-[4px_4px_0_var(--ink)] transition-shadow"
+                  style={{
+                    cursor: 'pointer',
+                    borderColor: isDueToday || isOverdue ? 'var(--coral)' : 'var(--line)',
+                    borderStyle: 'dashed',
+                  }}
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-mono text-[var(--gray)] uppercase">{(t.brands as any)?.name}</p>
+                    <p className="font-medium truncate">{t.deliverable}</p>
+                    <p className="text-xs font-mono" style={{ color: isOverdue ? 'var(--coral)' : isDueToday ? 'var(--coral)' : 'var(--gray)' }}>
+                      {isOverdue ? '⚠ Overdue · ' : isDueToday ? '⏰ Due today · ' : 'Due '}{deadlineStr}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4 shrink-0">
+                    <span
+                      className="text-xs font-mono uppercase px-2 py-0.5 rounded"
+                      style={
+                        t.priority === 'P0' ? { background: 'var(--red)', color: '#fff' } :
+                        t.priority === 'P1' ? { background: 'var(--ink)', color: 'var(--cream)' } :
+                        { border: '1px solid var(--line)' }
+                      }
+                    >{t.priority}</span>
+                    <span className="text-xs font-mono uppercase px-2 py-0.5 rounded" style={{ border: '1px dashed var(--line)', color: 'var(--gray)' }}>Flexible</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {reviewCount > 0 && (
         <section>

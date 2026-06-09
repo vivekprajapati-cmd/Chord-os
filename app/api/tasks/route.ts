@@ -175,7 +175,7 @@ export async function POST(req: Request) {
   const isStaff = tier === 'staff' || tier === 'viewer' || tier === 'operations';
 
   const body = await req.json();
-  const { brand_id, owner_id, reviewer_id, deliverable, task_type, task_name, priority, start_date, deadline, notes, recurrence, force } = body;
+  const { brand_id, owner_id, reviewer_id, deliverable, task_type, task_name, priority, start_date, deadline, notes, recurrence, force, flexible } = body;
 
   if (!brand_id || !owner_id || !deliverable || !task_type) {
     return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
@@ -306,7 +306,7 @@ export async function POST(req: Request) {
   }
 
   // ── Single task path ─────────────────────────────────────────────────────
-  if (startAt && endAt) {
+  if (!flexible && startAt && endAt) {
     const conflict = await checkConflict(supabase, owner_id, startAt, endAt);
     if (conflict) return NextResponse.json({ error: conflict }, { status: 409 });
   }
@@ -322,18 +322,20 @@ export async function POST(req: Request) {
       reviewer_id: reviewer_id || null,
       assigned_by_id: person.id,
       priority: priority || 'P1',
-      estimated_hours,
+      estimated_hours: flexible ? null : estimated_hours,
       status: 'scheduled',
       start_date: start_date || null,
       deadline: deadline || null,
       notes: notes || null,
+      flexible: flexible || false,
     })
     .select('id')
     .single();
 
   if (error || !task) return NextResponse.json({ error: error?.message ?? 'Insert failed' }, { status: 500 });
 
-  if (startAt && endAt) {
+  // Only create a block for non-flexible tasks
+  if (!flexible && startAt && endAt) {
     await supabase.from('blocks').insert({
       task_id: task.id,
       person_id: owner_id,

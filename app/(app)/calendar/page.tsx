@@ -38,6 +38,16 @@ export type TeamMember = {
   default_hours_per_day: number | null;
 };
 
+export type FlexibleTask = {
+  id: string;
+  deliverable: string;
+  priority: string;
+  status: string;
+  start_date: string;
+  deadline: string;
+  brands: { id: string; name: string } | null;
+};
+
 export default async function CalendarPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -125,6 +135,16 @@ export default async function CalendarPage() {
     .neq('status', 'cancelled')
     .order('start_at', { ascending: true });
 
+  // Fetch flexible tasks active this week (start_date <= weekEnd AND deadline >= weekStart)
+  const { data: flexTasks } = await supabase
+    .from('tasks')
+    .select('id, deliverable, priority, status, start_date, deadline, brands(id, name)')
+    .eq('owner_id', (person as any).id)
+    .eq('flexible', true)
+    .not('status', 'in', '(done,approved,cancelled)')
+    .lte('start_date', weekEnd.toISOString())
+    .gte('deadline', weekStart.toISOString());
+
   return (
     <CalendarClient
       personId={(person as any).id}
@@ -135,6 +155,7 @@ export default async function CalendarPage() {
       blocks={(blocks ?? []) as unknown as BlockWithTask[]}
       teamMembers={teamMembers}
       defaultHoursPerDay={(person as any).default_hours_per_day ?? 9}
+      flexibleTasks={(flexTasks ?? []) as unknown as FlexibleTask[]}
     />
   );
 }

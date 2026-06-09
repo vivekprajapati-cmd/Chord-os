@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, type CSSProperties } from 'react';
-import type { BlockWithTask, TeamMember } from './page';
+import type { BlockWithTask, TeamMember, FlexibleTask } from './page';
 import ContextModal from '@/components/context-modal';
 import { createClient } from '@/lib/supabase/client';
 
@@ -110,6 +110,7 @@ export default function CalendarClient({
   blocks: initialBlocks,
   teamMembers,
   defaultHoursPerDay,
+  flexibleTasks: initialFlexibleTasks,
 }: {
   personId: string;
   personName: string;
@@ -119,6 +120,7 @@ export default function CalendarClient({
   blocks: BlockWithTask[];
   teamMembers: TeamMember[];
   defaultHoursPerDay: number;
+  flexibleTasks: FlexibleTask[];
 }) {
   const supabase = createClient();
   const canSwitch = isAdmin || isLead;
@@ -135,6 +137,7 @@ export default function CalendarClient({
   const [selectedPersonName, setSelectedPersonName] = useState(myPersonName);
   const [selectedPersonHours, setSelectedPersonHours] = useState(defaultHoursPerDay);
   const [blocks, setBlocks] = useState<BlockWithTask[]>(initialBlocks);
+  const [flexibleTasks, setFlexibleTasks] = useState<FlexibleTask[]>(initialFlexibleTasks);
   const [loadingBlocks, setLoadingBlocks] = useState(false);
 
   // ── Google / capacity ────────────────────────────────────────────────────
@@ -174,24 +177,35 @@ export default function CalendarClient({
     setLoadingBlocks(true);
     const ws = getWeekStart(offset);
     const we = new Date(ws.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const { data } = await supabase
-      .from('blocks')
-      .select(`
-        id, start_at, end_at, status, actual_hours,
-        tasks (
-          id, deliverable, task_type, priority, estimated_hours, notes, status, owner_id, reviewer_id,
-          brands ( id, slug, name, colors, typography, voice_summary ),
-          owner:people!tasks_owner_id_fkey ( id, name ),
-          reviewer:people!tasks_reviewer_id_fkey ( id, name ),
-          references:task_references ( id, ref_type, url, caption )
-        )
-      `)
-      .eq('person_id', pid)
-      .gte('start_at', ws.toISOString())
-      .lt('start_at', we.toISOString())
-      .neq('status', 'cancelled')
-      .order('start_at', { ascending: true });
+    const [{ data }, { data: flex }] = await Promise.all([
+      supabase
+        .from('blocks')
+        .select(`
+          id, start_at, end_at, status, actual_hours,
+          tasks (
+            id, deliverable, task_type, priority, estimated_hours, notes, status, owner_id, reviewer_id,
+            brands ( id, slug, name, colors, typography, voice_summary ),
+            owner:people!tasks_owner_id_fkey ( id, name ),
+            reviewer:people!tasks_reviewer_id_fkey ( id, name ),
+            references:task_references ( id, ref_type, url, caption )
+          )
+        `)
+        .eq('person_id', pid)
+        .gte('start_at', ws.toISOString())
+        .lt('start_at', we.toISOString())
+        .neq('status', 'cancelled')
+        .order('start_at', { ascending: true }),
+      supabase
+        .from('tasks')
+        .select('id, deliverable, priority, status, start_date, deadline, brands(id, name)')
+        .eq('owner_id', pid)
+        .eq('flexible', true)
+        .not('status', 'in', '(done,approved,cancelled)')
+        .lte('start_date', we.toISOString())
+        .gte('deadline', ws.toISOString()),
+    ]);
     setBlocks((data ?? []) as unknown as BlockWithTask[]);
+    setFlexibleTasks((flex ?? []) as unknown as FlexibleTask[]);
     setLoadingBlocks(false);
   }, [supabase]);
 
@@ -493,6 +507,37 @@ export default function CalendarClient({
                       >
                         {DAYS[colIdx]} {d.getDate()}
                       </div>
+
+                      {/* Flexible task chips */}
+                      {(() => {
+                        const dayStr = d.toISOString().split('T')[0];
+                        const dayFlex = flexibleTasks.filter(t => {
+                          const start = t.start_date.slice(0, 10);
+                          const end = t.deadline.slice(0, 10);
+                          return start <= dayStr && end >= dayStr;
+                        });
+                        if (dayFlex.length === 0) return null;
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '4px' }}>
+                            {dayFlex.map(t => {
+                              const isDue = t.deadline.slice(0, 10) === dayStr;
+                              return (
+                                <div key={t.id} style={{
+                                  padding: '3px 8px', borderRadius: '6px', fontSize: '9px',
+                                  fontFamily: 'var(--f-mono)', lineHeight: 1.4,
+                                  background: isDue ? 'rgba(229,93,74,0.1)' : 'rgba(13,13,11,0.04)',
+                                  border: `1px dashed ${isDue ? 'var(--coral)' : 'var(--line)'}`,
+                                  color: isDue ? 'var(--coral)' : 'var(--gray)',
+                                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                                }}>
+                                  {isDue ? '⏰ ' : '○ '}{t.deliverable}{t.brands ? ` · ${(t.brands as any).name}` : ''}
+                                  {isDue && <span style={{ marginLeft: '4px', fontWeight: 700 }}>Due</span>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
 
                       {/* Column body */}
                       <div style={{
