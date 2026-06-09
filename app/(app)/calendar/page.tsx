@@ -61,10 +61,10 @@ export default async function CalendarPage() {
   if (!person) return <p className="text-[var(--gray)]">Person record not found. Contact admin.</p>;
 
   const tier = (person as any).access_tier ?? 'staff';
-  const isAdmin = tier === 'admin';
+  const isAdmin = tier === 'admin' || tier === 'operations';
   const isLead = tier === 'lead' || !!(person as any).is_team_lead;
 
-  // Fetch team members for person switcher (leads/admins only)
+  // Fetch team members for person switcher (leads/admins/operations only)
   let teamMembers: TeamMember[] = [];
   if (isAdmin) {
     const { data } = await supabase
