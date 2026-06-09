@@ -202,6 +202,13 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       </div>
 
 
+      {/* Performance dashboard */}
+      <BrandPerformance
+        brandId={b.id}
+        supabase={supabase}
+        accentColor={Object.values(colors)[0] ?? null}
+      />
+
       {/* Brand documents */}
       <BrandDocuments
         brandId={b.id}
@@ -236,6 +243,125 @@ async function BrandTasks({
         All tasks {tasks && tasks.length > 0 ? `(${tasks.length})` : ''}
       </p>
       <BrandTasksList tasks={(tasks ?? []) as any[]} />
+    </div>
+  );
+}
+
+// ─── Brand Performance Dashboard ─────────────────────────────────────────────
+const DEPT_MAP: { label: string; types: string[] }[] = [
+  { label: 'Design',     types: ['design'] },
+  { label: 'Video',      types: ['video'] },
+  { label: 'Copy',       types: ['copy', 'content'] },
+  { label: 'Operations', types: ['strategy', 'other'] },
+];
+
+const FY_START = '2025-04-01T00:00:00+05:30';
+
+function computeStats(tasks: any[]) {
+  const total     = tasks.length;
+  const completed = tasks.filter(t => t.status === 'approved').length;
+  const pending   = tasks.filter(t => ['in_progress', 'review', 'rework', 'scheduled'].includes(t.status)).length;
+  const backlog   = tasks.filter(t => t.status === 'pending').length;
+  const pct       = total > 0 ? Math.round((completed / total) * 100) : 0;
+  return { total, completed, pending, backlog, pct };
+}
+
+async function BrandPerformance({
+  brandId,
+  supabase,
+  accentColor,
+}: {
+  brandId: string;
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  accentColor: string | null;
+}) {
+  const { data: tasks } = await supabase
+    .from('tasks')
+    .select('id, status, task_type')
+    .eq('brand_id', brandId)
+    .neq('status', 'cancelled')
+    .gte('start_date', FY_START);
+
+  const fyTasks = tasks ?? [];
+  const overall = computeStats(fyTasks);
+  const accent = accentColor ?? 'var(--ink)';
+
+  const summaryCards = [
+    { label: 'Total Allocated', value: overall.total },
+    { label: 'Completed',       value: overall.completed },
+    { label: 'Pending',         value: overall.pending },
+    { label: 'Completion',      value: `${overall.pct}%` },
+  ];
+
+  return (
+    <div>
+      <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)] mb-4">
+        Delivery tracker · FY 2025–26
+      </p>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {summaryCards.map(({ label, value }) => (
+          <div
+            key={label}
+            style={{ background: 'var(--paper)', border: '1.5px solid var(--line)', borderRadius: '14px', padding: '18px 20px', boxShadow: `4px 4px 0 ${accent}` }}
+          >
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '8px' }}>{label}</p>
+            <p style={{ fontFamily: 'var(--f-display)', fontSize: '36px', lineHeight: 1, color: 'var(--ink)' }}>{value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Department breakdown table */}
+      {fyTasks.length > 0 && (
+        <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '14px', overflow: 'hidden' }}>
+          {/* Table header */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(5, 1fr)', padding: '10px 20px', background: 'var(--ink)' }}>
+            {['Department', 'Assigned', 'Completed', 'Pending', 'Backlog', '%'].map(h => (
+              <p key={h} style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cream)' }}>{h}</p>
+            ))}
+          </div>
+          {/* Department rows */}
+          {DEPT_MAP.map(({ label, types }, i) => {
+            const deptTasks = fyTasks.filter(t => types.includes(t.task_type));
+            const s = computeStats(deptTasks);
+            const isLast = i === DEPT_MAP.length - 1;
+            return (
+              <div
+                key={label}
+                style={{
+                  display: 'grid', gridTemplateColumns: '1.4fr repeat(5, 1fr)',
+                  padding: '12px 20px',
+                  borderBottom: isLast ? 'none' : '1px solid var(--line)',
+                  background: i % 2 === 0 ? 'transparent' : 'rgba(13,13,11,0.02)',
+                }}
+              >
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', fontWeight: 600 }}>{label}</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px' }}>{s.total}</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: s.completed > 0 ? '#1a7a45' : 'var(--gray)' }}>{s.completed}</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: s.pending > 0 ? '#2226D9' : 'var(--gray)' }}>{s.pending}</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: s.backlog > 0 ? 'var(--coral)' : 'var(--gray)' }}>{s.backlog}</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 600, color: s.pct >= 80 ? '#1a7a45' : s.pct >= 40 ? '#7a5c00' : 'var(--gray)' }}>
+                  {s.total > 0 ? `${s.pct}%` : '—'}
+                </p>
+              </div>
+            );
+          })}
+          {/* Total row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr repeat(5, 1fr)', padding: '12px 20px', borderTop: `2px solid var(--ink)`, background: 'rgba(13,13,11,0.03)' }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700 }}>{overall.total}</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700, color: '#1a7a45' }}>{overall.completed}</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700, color: '#2226D9' }}>{overall.pending}</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700, color: 'var(--coral)' }}>{overall.backlog}</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700 }}>{overall.pct}%</p>
+          </div>
+        </div>
+      )}
+
+      {fyTasks.length === 0 && (
+        <p className="text-sm text-[var(--gray)]">No tasks found for FY 2025–26.</p>
+      )}
     </div>
   );
 }
