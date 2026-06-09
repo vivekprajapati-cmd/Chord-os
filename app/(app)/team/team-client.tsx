@@ -122,7 +122,7 @@ export default function TeamClient({ people: initialPeople, capacityMap = {} }: 
                             <div style={{ width: `${pct}%`, height: '100%', background: isOverloaded ? 'var(--coral)' : 'var(--cobalt)', borderRadius: '999px', transition: 'width 0.3s' }} />
                           </div>
                           <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: isOverloaded ? 'var(--coral)' : 'var(--gray)' }}>
-                            {blockedHours}h blocked · {remainingHours}h free
+                            {Math.round(blockedHours * 10) / 10}h blocked · {Math.round(remainingHours * 10) / 10}h free
                           </p>
                         </div>
                       </div>
