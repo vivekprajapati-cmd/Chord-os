@@ -191,12 +191,12 @@ export async function POST(req: Request) {
   let endAt: string | null = null;
 
   if (start_date && deadline) {
-    // For flexible tasks, treat deadline as end of day IST (23:59:59)
+    // For flexible tasks, anchor deadline to end of selected day, start to beginning — no timezone conversion
     const resolvedDeadline = flexible
-      ? new Date(`${deadline.slice(0, 10)}T23:59:59+05:30`).toISOString()
+      ? `${deadline.slice(0, 10)}T23:59:59Z`
       : deadline;
     const resolvedStart = flexible
-      ? new Date(`${start_date.slice(0, 10)}T00:00:00+05:30`).toISOString()
+      ? `${start_date.slice(0, 10)}T00:00:00Z`
       : start_date;
 
     const startMs = new Date(resolvedStart).getTime();
