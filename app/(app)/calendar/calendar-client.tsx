@@ -345,7 +345,7 @@ export default function CalendarClient({
             {capacity && (
               <div className="flex items-center gap-3 mt-2">
                 <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>
-                  Today: <strong style={{ color: capacity.remaining_hours === 0 ? 'var(--coral)' : 'var(--ink)' }}>{capacity.remaining_hours}h remaining</strong> of {capacity.total_hours}h
+                  Today: <strong style={{ color: capacity.remaining_hours === 0 ? 'var(--coral)' : 'var(--ink)' }}>{Math.round(capacity.remaining_hours * 10) / 10}h remaining</strong> of {capacity.total_hours}h
                 </span>
                 <div style={{ width: '80px', height: '4px', background: 'var(--line)', borderRadius: '999px', overflow: 'hidden' }}>
                   <div style={{ width: `${Math.min(100, capacity.utilization_pct ?? 0)}%`, height: '100%', background: (capacity.utilization_pct ?? 0) >= 100 ? 'var(--coral)' : 'var(--cobalt)', borderRadius: '999px', transition: 'width 0.3s ease' }} />
