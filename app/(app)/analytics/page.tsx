@@ -91,15 +91,15 @@ export default async function AnalyticsPage({
 
   const { data: periodTasks } = await supabase
     .from('tasks')
-    .select('id, owner_id, status, deadline, start_date, priority')
+    .select('id, owner_id, status, deadline, start_date, submitted_at, priority')
     .not('status', 'eq', 'cancelled')
     .gte('start_date', rangeStart)
     .lte('start_date', rangeEnd);
 
   // Build member stats from period tasks
-  const statsMap: Record<string, { total: number; completed: number; active: number; delays: number }> = {};
+  const statsMap: Record<string, { total: number; completed: number; active: number; delays: number; turnaroundHours: number[]; }> = {};
   (periodTasks ?? []).forEach((t: any) => {
-    if (!statsMap[t.owner_id]) statsMap[t.owner_id] = { total: 0, completed: 0, active: 0, delays: 0 };
+    if (!statsMap[t.owner_id]) statsMap[t.owner_id] = { total: 0, completed: 0, active: 0, delays: 0, turnaroundHours: [] };
     statsMap[t.owner_id].total += 1;
     if (['approved', 'done'].includes(t.status)) statsMap[t.owner_id].completed += 1;
     if (!['approved', 'done'].includes(t.status)) statsMap[t.owner_id].active += 1;
@@ -107,11 +107,19 @@ export default async function AnalyticsPage({
     if (t.deadline && new Date(t.deadline) < new Date() && !['approved', 'done'].includes(t.status)) {
       statsMap[t.owner_id].delays += 1;
     }
+    // Turnaround: start_date → submitted_at (only for submitted tasks)
+    if (t.start_date && t.submitted_at) {
+      const hours = (new Date(t.submitted_at).getTime() - new Date(t.start_date).getTime()) / 3600000;
+      if (hours > 0) statsMap[t.owner_id].turnaroundHours.push(hours);
+    }
   });
 
   const members: MemberStat[] = (allPeople ?? []).map((p: any) => {
-    const s = statsMap[p.id] ?? { total: 0, completed: 0, active: 0, delays: 0 };
+    const s = statsMap[p.id] ?? { total: 0, completed: 0, active: 0, delays: 0, turnaroundHours: [] };
     const onTimeRate = s.total > 0 ? Math.round(((s.total - s.delays) / s.total) * 100) : null;
+    const avgTurnaround = s.turnaroundHours.length > 0
+      ? Math.round((s.turnaroundHours.reduce((a, b) => a + b, 0) / s.turnaroundHours.length) * 10) / 10
+      : null;
     return {
       person_id: p.id,
       name: p.name,
@@ -122,7 +130,7 @@ export default async function AnalyticsPage({
       late_count: s.delays,
       total_delays: s.delays,
       on_time_rate: onTimeRate,
-      avg_turnaround_hours: null,
+      avg_turnaround_hours: avgTurnaround,
       active_tasks: s.active,
     };
   });
