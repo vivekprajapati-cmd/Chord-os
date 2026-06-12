@@ -283,21 +283,37 @@ export default function CalendarClient({
     e => e.start && activeDay && isSameDay(new Date(e.start), activeDay)
   );
 
-  // Overbooked: sum hours per day
+  // Overbooked: sum hours per day (task blocks + Google events)
   const dayHours: Record<string, number> = {};
   blocks.forEach(b => {
     const key = new Date(b.start_at).toDateString();
     const dur = (new Date(b.end_at).getTime() - new Date(b.start_at).getTime()) / 3600000;
     dayHours[key] = (dayHours[key] ?? 0) + dur;
   });
+  // Add Google Calendar hours into dayHours (only for own calendar)
+  if (selectedPersonId === myPersonId) {
+    googleEvents.forEach(e => {
+      if (!e.start || !e.end) return;
+      const key = new Date(e.start).toDateString();
+      const dur = (new Date(e.end).getTime() - new Date(e.start).getTime()) / 3600000;
+      dayHours[key] = (dayHours[key] ?? 0) + dur;
+    });
+  }
   function isOverbooked(d: Date) {
     return (dayHours[d.toDateString()] ?? 0) > selectedPersonHours;
   }
 
-  // Weekly totals
-  const totalWeekHours = blocks.reduce((sum, b) => {
+  // Weekly totals (task blocks + Google events)
+  const totalBlockHours = blocks.reduce((sum, b) => {
     return sum + (new Date(b.end_at).getTime() - new Date(b.start_at).getTime()) / 3600000;
   }, 0);
+  const totalGoogleWeekHours = selectedPersonId === myPersonId
+    ? googleEvents.reduce((sum, e) => {
+        if (!e.start || !e.end) return sum;
+        return sum + (new Date(e.end).getTime() - new Date(e.start).getTime()) / 3600000;
+      }, 0)
+    : 0;
+  const totalWeekHours = totalBlockHours + totalGoogleWeekHours;
   const totalWeekCapacity = selectedPersonHours * 5; // Mon-Fri
   const weekUtilPct = totalWeekCapacity > 0 ? Math.round((totalWeekHours / totalWeekCapacity) * 100) : 0;
   const brands = brandBreakdown(blocks);
