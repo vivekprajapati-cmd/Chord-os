@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   // Get person's daily hours limit + Google refresh token
   const { data: person } = await supabase
     .from('people')
-    .select('id, name, default_hours_per_day, google_refresh_token')
+    .select('id, name, default_hours_per_day, google_refresh_token, google_calendar_connected')
     .eq(personId ? 'id' : 'email', personId ?? user.email!)
     .maybeSingle();
 
@@ -44,11 +44,21 @@ export async function GET(req: Request) {
 
   // Add Google Calendar event hours if connected
   let googleHours = 0;
-  if ((person as any).google_refresh_token) {
-    googleHours = await getGoogleEventsHours({
+  let googleTokenExpired = false;
+  const googleConnected = !!(person as any).google_calendar_connected && !!(person as any).google_refresh_token;
+
+  if (googleConnected) {
+    const result = await getGoogleEventsHours({
       refreshToken: (person as any).google_refresh_token,
       date,
     }).catch(() => 0);
+
+    if (result === -1) {
+      googleTokenExpired = true;
+      googleHours = 0;
+    } else {
+      googleHours = result;
+    }
   }
 
   const blockedHours = Math.round((taskBlockedHours + googleHours) * 10) / 10;
@@ -64,6 +74,7 @@ export async function GET(req: Request) {
     remaining_hours: remainingHours,
     utilization_pct: utilizationPct,
     date,
+    google_token_expired: googleTokenExpired,
   });
 }
 

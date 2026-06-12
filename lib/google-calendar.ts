@@ -64,6 +64,7 @@ export async function createCalendarEvent({
 }
 
 // Fetch total hours of Google Calendar events for a given day (IST)
+// Returns -1 if the token is expired/revoked so the caller can flag reconnection needed
 export async function getGoogleEventsHours({
   refreshToken,
   date, // YYYY-MM-DD in IST
@@ -72,7 +73,7 @@ export async function getGoogleEventsHours({
   date: string;
 }): Promise<number> {
   const accessToken = await getAccessToken(refreshToken);
-  if (!accessToken) return 0;
+  if (!accessToken) return -1; // token refresh failed — expired or revoked
 
   const dayStart = new Date(`${date}T00:00:00+05:30`).toISOString();
   const dayEnd = new Date(`${date}T23:59:59+05:30`).toISOString();
@@ -87,14 +88,26 @@ export async function getGoogleEventsHours({
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
+  // 401/403 = token revoked or scope issue
+  if (res.status === 401 || res.status === 403) return -1;
   if (!res.ok) return 0;
 
   const data = await res.json();
-  const events: { start?: { dateTime?: string }; end?: { dateTime?: string } }[] = data.items ?? [];
+  const events: {
+    start?: { dateTime?: string; date?: string };
+    end?: { dateTime?: string; date?: string };
+  }[] = data.items ?? [];
 
   const totalMs = events.reduce((acc, e) => {
-    if (!e.start?.dateTime || !e.end?.dateTime) return acc;
-    return acc + (new Date(e.end.dateTime).getTime() - new Date(e.start.dateTime).getTime());
+    if (e.start?.dateTime && e.end?.dateTime) {
+      // Regular timed event
+      return acc + (new Date(e.end.dateTime).getTime() - new Date(e.start.dateTime).getTime());
+    }
+    if (e.start?.date && e.end?.date) {
+      // All-day event — count as 8 hours of blocked time
+      return acc + 8 * 3600000;
+    }
+    return acc;
   }, 0);
 
   return Math.round((totalMs / 3600000) * 10) / 10; // hours, 1 decimal
