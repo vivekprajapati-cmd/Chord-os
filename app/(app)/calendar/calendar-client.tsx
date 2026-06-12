@@ -142,6 +142,7 @@ export default function CalendarClient({
 
   // ── Google / capacity ────────────────────────────────────────────────────
   const [googleEvents, setGoogleEvents] = useState<any[]>([]);
+  const [googleTokenExpired, setGoogleTokenExpired] = useState(false);
   const [capacity, setCapacity] = useState<{ total_hours: number; blocked_hours: number; remaining_hours: number; utilization_pct?: number } | null>(null);
 
   // ── Context modal ────────────────────────────────────────────────────────
@@ -225,7 +226,10 @@ export default function CalendarClient({
     weekEnd.setHours(23, 59, 59, 999);
     fetch(`/api/calendar/google-events?timeMin=${weekStart.toISOString()}&timeMax=${weekEnd.toISOString()}`)
       .then(r => r.json())
-      .then(data => setGoogleEvents(data.events ?? []))
+      .then(data => {
+        setGoogleEvents(data.events ?? []);
+        if (data.token_expired) setGoogleTokenExpired(true);
+      })
       .catch(() => {});
   }, [googleConnected, weekDays, selectedPersonId, myPersonId]);
 
@@ -415,7 +419,7 @@ export default function CalendarClient({
 
             {/* Google Calendar indicator */}
             {selectedPersonId === myPersonId && (
-              googleConnected ? (
+              googleConnected && !googleTokenExpired ? (
                 <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34A853', display: 'inline-block' }} />
                   GCal
@@ -423,9 +427,9 @@ export default function CalendarClient({
               ) : (
                 <a
                   href="/api/auth/google"
-                  style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink)', color: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '8px 16px', textDecoration: 'none', display: 'inline-block' }}
+                  style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', background: googleTokenExpired ? 'var(--coral)' : 'var(--ink)', color: 'var(--cream)', border: `1px solid ${googleTokenExpired ? 'var(--coral)' : 'var(--ink)'}`, borderRadius: '999px', padding: '8px 16px', textDecoration: 'none', display: 'inline-block' }}
                 >
-                  Connect Google Calendar
+                  {googleTokenExpired ? 'Reconnect Google Calendar' : 'Connect Google Calendar'}
                 </a>
               )
             )}

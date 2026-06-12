@@ -35,7 +35,7 @@ export async function GET(req: Request) {
   }
 
   const accessToken = await getAccessToken(person.google_refresh_token);
-  if (!accessToken) return NextResponse.json({ events: [] });
+  if (!accessToken) return NextResponse.json({ events: [], token_expired: true });
 
   // Get week range from query params
   const { searchParams } = new URL(req.url);
@@ -54,6 +54,7 @@ export async function GET(req: Request) {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
+  if (res.status === 401 || res.status === 403) return NextResponse.json({ events: [], token_expired: true });
   if (!res.ok) return NextResponse.json({ events: [] });
 
   const data = await res.json();
