@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createAdmin } from '@/lib/supabase/admin';
 
 const CAN_MANAGE = ['admin', 'lead', 'operations'];
 

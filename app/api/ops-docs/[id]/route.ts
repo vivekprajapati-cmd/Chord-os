@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createAdmin } from '@/lib/supabase/admin';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 const CAN_MANAGE = ['admin', 'lead', 'operations'];
 const STORAGE_BUCKET = 'briefings';
@@ -30,7 +30,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
   // Delete file from storage if exists
   if (doc?.file_path) {
-    const admin = createAdmin();
+    const admin = createAdminClient();
     await admin.storage.from(STORAGE_BUCKET).remove([doc.file_path]);
   }
 
