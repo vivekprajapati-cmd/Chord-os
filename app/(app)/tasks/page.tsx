@@ -40,7 +40,7 @@ export default async function TasksPage({
   const tier = (person as any)?.access_tier ?? 'staff';
   const viewAll = !!(person as any)?.view_all;
   const canCreate = true; // all tiers can create tasks (staff locked to self)
-  const isStaff = tier === 'staff' || tier === 'viewer' || tier === 'operations';
+  const isStaff = tier === 'staff' || tier === 'viewer';
   const isAdmin = tier === 'admin';
   const isLead = tier === 'lead';
   const isViewer = tier === 'viewer';
