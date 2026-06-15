@@ -35,9 +35,50 @@ const MONTHS = [
   'July','August','September','October','November','December',
 ];
 
+const YEARS = Array.from({ length: 11 }, (_, i) => 2025 + i); // 2025–2035
+
 function monthLabel(m: string) {
   const [year, month] = m.split('-');
   return `${MONTHS[parseInt(month) - 1]} ${year}`;
+}
+
+function MonthYearPicker({
+  value,
+  onChange,
+  style,
+}: {
+  value: string; // YYYY-MM
+  onChange: (v: string) => void;
+  style?: React.CSSProperties;
+}) {
+  const [year, mon] = value ? value.split('-') : ['2026', '01'];
+  const sel: React.CSSProperties = {
+    fontFamily: 'var(--f-mono)', fontSize: '11px',
+    background: 'var(--paper)', border: '1px solid var(--line)',
+    borderRadius: '8px', padding: '6px 10px',
+    color: 'var(--ink)', cursor: 'pointer', outline: 'none',
+    ...style,
+  };
+  return (
+    <div style={{ display: 'flex', gap: '4px' }}>
+      <select
+        value={mon}
+        onChange={e => onChange(`${year}-${e.target.value}`)}
+        style={sel}
+      >
+        {MONTHS.map((m, i) => (
+          <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>
+        ))}
+      </select>
+      <select
+        value={year}
+        onChange={e => onChange(`${e.target.value}-${mon}`)}
+        style={sel}
+      >
+        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+      </select>
+    </div>
+  );
 }
 
 function timeAgo(dateStr: string) {
@@ -159,13 +200,6 @@ export default function BrandOpsDocs({
     setSaving(false);
   }
 
-  // Generate month options (last 6 months + next 2)
-  const monthOptions: string[] = [];
-  for (let i = -5; i <= 2; i++) {
-    const d = new Date(Date.UTC(nowIST.getUTCFullYear(), nowIST.getUTCMonth() + i, 1));
-    monthOptions.push(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`);
-  }
-
   const sel: React.CSSProperties = { fontFamily: 'var(--f-mono)', fontSize: '11px', background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '8px', padding: '6px 10px', color: 'var(--ink)', cursor: 'pointer', outline: 'none' };
   const inp: React.CSSProperties = { fontFamily: 'var(--f-mono)', fontSize: '12px', background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: '10px', padding: '10px 14px', width: '100%', outline: 'none', color: 'var(--ink)' };
   const lbl: React.CSSProperties = { fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '6px' };
@@ -197,10 +231,7 @@ export default function BrandOpsDocs({
           <option value="">All Types</option>
           {Object.entries(DOC_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)} style={sel}>
-          <option value="">All Months</option>
-          {monthOptions.map(m => <option key={m} value={m}>{monthLabel(m)}</option>)}
-        </select>
+        <MonthYearPicker value={filterMonth} onChange={setFilterMonth} />
         <select value={filterWeek} onChange={e => setFilterWeek(e.target.value)} style={sel}>
           <option value="">All Weeks</option>
           {[1,2,3,4,5].map(w => <option key={w} value={w}>Week {w}</option>)}
@@ -302,9 +333,11 @@ export default function BrandOpsDocs({
               </div>
               <div>
                 <label style={lbl}>Month</label>
-                <select value={form.month} onChange={e => setForm(f => ({ ...f, month: e.target.value }))} style={{ ...inp, cursor: 'pointer' }}>
-                  {monthOptions.map(m => <option key={m} value={m}>{monthLabel(m)}</option>)}
-                </select>
+                <MonthYearPicker
+                  value={form.month}
+                  onChange={v => setForm(f => ({ ...f, month: v }))}
+                  style={{ background: 'var(--cream)' }}
+                />
               </div>
               <div>
                 <label style={lbl}>Week</label>
