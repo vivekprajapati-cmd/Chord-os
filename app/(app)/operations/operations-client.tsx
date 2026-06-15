@@ -1,18 +1,30 @@
 'use client';
 
 import { useState } from 'react';
+import BrandOpsDocs from '@/components/brand-ops-docs';
 
 type OpsLink = { id: string; title: string; url: string; sort_order: number };
+type Brand = { id: string; name: string; slug: string };
+
+const BRAND_DOCS_TAB = '__brand_docs__';
 
 export default function OperationsClient({
   initialLinks,
   isAdmin,
+  canManage,
+  brands,
+  initialDocs,
+  currentPersonId,
 }: {
   initialLinks: OpsLink[];
   isAdmin: boolean;
+  canManage: boolean;
+  brands: Brand[];
+  initialDocs: any[];
+  currentPersonId: string;
 }) {
   const [links, setLinks] = useState<OpsLink[]>(initialLinks);
-  const [activeId, setActiveId] = useState<string>(initialLinks[0]?.id ?? '');
+  const [activeId, setActiveId] = useState<string>(initialLinks[0]?.id ?? BRAND_DOCS_TAB);
 
   // Add form
   const [showAdd, setShowAdd] = useState(false);
@@ -29,6 +41,7 @@ export default function OperationsClient({
   const [error, setError] = useState('');
 
   const activeLink = links.find(l => l.id === activeId) ?? null;
+  const isBrandDocs = activeId === BRAND_DOCS_TAB;
 
   async function addLink() {
     if (!addTitle.trim() || !addUrl.trim()) return;
@@ -75,7 +88,7 @@ export default function OperationsClient({
     if (!res.ok) return;
     const remaining = links.filter(l => l.id !== id);
     setLinks(remaining);
-    if (activeId === id) setActiveId(remaining[0]?.id ?? '');
+    if (activeId === id) setActiveId(remaining[0]?.id ?? BRAND_DOCS_TAB);
   }
 
   return (
@@ -89,7 +102,7 @@ export default function OperationsClient({
           <h1 className="font-display text-5xl uppercase tracking-tight">Ops Hub</h1>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          {activeLink && (
+          {activeLink && !isBrandDocs && (
             <a
               href={activeLink.url}
               target="_blank"
@@ -99,7 +112,7 @@ export default function OperationsClient({
               ↗ Open in new tab
             </a>
           )}
-          {isAdmin && (
+          {isAdmin && !isBrandDocs && (
             <button
               onClick={() => { setShowAdd(s => !s); setError(''); }}
               style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink)', color: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '8px 16px', cursor: 'pointer' }}
@@ -111,7 +124,7 @@ export default function OperationsClient({
       </div>
 
       {/* Add link form — admin only */}
-      {isAdmin && showAdd && (
+      {isAdmin && showAdd && !isBrandDocs && (
         <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '14px', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)' }}>
             New link — Google Sheets (published), Airtable, Coda, Excel Online
@@ -153,92 +166,108 @@ export default function OperationsClient({
         </div>
       )}
 
-      {links.length > 0 ? (
-        <>
-          {/* Tab strip */}
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {links.map(link => (
-              <div key={link.id} style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                {editingId === link.id ? (
-                  /* Inline edit */
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', background: 'var(--paper)', border: '1px solid var(--ink)', borderRadius: '10px', padding: '4px 8px' }}>
-                    <input
-                      value={editTitle}
-                      onChange={e => setEditTitle(e.target.value)}
-                      style={{ width: '100px', background: 'transparent', border: 'none', outline: 'none', fontFamily: 'var(--f-mono)', fontSize: '11px' }}
-                      autoFocus
-                    />
-                    <input
-                      value={editUrl}
-                      onChange={e => setEditUrl(e.target.value)}
-                      style={{ width: '180px', background: 'transparent', border: 'none', outline: 'none', fontFamily: 'var(--f-mono)', fontSize: '11px' }}
-                      placeholder="URL"
-                    />
+      {/* Tab strip */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+        {links.map(link => (
+          <div key={link.id} style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+            {editingId === link.id ? (
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', background: 'var(--paper)', border: '1px solid var(--ink)', borderRadius: '10px', padding: '4px 8px' }}>
+                <input
+                  value={editTitle}
+                  onChange={e => setEditTitle(e.target.value)}
+                  style={{ width: '100px', background: 'transparent', border: 'none', outline: 'none', fontFamily: 'var(--f-mono)', fontSize: '11px' }}
+                  autoFocus
+                />
+                <input
+                  value={editUrl}
+                  onChange={e => setEditUrl(e.target.value)}
+                  style={{ width: '180px', background: 'transparent', border: 'none', outline: 'none', fontFamily: 'var(--f-mono)', fontSize: '11px' }}
+                  placeholder="URL"
+                />
+                <button
+                  onClick={() => saveEdit(link.id)}
+                  disabled={saving}
+                  style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', background: 'var(--ink)', color: 'var(--cream)', border: 'none', borderRadius: '6px', padding: '3px 8px', cursor: 'pointer' }}
+                >
+                  {saving ? '…' : 'Save'}
+                </button>
+                <button
+                  onClick={() => setEditingId(null)}
+                  style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', background: 'transparent', border: 'none', color: 'var(--gray)', cursor: 'pointer' }}
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => setActiveId(link.id)}
+                  style={{
+                    fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em',
+                    padding: '7px 14px', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.15s',
+                    background: activeId === link.id ? 'var(--ink)' : 'var(--paper)',
+                    color: activeId === link.id ? 'var(--cream)' : 'var(--ink)',
+                    border: `1px solid ${activeId === link.id ? 'var(--ink)' : 'var(--line)'}`,
+                  }}
+                >
+                  {link.title}
+                </button>
+                {isAdmin && (
+                  <>
                     <button
-                      onClick={() => saveEdit(link.id)}
-                      disabled={saving}
-                      style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', background: 'var(--ink)', color: 'var(--cream)', border: 'none', borderRadius: '6px', padding: '3px 8px', cursor: 'pointer' }}
+                      onClick={() => { setEditingId(link.id); setEditTitle(link.title); setEditUrl(link.url); }}
+                      title="Edit"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', padding: '4px', lineHeight: 1 }}
                     >
-                      {saving ? '…' : 'Save'}
+                      ✎
                     </button>
                     <button
-                      onClick={() => setEditingId(null)}
-                      style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', background: 'transparent', border: 'none', color: 'var(--gray)', cursor: 'pointer' }}
+                      onClick={() => deleteLink(link.id)}
+                      title="Remove"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', padding: '4px', lineHeight: 1 }}
                     >
                       ×
                     </button>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => setActiveId(link.id)}
-                      style={{
-                        fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em',
-                        padding: '7px 14px', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.15s',
-                        background: activeId === link.id ? 'var(--ink)' : 'var(--paper)',
-                        color: activeId === link.id ? 'var(--cream)' : 'var(--ink)',
-                        border: `1px solid ${activeId === link.id ? 'var(--ink)' : 'var(--line)'}`,
-                      }}
-                    >
-                      {link.title}
-                    </button>
-                    {isAdmin && (
-                      <>
-                        <button
-                          onClick={() => { setEditingId(link.id); setEditTitle(link.title); setEditUrl(link.url); }}
-                          title="Edit"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', padding: '4px', lineHeight: 1 }}
-                        >
-                          ✎
-                        </button>
-                        <button
-                          onClick={() => deleteLink(link.id)}
-                          title="Remove"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', padding: '4px', lineHeight: 1 }}
-                        >
-                          ×
-                        </button>
-                      </>
-                    )}
                   </>
                 )}
-              </div>
-            ))}
+              </>
+            )}
           </div>
+        ))}
 
-          {/* Embed */}
-          {activeLink && (
-            <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--line)', background: 'var(--paper)' }}>
-              <iframe
-                key={activeLink.id}
-                src={activeLink.url}
-                style={{ width: '100%', height: 'calc(100vh - 300px)', minHeight: '500px', border: 'none', display: 'block' }}
-                title={activeLink.title}
-                allow="clipboard-read; clipboard-write"
-              />
-            </div>
-          )}
-        </>
+        {/* Brand Documents tab — always present */}
+        <button
+          onClick={() => setActiveId(BRAND_DOCS_TAB)}
+          style={{
+            fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em',
+            padding: '7px 14px', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.15s',
+            background: isBrandDocs ? 'var(--ink)' : 'var(--paper)',
+            color: isBrandDocs ? 'var(--cream)' : 'var(--ink)',
+            border: `1px solid ${isBrandDocs ? 'var(--ink)' : 'var(--line)'}`,
+          }}
+        >
+          Brand Documents
+        </button>
+      </div>
+
+      {/* Content area */}
+      {isBrandDocs ? (
+        <BrandOpsDocs
+          brands={brands}
+          initialDocs={initialDocs}
+          canManage={canManage}
+          currentPersonId={currentPersonId}
+        />
+      ) : activeLink ? (
+        <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--line)', background: 'var(--paper)' }}>
+          <iframe
+            key={activeLink.id}
+            src={activeLink.url}
+            style={{ width: '100%', height: 'calc(100vh - 300px)', minHeight: '500px', border: 'none', display: 'block' }}
+            title={activeLink.title}
+            allow="clipboard-read; clipboard-write"
+          />
+        </div>
       ) : (
         <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px', padding: '80px 40px', textAlign: 'center' }}>
           <p style={{ fontFamily: 'var(--f-display)', fontSize: '28px', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: '8px' }}>
