@@ -155,7 +155,7 @@ export default async function TasksPage({
         const nowIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
         const todayStr = `${nowIST.getUTCFullYear()}-${String(nowIST.getUTCMonth() + 1).padStart(2, '0')}-${String(nowIST.getUTCDate()).padStart(2, '0')}`;
         q = q
-          .not('status', 'in', '("done","cancelled","approved","rework")')
+          .not('status', 'in', '("done","cancelled","approved")')
           .or(`start_date.is.null,start_date.lte.${todayStr}`)
           .or(`deadline.is.null,deadline.gte.${todayStr}`);
       }
@@ -183,7 +183,6 @@ export default async function TasksPage({
               { href: '/tasks?status=ready_for_review', label: 'Review queue', active: statusFilter === 'ready_for_review', activeColor: 'var(--coral)' },
               { href: '/tasks?status=delayed',          label: 'Delayed',      active: statusFilter === 'delayed',           activeColor: 'var(--red)' },
               { href: '/tasks?status=approved',         label: 'Approved',     active: statusFilter === 'approved',          activeColor: 'var(--coral)' },
-              { href: '/tasks?status=rework',           label: 'Rework',       active: statusFilter === 'rework',            activeColor: 'var(--red)' },
               { href: '/tasks?status=done',             label: 'Done',         active: statusFilter === 'done',              activeColor: 'var(--coral)' },
             ].map(({ href, label, active, activeColor }) => (
               <a
