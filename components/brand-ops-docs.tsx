@@ -213,7 +213,7 @@ export default function BrandOpsDocs({
         </p>
         {canManage && (
           <button
-            onClick={() => { setShowModal(true); setError(''); }}
+            onClick={() => { setShowModal(true); setError(''); setUploadFile(null); setForm({ brand_id: brands[0]?.id ?? '', doc_type: 'orm_report', month: currentMonth, week: '1', link: '' }); }}
             style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink)', color: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '8px 16px', cursor: 'pointer' }}
           >
             + Add Document
