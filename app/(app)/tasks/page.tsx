@@ -151,7 +151,13 @@ export default async function TasksPage({
       } else if (statusFilter) {
         q = q.eq('status', statusFilter);
       } else {
-        q = q.not('status', 'in', '("done","cancelled")');
+        // Active = tasks spanning today in IST
+        const nowIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+        const todayStr = `${nowIST.getUTCFullYear()}-${String(nowIST.getUTCMonth() + 1).padStart(2, '0')}-${String(nowIST.getUTCDate()).padStart(2, '0')}`;
+        q = q
+          .not('status', 'in', '("done","cancelled")')
+          .or(`start_date.is.null,start_date.lte.${todayStr}`)
+          .or(`deadline.is.null,deadline.gte.${todayStr}`);
       }
 
       return q;
