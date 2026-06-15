@@ -112,7 +112,7 @@ export default function OperationsClient({
               ↗ Open in new tab
             </a>
           )}
-          {isAdmin && !isBrandDocs && (
+          {isAdmin && (
             <button
               onClick={() => { setShowAdd(s => !s); setError(''); }}
               style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink)', color: 'var(--cream)', border: '1px solid var(--ink)', borderRadius: '999px', padding: '8px 16px', cursor: 'pointer' }}
@@ -124,7 +124,7 @@ export default function OperationsClient({
       </div>
 
       {/* Add link form — admin only */}
-      {isAdmin && showAdd && !isBrandDocs && (
+      {isAdmin && showAdd && (
         <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '14px', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)' }}>
             New link — Google Sheets (published), Airtable, Coda, Excel Online
