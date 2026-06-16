@@ -377,103 +377,136 @@ export default function BrandPerformance({
       ) : (
         <>
           {/* Summary bar */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
             {[
-              { label: 'Total Reach',      value: fmtNum(totals.reach) },
-              { label: 'Total Views',      value: fmtNum(totals.views) },
-              { label: 'Avg ER%',          value: `${avgER.toFixed(2)}%` },
-              { label: 'Posts This Week',  value: String(totals.posts) },
-            ].map(({ label, value }) => (
+              { label: 'TOTAL REACH',       value: fmtNum(totals.reach),          icon: '◎', iconBg: '#D6F5E3', iconColor: '#2E8B57' },
+              { label: 'TOTAL VIEWS',       value: fmtNum(totals.views),           icon: '◉', iconBg: '#E8E0F7', iconColor: '#6B46C1' },
+              { label: 'ENGAGEMENT RATE',   value: `${avgER.toFixed(2)}%`,         icon: '♡', iconBg: '#FCE4EC', iconColor: '#C2185B' },
+              { label: 'POSTS THIS MONTH',  value: String(totals.posts),           icon: '◷', iconBg: '#FFF3E0', iconColor: '#E65100' },
+            ].map(({ label, value, icon, iconBg, iconColor }) => (
               <div
                 key={label}
-                style={{ background: 'var(--paper)', border: '1.5px solid var(--line)', borderRadius: '14px', padding: '18px 20px', boxShadow: '4px 4px 0 var(--ink)' }}
+                style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '18px', padding: '20px 22px', display: 'flex', alignItems: 'center', gap: '16px' }}
               >
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '8px' }}>{label}</p>
-                <p style={{ fontFamily: 'var(--f-display)', fontSize: '32px', lineHeight: 1, color: 'var(--ink)' }}>{value}</p>
+                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: '18px', color: iconColor, lineHeight: 1 }}>{icon}</span>
+                </div>
+                <div>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '4px' }}>{label}</p>
+                  <p style={{ fontFamily: 'var(--f-body)', fontSize: '28px', fontWeight: 800, lineHeight: 1, color: 'var(--ink)' }}>{value}</p>
+                </div>
               </div>
             ))}
           </div>
 
           {/* Brand cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
-            {metrics.filter(m => m.feed.postCount > 0 || m.story.storyCount > 0).map(m => (
-              <div
-                key={m.brand.id}
-                style={{ background: 'var(--paper)', border: '1.5px solid var(--line)', borderRadius: '16px', padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '14px', boxShadow: '4px 4px 0 var(--line)' }}
-              >
-                {/* Brand header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'var(--ink)', color: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: '12px', fontWeight: 600, flexShrink: 0 }}>
-                    {getBrandInitials(m.brand.name)}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+            {metrics.filter(m => m.feed.postCount > 0 || m.story.storyCount > 0).map(m => {
+              const feedRows = [
+                { label: 'Reach',            value: fmtNum(m.feed.totalReach) },
+                { label: 'Views',            value: fmtNum(m.feed.totalViews) },
+                { label: 'Engagement Rate',  value: `${m.feed.avgER.toFixed(2)}%` },
+                { label: 'Posts / Month',    value: String(m.postsPerWeek) },
+              ];
+              const storyRows = m.story.storyCount > 0 ? [
+                { label: 'Story Reach',    value: fmtNum(m.story.totalReach) },
+                { label: 'Story Views',    value: fmtNum(m.story.totalViews) },
+                { label: 'Story Engaged',  value: fmtNum(m.story.totalEngaged) },
+                { label: 'Stories',        value: String(m.story.storyCount) },
+              ] : [];
+              const hasDocs = !!(m.ormDoc || m.reviewDoc);
+              return (
+                <div
+                  key={m.brand.id}
+                  style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '18px', padding: '20px 22px 16px', display: 'flex', flexDirection: 'column', gap: '0' }}
+                >
+                  {/* Header row */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--ink)', color: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700, flexShrink: 0, letterSpacing: '0.02em' }}>
+                        {getBrandInitials(m.brand.name)}
+                      </div>
+                      <p style={{ fontFamily: 'var(--f-body)', fontSize: '15px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}>
+                        {m.brand.name}
+                      </p>
+                    </div>
+                    <span style={{ fontFamily: 'var(--f-mono)', fontSize: '18px', color: 'var(--gray)', lineHeight: 1, letterSpacing: '0.1em', userSelect: 'none' }}>⋯</span>
                   </div>
-                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    {m.brand.name}
-                  </p>
-                </div>
 
-                {/* Feed metrics */}
-                <div>
-                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '8px' }}>Feed</p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                    {[
-                      { label: 'Reach',          value: fmtNum(m.feed.totalReach) },
-                      { label: 'Views',          value: fmtNum(m.feed.totalViews) },
-                      { label: 'Engagement Rate', value: `${m.feed.avgER.toFixed(2)}%` },
-                      { label: 'Posts/Week',     value: String(m.postsPerWeek) },
-                    ].map(({ label, value }) => (
-                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: '1px solid var(--line)' }}>
-                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>{label}</p>
-                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>{value}</p>
+                  {/* Feed metric rows */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0', marginBottom: storyRows.length ? '10px' : '0' }}>
+                    {feedRows.map(({ label, value }) => (
+                      <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--ink)', display: 'inline-block', flexShrink: 0 }} />
+                          <span style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--ink)' }}>{label}</span>
+                        </div>
+                        <span style={{ fontFamily: 'var(--f-body)', fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>{value}</span>
                       </div>
                     ))}
                   </div>
-                </div>
 
-                {/* Story metrics */}
-                {m.story.storyCount > 0 && (
-                  <div>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '8px' }}>Stories</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                      {[
-                        { label: 'Reach',    value: fmtNum(m.story.totalReach) },
-                        { label: 'Views',    value: fmtNum(m.story.totalViews) },
-                        { label: 'Engaged',  value: fmtNum(m.story.totalEngaged) },
-                        { label: 'Stories',  value: String(m.story.storyCount) },
-                      ].map(({ label, value }) => (
-                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: '1px solid var(--line)' }}>
-                          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>{label}</p>
-                          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>{value}</p>
+                  {/* Story metric rows */}
+                  {storyRows.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0', paddingTop: '4px', borderTop: '1px solid var(--line)', marginBottom: '0' }}>
+                      {storyRows.map(({ label, value }) => (
+                        <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--gray)', display: 'inline-block', flexShrink: 0 }} />
+                            <span style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--ink)' }}>{label}</span>
+                          </div>
+                          <span style={{ fontFamily: 'var(--f-body)', fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>{value}</span>
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* ORM + Review Deck links */}
-                {(m.ormDoc || m.reviewDoc) && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '4px', borderTop: '1px solid var(--line)' }}>
-                    {m.ormDoc && (
-                      <button
-                        onClick={() => openDoc(m.ormDoc!)}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}
-                      >
-                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--ink)' }}>ORM Report</p>
-                        <span style={{ fontSize: '12px' }}>↗</span>
-                      </button>
-                    )}
-                    {m.reviewDoc && (
-                      <button
-                        onClick={() => openDoc(m.reviewDoc!)}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}
-                      >
-                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--ink)' }}>Review Deck</p>
-                        <span style={{ fontSize: '12px' }}>↗</span>
-                      </button>
-                    )}
+                  {/* Doc links */}
+                  {hasDocs && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--line)' }}>
+                      {m.ormDoc && (
+                        <button
+                          onClick={() => openDoc(m.ormDoc!)}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: '5px 0', textAlign: 'left' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontFamily: 'var(--f-mono)', fontSize: '14px', color: 'var(--gray)' }}>☐</span>
+                            <span style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--ink)' }}>ORM Report</span>
+                          </div>
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--gray)' }}>↗</span>
+                        </button>
+                      )}
+                      {m.reviewDoc && (
+                        <button
+                          onClick={() => openDoc(m.reviewDoc!)}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: '5px 0', textAlign: 'left' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontFamily: 'var(--f-mono)', fontSize: '14px', color: 'var(--gray)' }}>☐</span>
+                            <span style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--ink)' }}>Review Deck</span>
+                          </div>
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--gray)' }}>↗</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Footer */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--line)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)' }}>🕐</span>
+                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Updated Today</span>
+                    </div>
+                    <a
+                      href={`/brands/${m.brand.slug}`}
+                      style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', fontWeight: 700, color: 'var(--ink)', textDecoration: 'none', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      VIEW DETAILS <span style={{ fontSize: '13px' }}>↗</span>
+                    </a>
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </>
       )}
