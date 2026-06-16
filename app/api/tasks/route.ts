@@ -172,7 +172,7 @@ export async function POST(req: Request) {
   if (!person) return NextResponse.json({ error: 'Person not found.' }, { status: 403 });
 
   const tier = (person as any).access_tier ?? 'staff';
-  const isStaff = tier === 'staff' || tier === 'viewer' || tier === 'operations';
+  const isStaff = tier === 'staff' || tier === 'viewer';
 
   const body = await req.json();
   const { brand_id, owner_id, reviewer_id, deliverable, task_type, task_name, priority, start_date, deadline, notes, recurrence, force, flexible } = body;
