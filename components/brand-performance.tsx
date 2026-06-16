@@ -122,7 +122,7 @@ function parseCSV(text: string, weekFilter: number): { feed: FeedMetrics; story:
     const week = dateStr ? getWeekOfMonth(dateStr) : 0;
 
     // Feed row — must have a date and reach
-    if (dateStr && week === weekFilter) {
+    if (dateStr && (weekFilter === 0 || week === weekFilter)) {
       const reach = parseNum(cols[iReach] ?? '');
       const views = parseNum(cols[iViews] ?? '');
       const eng   = parseNum(cols[iEngagement] ?? '');
@@ -142,7 +142,7 @@ function parseCSV(text: string, weekFilter: number): { feed: FeedMetrics; story:
     if (iStoryDate >= 0) {
       const storyDateStr = (cols[iStoryDate] ?? '').trim();
       const storyWeek = storyDateStr ? getWeekOfMonth(storyDateStr) : 0;
-      if (storyDateStr && storyWeek === weekFilter && !seenStoryDates.has(storyDateStr + (cols[iStoryDate + 1] ?? ''))) {
+      if (storyDateStr && (weekFilter === 0 || storyWeek === weekFilter) && !seenStoryDates.has(storyDateStr + (cols[iStoryDate + 1] ?? ''))) {
         seenStoryDates.add(storyDateStr + (cols[iStoryDate + 1] ?? ''));
         const sReach   = parseNum(cols[iStoryReach] ?? '');
         const sViews   = parseNum(cols[iStoryViews] ?? '');
@@ -185,7 +185,7 @@ function splitCSVLine(line: string): string[] {
 }
 
 function MonthYearPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [year, mon] = value ? value.split('-') : ['2026', '01'];
+  const [year, mon] = value ? value.split('-') : ['', ''];
   const sel: React.CSSProperties = {
     fontFamily: 'var(--f-mono)', fontSize: '11px',
     background: 'var(--paper)', border: '1px solid var(--line)',
@@ -194,14 +194,24 @@ function MonthYearPicker({ value, onChange }: { value: string; onChange: (v: str
   };
   return (
     <div style={{ display: 'flex', gap: '4px' }}>
-      <select value={mon} onChange={e => onChange(`${year}-${e.target.value}`)} style={sel}>
+      <select
+        value={mon}
+        onChange={e => {
+          if (!e.target.value) { onChange(''); return; }
+          onChange(`${year || new Date().getFullYear()}-${e.target.value}`);
+        }}
+        style={sel}
+      >
+        <option value=''>All Months</option>
         {MONTHS.map((m, i) => (
           <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>
         ))}
       </select>
-      <select value={year} onChange={e => onChange(`${e.target.value}-${mon}`)} style={sel}>
-        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-      </select>
+      {mon && (
+        <select value={year} onChange={e => onChange(`${e.target.value}-${mon}`)} style={sel}>
+          {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+      )}
     </div>
   );
 }
@@ -218,8 +228,8 @@ export default function BrandPerformance({
   const currentMonth = `${nowIST.getUTCFullYear()}-${String(nowIST.getUTCMonth() + 1).padStart(2, '0')}`;
 
   const [filterBrand, setFilterBrand] = useState('');
-  const [filterMonth, setFilterMonth] = useState(currentMonth);
-  const [filterWeek, setFilterWeek] = useState(1);
+  const [filterMonth, setFilterMonth] = useState('');
+  const [filterWeek, setFilterWeek] = useState(0);
   const [metrics, setMetrics] = useState<BrandMetrics[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -246,19 +256,19 @@ export default function BrandPerformance({
       const trackerDoc = allDocs.find(d =>
         d.brand_id === brand.id &&
         d.doc_type === 'weekly_tracker' &&
-        d.month === filterMonth
+        (!filterMonth || d.month === filterMonth)
       );
 
       const ormDoc = allDocs.find(d =>
         d.brand_id === brand.id &&
         d.doc_type === 'orm_report' &&
-        d.month === filterMonth
+        (!filterMonth || d.month === filterMonth)
       ) ?? null;
 
       const reviewDoc = allDocs.find(d =>
         d.brand_id === brand.id &&
         d.doc_type === 'review_deck' &&
-        d.month === filterMonth
+        (!filterMonth || d.month === filterMonth)
       ) ?? null;
 
       if (!trackerDoc?.file_path) {
@@ -346,6 +356,7 @@ export default function BrandPerformance({
         </select>
         <MonthYearPicker value={filterMonth} onChange={setFilterMonth} />
         <select value={filterWeek} onChange={e => setFilterWeek(parseInt(e.target.value))} style={sel}>
+          <option value={0}>All Weeks</option>
           {[1,2,3,4,5].map(w => <option key={w} value={w}>Week {w}</option>)}
         </select>
       </div>
@@ -360,7 +371,7 @@ export default function BrandPerformance({
             No data
           </p>
           <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>
-            Upload a Weekly Tracker CSV via Brand Documents for {monthLabel(filterMonth)}.
+            Upload a Weekly Tracker CSV via Brand Documents{filterMonth ? ` for ${monthLabel(filterMonth)}` : ''}.
           </p>
         </div>
       ) : (
