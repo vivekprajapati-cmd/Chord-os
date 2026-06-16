@@ -2,11 +2,13 @@
 
 import { useState } from 'react';
 import BrandOpsDocs from '@/components/brand-ops-docs';
+import BrandPerformance from '@/components/brand-performance';
 
 type OpsLink = { id: string; title: string; url: string; sort_order: number };
 type Brand = { id: string; name: string; slug: string };
 
-const BRAND_DOCS_TAB = '__brand_docs__';
+const BRAND_DOCS_TAB  = '__brand_docs__';
+const BRAND_PERF_TAB  = '__brand_perf__';
 
 export default function OperationsClient({
   initialLinks,
@@ -42,6 +44,7 @@ export default function OperationsClient({
 
   const activeLink = links.find(l => l.id === activeId) ?? null;
   const isBrandDocs = activeId === BRAND_DOCS_TAB;
+  const isBrandPerf = activeId === BRAND_PERF_TAB;
 
   async function addLink() {
     if (!addTitle.trim() || !addUrl.trim()) return;
@@ -102,7 +105,7 @@ export default function OperationsClient({
           <h1 className="font-display text-5xl uppercase tracking-tight">Ops Hub</h1>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          {activeLink && !isBrandDocs && (
+          {activeLink && !isBrandDocs && !isBrandPerf && (
             <a
               href={activeLink.url}
               target="_blank"
@@ -235,7 +238,7 @@ export default function OperationsClient({
           </div>
         ))}
 
-        {/* Brand Documents tab — always present */}
+        {/* Brand Documents tab */}
         <button
           onClick={() => setActiveId(BRAND_DOCS_TAB)}
           style={{
@@ -248,10 +251,29 @@ export default function OperationsClient({
         >
           Brand Documents
         </button>
+
+        {/* Brand Performance tab */}
+        <button
+          onClick={() => setActiveId(BRAND_PERF_TAB)}
+          style={{
+            fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em',
+            padding: '7px 14px', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.15s',
+            background: isBrandPerf ? 'var(--ink)' : 'var(--paper)',
+            color: isBrandPerf ? 'var(--cream)' : 'var(--ink)',
+            border: `1px solid ${isBrandPerf ? 'var(--ink)' : 'var(--line)'}`,
+          }}
+        >
+          Brand Performance
+        </button>
       </div>
 
       {/* Content area */}
-      {isBrandDocs ? (
+      {isBrandPerf ? (
+        <BrandPerformance
+          brands={brands}
+          allDocs={initialDocs}
+        />
+      ) : isBrandDocs ? (
         <BrandOpsDocs
           brands={brands}
           initialDocs={initialDocs}
