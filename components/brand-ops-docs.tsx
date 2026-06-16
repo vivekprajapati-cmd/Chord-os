@@ -206,7 +206,7 @@ export default function BrandOpsDocs({
     setSaving(false);
   }
 
-  const sel: React.CSSProperties = { fontFamily: 'var(--f-mono)', fontSize: '11px', background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '8px', padding: '6px 10px', color: 'var(--ink)', cursor: 'pointer', outline: 'none' };
+  const sel: React.CSSProperties = { fontFamily: 'var(--f-mono)', fontSize: '13px', background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '10px', padding: '10px 16px', color: 'var(--ink)', cursor: 'pointer', outline: 'none' };
   const inp: React.CSSProperties = { fontFamily: 'var(--f-mono)', fontSize: '12px', background: 'var(--cream)', border: '1px solid var(--line)', borderRadius: '10px', padding: '10px 14px', width: '100%', outline: 'none', color: 'var(--ink)' };
   const lbl: React.CSSProperties = { fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '6px' };
 
