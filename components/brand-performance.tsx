@@ -187,9 +187,9 @@ function splitCSVLine(line: string): string[] {
 function MonthYearPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [year, mon] = value ? value.split('-') : ['', ''];
   const sel: React.CSSProperties = {
-    fontFamily: 'var(--f-mono)', fontSize: '11px',
+    fontFamily: 'var(--f-mono)', fontSize: '13px',
     background: 'var(--paper)', border: '1px solid var(--line)',
-    borderRadius: '8px', padding: '6px 10px',
+    borderRadius: '10px', padding: '10px 16px',
     color: 'var(--ink)', cursor: 'pointer', outline: 'none',
   };
   return (
@@ -235,9 +235,9 @@ export default function BrandPerformance({
   const [error, setError] = useState('');
 
   const sel: React.CSSProperties = {
-    fontFamily: 'var(--f-mono)', fontSize: '11px',
+    fontFamily: 'var(--f-mono)', fontSize: '13px',
     background: 'var(--paper)', border: '1px solid var(--line)',
-    borderRadius: '8px', padding: '6px 10px',
+    borderRadius: '10px', padding: '10px 16px',
     color: 'var(--ink)', cursor: 'pointer', outline: 'none',
   };
 
@@ -339,10 +339,10 @@ export default function BrandPerformance({
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)' }}>
+          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)' }}>
             Brand Performance
           </p>
-          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', marginTop: '2px' }}>
+          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--gray)', marginTop: '4px' }}>
             Performance metrics from Weekly Tracker CSV data
           </p>
         </div>
