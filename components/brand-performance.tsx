@@ -33,6 +33,7 @@ type StoryMetrics = {
 
 type BrandMetrics = {
   brand: Brand;
+  month: string; // 'YYYY-MM'
   feed: FeedMetrics;
   story: StoryMetrics;
   postsPerWeek: number;
@@ -252,57 +253,56 @@ export default function BrandPerformance({
     const results: BrandMetrics[] = [];
 
     for (const brand of targetBrands) {
-      // Find weekly tracker doc for this brand + month
-      const trackerDoc = allDocs.find(d =>
+      // All tracker docs for this brand, optionally filtered to a specific month
+      const trackerDocs = allDocs.filter(d =>
         d.brand_id === brand.id &&
         d.doc_type === 'weekly_tracker' &&
+        d.file_path &&
         (!filterMonth || d.month === filterMonth)
       );
 
-      const ormDoc = allDocs.find(d =>
-        d.brand_id === brand.id &&
-        d.doc_type === 'orm_report' &&
-        (!filterMonth || d.month === filterMonth)
-      ) ?? null;
+      for (const trackerDoc of trackerDocs) {
+        const month = trackerDoc.month ?? '';
 
-      const reviewDoc = allDocs.find(d =>
-        d.brand_id === brand.id &&
-        d.doc_type === 'review_deck' &&
-        (!filterMonth || d.month === filterMonth)
-      ) ?? null;
+        const ormDoc = allDocs.find(d =>
+          d.brand_id === brand.id &&
+          d.doc_type === 'orm_report' &&
+          d.month === month
+        ) ?? null;
 
-      if (!trackerDoc?.file_path) {
-        results.push({ brand, feed: emptyFeed(), story: emptyStory(), postsPerWeek: 0, ormDoc, reviewDoc, updatedAt: null });
-        continue;
-      }
+        const reviewDoc = allDocs.find(d =>
+          d.brand_id === brand.id &&
+          d.doc_type === 'review_deck' &&
+          d.month === month
+        ) ?? null;
 
-      try {
-        const { data: urlData } = await supabase.storage
-          .from('briefings')
-          .createSignedUrl(trackerDoc.file_path, 300);
+        try {
+          const { data: urlData } = await supabase.storage
+            .from('briefings')
+            .createSignedUrl(trackerDoc.file_path!, 300);
 
-        if (!urlData?.signedUrl) {
-          results.push({ brand, feed: emptyFeed(), story: emptyStory(), postsPerWeek: 0, ormDoc, reviewDoc, updatedAt: null });
-          continue;
+          if (!urlData?.signedUrl) {
+            results.push({ brand, month, feed: emptyFeed(), story: emptyStory(), postsPerWeek: 0, ormDoc, reviewDoc, updatedAt: null });
+            continue;
+          }
+
+          const res = await fetch(urlData.signedUrl);
+          const text = await res.text();
+          const { feed, story } = parseCSV(text, filterWeek);
+
+          results.push({ brand, month, feed, story, postsPerWeek: feed.postCount, ormDoc, reviewDoc, updatedAt: new Date().toISOString() });
+        } catch {
+          results.push({ brand, month, feed: emptyFeed(), story: emptyStory(), postsPerWeek: 0, ormDoc, reviewDoc, updatedAt: null });
         }
-
-        const res = await fetch(urlData.signedUrl);
-        const text = await res.text();
-        const { feed, story } = parseCSV(text, filterWeek);
-
-        results.push({
-          brand,
-          feed,
-          story,
-          postsPerWeek: feed.postCount,
-          ormDoc,
-          reviewDoc,
-          updatedAt: trackerDoc ? new Date().toISOString() : null,
-        });
-      } catch {
-        results.push({ brand, feed: emptyFeed(), story: emptyStory(), postsPerWeek: 0, ormDoc, reviewDoc, updatedAt: null });
       }
     }
+
+    // Sort: brand name asc, then month desc (newest first)
+    results.sort((a, b) => {
+      const nameCmp = a.brand.name.localeCompare(b.brand.name);
+      if (nameCmp !== 0) return nameCmp;
+      return b.month.localeCompare(a.month);
+    });
 
     setMetrics(results);
     setLoading(false);
@@ -426,9 +426,16 @@ export default function BrandPerformance({
                       <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--ink)', color: 'var(--cream)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700, flexShrink: 0, letterSpacing: '0.02em' }}>
                         {getBrandInitials(m.brand.name)}
                       </div>
-                      <p style={{ fontFamily: 'var(--f-body)', fontSize: '15px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}>
-                        {m.brand.name}
-                      </p>
+                      <div>
+                        <p style={{ fontFamily: 'var(--f-body)', fontSize: '15px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}>
+                          {m.brand.name}
+                        </p>
+                        {m.month && (
+                          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginTop: '3px' }}>
+                            {monthLabel(m.month)}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <span style={{ fontFamily: 'var(--f-mono)', fontSize: '18px', color: 'var(--gray)', lineHeight: 1, letterSpacing: '0.1em', userSelect: 'none' }}>⋯</span>
                   </div>
