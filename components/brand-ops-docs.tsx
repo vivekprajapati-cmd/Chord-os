@@ -53,9 +53,9 @@ function MonthYearPicker({
 }) {
   const [year, mon] = value ? value.split('-') : ['', ''];
   const sel: React.CSSProperties = {
-    fontFamily: 'var(--f-mono)', fontSize: '11px',
+    fontFamily: 'var(--f-mono)', fontSize: '13px',
     background: 'var(--paper)', border: '1px solid var(--line)',
-    borderRadius: '8px', padding: '6px 10px',
+    borderRadius: '10px', padding: '10px 16px',
     color: 'var(--ink)', cursor: 'pointer', outline: 'none',
     ...style,
   };
