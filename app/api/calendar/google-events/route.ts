@@ -63,8 +63,8 @@ export async function GET(req: Request) {
   const events = (data.items ?? []).map((e: any) => ({
     id: e.id,
     title: e.summary ?? 'Busy',
-    start: e.start?.dateTime ?? e.start?.date,
-    end: e.end?.dateTime ?? e.end?.date,
+    start: e.start?.dateTime ? new Date(e.start.dateTime).toISOString() : e.start?.date,
+    end: e.end?.dateTime ? new Date(e.end.dateTime).toISOString() : e.end?.date,
     isAllDay: !e.start?.dateTime,
     meetLink: e.hangoutLink ?? null,
     location: e.location ?? null,
