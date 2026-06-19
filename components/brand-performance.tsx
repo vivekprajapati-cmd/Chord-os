@@ -13,6 +13,7 @@ type OpsDoc = {
   week: number;
   link: string | null;
   file_path: string | null;
+  created_at: string | null;
   brands: { id: string; name: string; slug: string } | null;
 };
 
@@ -290,7 +291,7 @@ export default function BrandPerformance({
           const text = await res.text();
           const { feed, story } = parseCSV(text, filterWeek);
 
-          results.push({ brand, month, feed, story, postsPerWeek: feed.postCount, ormDoc, reviewDoc, updatedAt: new Date().toISOString() });
+          results.push({ brand, month, feed, story, postsPerWeek: feed.postCount, ormDoc, reviewDoc, updatedAt: trackerDoc.created_at ?? null });
         } catch {
           results.push({ brand, month, feed: emptyFeed(), story: emptyStory(), postsPerWeek: 0, ormDoc, reviewDoc, updatedAt: null });
         }
@@ -502,7 +503,20 @@ export default function BrandPerformance({
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--line)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)' }}>🕐</span>
-                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Updated Today</span>
+                      <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        {m.updatedAt
+                          ? (() => {
+                              const d = new Date(m.updatedAt);
+                              const today = new Date();
+                              const isToday = d.toDateString() === today.toDateString();
+                              const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+                              const isYesterday = d.toDateString() === yesterday.toDateString();
+                              if (isToday) return 'Updated Today';
+                              if (isYesterday) return 'Updated Yesterday';
+                              return `Updated ${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+                            })()
+                          : 'Not updated'}
+                      </span>
                     </div>
                     <a
                       href={`/brands/${m.brand.slug}`}
