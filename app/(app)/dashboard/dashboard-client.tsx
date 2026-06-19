@@ -33,6 +33,7 @@ export default function DashboardClient() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [canDelete, setCanDelete] = useState(false);
   const [flexibleDue, setFlexibleDue] = useState<{ id: string; deliverable: string; deadline: string; priority: string; brands: { name: string } | null }[]>([]);
+  const [googleHoursToday, setGoogleHoursToday] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -104,6 +105,28 @@ export default function DashboardClient() {
       setInProgressCount(ip?.length ?? 0);
       setReviewCount(rv?.length ?? 0);
       setFlexibleDue((ft ?? []) as any[]);
+
+      // Fetch Google Calendar events for today and add to blocked hours
+      try {
+        const gcRes = await fetch(
+          `/api/calendar/google-events?timeMin=${todayStart.toISOString()}&timeMax=${todayEnd.toISOString()}`
+        );
+        if (gcRes.ok) {
+          const gcData = await gcRes.json();
+          const gcEvents: { start: string; end: string; isAllDay: boolean }[] = gcData.events ?? [];
+          const gcHours = gcEvents
+            .filter(e => !e.isAllDay && e.start && e.end)
+            .reduce((acc, e) => {
+              const s = Math.max(new Date(e.start).getTime(), todayStart.getTime());
+              const en = Math.min(new Date(e.end).getTime(), todayEnd.getTime());
+              return acc + Math.max(0, (en - s) / 3600000);
+            }, 0);
+          setGoogleHoursToday(Math.round(gcHours * 10) / 10);
+        }
+      } catch {
+        // Google Calendar not connected — silently skip
+      }
+
       setLoading(false);
     }
 
@@ -127,11 +150,12 @@ export default function DashboardClient() {
   const istDateStr = nowIST.toISOString().split('T')[0];
   const dayStartMs = new Date(`${istDateStr}T00:00:00+05:30`).getTime();
   const dayEndMs = new Date(`${istDateStr}T23:59:59+05:30`).getTime();
-  const blockedHoursToday = Math.round(todayBlocks.reduce((acc, b) => {
+  const taskBlockedHours = Math.round(todayBlocks.reduce((acc, b) => {
     const overlapStart = Math.max(new Date(b.start_at).getTime(), dayStartMs);
     const overlapEnd = Math.min(new Date(b.end_at).getTime(), dayEndMs);
     return acc + Math.max(0, (overlapEnd - overlapStart) / 3600000);
   }, 0) * 10) / 10;
+  const blockedHoursToday = Math.round((taskBlockedHours + googleHoursToday) * 10) / 10;
   const remainingHoursToday = Math.max(0, defaultHours - blockedHoursToday);
 
   if (loading) {
