@@ -16,8 +16,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     .maybeSingle();
 
   const tier = (person as any)?.access_tier ?? 'staff';
-  if (tier !== 'admin' && tier !== 'lead' && !person?.is_team_lead) {
-    return NextResponse.json({ error: 'Not authorized to edit tasks.' }, { status: 403 });
+  const isAdminOrLead = tier === 'admin' || tier === 'lead' || person?.is_team_lead;
+
+  if (!isAdminOrLead) {
+    // Staff can only edit tasks they own
+    const { data: taskCheck } = await supabase
+      .from('tasks')
+      .select('owner_id')
+      .eq('id', id)
+      .maybeSingle();
+    if (!taskCheck || taskCheck.owner_id !== person?.id) {
+      return NextResponse.json({ error: 'Not authorized to edit tasks.' }, { status: 403 });
+    }
   }
 
   const body = await req.json();

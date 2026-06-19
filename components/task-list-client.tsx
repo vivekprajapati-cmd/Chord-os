@@ -50,6 +50,8 @@ export default function TaskListClient({
   people,
   brands,
   canEdit,
+  isStaff,
+  currentPersonId,
   statusFilter,
   currentUserName,
 }: {
@@ -57,6 +59,8 @@ export default function TaskListClient({
   people: Person[];
   brands: Brand[];
   canEdit: boolean;
+  isStaff?: boolean;
+  currentPersonId?: string;
   statusFilter?: string;
   currentUserName?: string;
 }) {
@@ -246,7 +250,7 @@ export default function TaskListClient({
                       )}
                     </>
                   )}
-                  {canEdit && (
+                  {canEdit && (!isStaff || task.owner_id === currentPersonId) && (
                     <button
                       onClick={e => { e.stopPropagation(); setEditingTask(task); }}
                       style={{

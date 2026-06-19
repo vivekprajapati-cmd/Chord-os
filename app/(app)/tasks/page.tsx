@@ -214,6 +214,8 @@ export default async function TasksPage({
         people={people}
         brands={brands}
         canEdit={canCreate}
+        isStaff={isStaff}
+        currentPersonId={person?.id ?? ''}
         statusFilter={statusFilter}
         currentUserName={person?.name ?? ''}
       />
