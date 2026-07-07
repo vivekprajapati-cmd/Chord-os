@@ -15,11 +15,19 @@ export async function GET(req: Request) {
   const admin = createAdminClient();
   const { data: files } = await admin
     .from('client_files')
-    .select('id, file_name, file_url, created_at')
+    .select('id, file_name, storage_path, file_url, created_at')
     .eq('client_account_id', clientAccountId)
     .order('created_at', { ascending: false });
 
-  return NextResponse.json({ files: files ?? [] });
+  const signed = await Promise.all(
+    (files ?? []).map(async (f) => {
+      if (!f.storage_path) return { ...f, file_url: f.file_url };
+      const { data } = await admin.storage.from('client-files').createSignedUrl(f.storage_path, 3600);
+      return { ...f, file_url: data?.signedUrl ?? f.file_url };
+    })
+  );
+
+  return NextResponse.json({ files: signed });
 }
 
 // POST — upload a file for a client account (admin/operations only)
@@ -74,13 +82,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: uploadError.message }, { status: 500 });
   }
 
-  const { data: { publicUrl } } = admin.storage.from('client-files').getPublicUrl(storagePath);
-
   const { error: insertError } = await admin.from('client_files').insert({
     client_account_id: clientAccountId,
     brand_id: brandId,
     file_name: file.name,
-    file_url: publicUrl,
+    file_url: storagePath,
+    storage_path: storagePath,
     uploaded_by_person_id: person?.id ?? null,
   });
 

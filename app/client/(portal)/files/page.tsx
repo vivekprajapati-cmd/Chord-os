@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 
 export default async function ClientFilesPage() {
@@ -14,13 +15,25 @@ export default async function ClientFilesPage() {
 
   if (!clientAccount) redirect('/client/login');
 
-  const { data: files } = await supabase
+  const admin = createAdminClient();
+  const { data: files } = await admin
     .from('client_files')
-    .select('id, file_name, file_url, created_at')
+    .select('id, file_name, storage_path, file_url, created_at')
     .eq('client_account_id', clientAccount.id)
     .order('created_at', { ascending: false });
 
-  const allFiles = files ?? [];
+  // Generate signed URLs (1 hour expiry) for each file
+  const signedFiles = await Promise.all(
+    (files ?? []).map(async (file) => {
+      const path = file.storage_path ?? file.file_url;
+      // file_url on old records may be a full public URL — skip signing if no storage_path
+      if (!file.storage_path) return { ...file, signedUrl: file.file_url };
+      const { data } = await admin.storage
+        .from('client-files')
+        .createSignedUrl(path, 3600);
+      return { ...file, signedUrl: data?.signedUrl ?? null };
+    })
+  );
 
   return (
     <div>
@@ -31,13 +44,13 @@ export default async function ClientFilesPage() {
         Documents, presentations & invoices shared by your team
       </p>
 
-      {allFiles.length === 0 ? (
+      {signedFiles.length === 0 ? (
         <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '14px', padding: '48px', textAlign: 'center' }}>
           <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)' }}>No files shared yet.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {allFiles.map(file => {
+          {signedFiles.map(file => {
             const uploadedDate = new Date(file.created_at).toLocaleDateString('en-IN', {
               day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata',
             });
@@ -46,14 +59,13 @@ export default async function ClientFilesPage() {
             return (
               <a
                 key={file.id}
-                href={file.file_url}
+                href={file.signedUrl ?? '#'}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
                   background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '12px',
                   padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   textDecoration: 'none', color: 'inherit',
-                  transition: 'box-shadow 0.15s',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
