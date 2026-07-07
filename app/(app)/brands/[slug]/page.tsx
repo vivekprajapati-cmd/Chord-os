@@ -75,17 +75,19 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
   const allClientAccounts = (clientAccountsResult.data ?? []) as { id: string; email: string; is_active: boolean }[];
   const activeClientAccounts = allClientAccounts.filter(a => a.is_active);
 
-  // Fetch client files for each active account
+  // Fetch client files for all active accounts in a single query
   const clientFilesMap: Record<string, any[]> = {};
   if (isAdminOrOps && activeClientAccounts.length > 0) {
-    await Promise.all(activeClientAccounts.map(async (acc) => {
-      const { data } = await supabase
-        .from('client_files')
-        .select('id, file_name, file_url, created_at')
-        .eq('client_account_id', acc.id)
-        .order('created_at', { ascending: false });
-      clientFilesMap[acc.id] = data ?? [];
-    }));
+    const activeIds = activeClientAccounts.map(a => a.id);
+    const { data: allFiles } = await supabase
+      .from('client_files')
+      .select('id, file_name, file_url, created_at, client_account_id')
+      .in('client_account_id', activeIds)
+      .order('created_at', { ascending: false });
+    (allFiles ?? []).forEach(f => {
+      if (!clientFilesMap[f.client_account_id]) clientFilesMap[f.client_account_id] = [];
+      clientFilesMap[f.client_account_id].push(f);
+    });
   }
 
   return (

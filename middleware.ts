@@ -21,13 +21,10 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session — keeps cookies alive across navigations
-  await supabase.auth.getUser();
   const { data: { user } } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
 
-  // Public paths — no auth required for anyone
   const isPublic =
     path.startsWith('/login') ||
     path.startsWith('/demo') ||
@@ -42,59 +39,36 @@ export async function middleware(request: NextRequest) {
   const isClientRoute = path.startsWith('/client') && !path.startsWith('/client/login');
   const isInternalRoute = !isClientRoute && !isPublic;
 
-  if (isClientRoute) {
-    // Client portal: must be authenticated AND have a client_accounts record
-    if (!user) {
-      return NextResponse.redirect(new URL('/client/login', request.url));
-    }
-
-    // Verify this user has a client_accounts record (not an internal staff member)
-    const { data: clientAccount } = await supabase
+  // Single client_accounts lookup for authenticated users on non-fully-public paths
+  let clientAccount: { id: string; is_active: boolean } | null = null;
+  if (user && !path.startsWith('/demo') && !path.startsWith('/_next')) {
+    const { data } = await supabase
       .from('client_accounts')
       .select('id, is_active')
       .eq('auth_user_id', user.id)
       .maybeSingle();
+    clientAccount = data;
+  }
 
+  if (isClientRoute) {
+    if (!user) return NextResponse.redirect(new URL('/client/login', request.url));
     if (!clientAccount || !clientAccount.is_active) {
-      // Authenticated but no client account — could be a staff member trying to access client portal
       return NextResponse.redirect(new URL('/client/login', request.url));
     }
-
     return response;
   }
 
   if (isInternalRoute) {
-    if (!user) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-    // Prevent client accounts from accessing internal dashboard
-    const { data: clientAccount } = await supabase
-      .from('client_accounts')
-      .select('id')
-      .eq('auth_user_id', user.id)
-      .maybeSingle();
-
-    if (clientAccount) {
-      // This is a client user — block internal access, send to client portal
-      return NextResponse.redirect(new URL('/client', request.url));
-    }
+    if (!user) return NextResponse.redirect(new URL('/login', request.url));
+    if (clientAccount) return NextResponse.redirect(new URL('/client', request.url));
   }
 
   if (user && path === '/login') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  if (user && path === '/client/login') {
-    // Check if they have a client account
-    const { data: clientAccount } = await supabase
-      .from('client_accounts')
-      .select('id')
-      .eq('auth_user_id', user.id)
-      .maybeSingle();
-
-    if (clientAccount) {
-      return NextResponse.redirect(new URL('/client', request.url));
-    }
+  if (user && path.startsWith('/client/login') && clientAccount) {
+    return NextResponse.redirect(new URL('/client', request.url));
   }
 
   return response;
