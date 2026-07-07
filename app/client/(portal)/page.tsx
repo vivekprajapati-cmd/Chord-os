@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import ClientReviewBar from '@/components/client-review-bar';
+import PortalLineChart from '@/components/portal-line-chart';
 
 const STATUS_LABEL: Record<string, string> = {
   scheduled: 'Scheduled',
@@ -126,31 +127,72 @@ export default async function ClientOverviewPage() {
         </div>
       </div>
 
-      {/* Section 3 — MoM + Sentiment (Coming Soon) */}
+      {/* Section 3 — MoM + Sentiment (Coming Soon — charts as preview) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        {[{ label: 'Month on Month Growth', sub: 'Trend across key metrics' }, { label: 'Sentiment Analysis', sub: 'Audience & brand sentiment' }].map(({ label, sub }) => (
-          <div key={label} style={{
-            background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px',
-            padding: '24px', minHeight: '180px', position: 'relative', overflow: 'hidden',
-          }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '4px' }}>{label}</p>
-            <p style={{ fontSize: '12px', color: 'var(--gray)' }}>{sub}</p>
-            {/* Placeholder lines */}
-            <div style={{ marginTop: '20px', opacity: 0.1 }}>
-              {[80, 55, 70, 45, 65].map((w, i) => (
-                <div key={i} style={{ height: '8px', width: `${w}%`, background: 'var(--ink)', borderRadius: '4px', marginBottom: '10px' }} />
-              ))}
-            </div>
-            <div style={{
-              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(240,237,229,0.85)',
-            }}>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)' }}>
-                Coming Soon
-              </p>
-            </div>
+        {/* MoM Growth */}
+        <div style={{
+          background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px',
+          overflow: 'hidden', position: 'relative',
+        }}>
+          <div style={{ padding: '18px 20px 0', borderBottom: '1px solid var(--line)', paddingBottom: '14px' }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Month on Month Growth</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', marginTop: '2px' }}>Reach trend over time</p>
           </div>
-        ))}
+          <div style={{ padding: '16px 8px 8px', opacity: 0.25, pointerEvents: 'none' }}>
+            <PortalLineChart
+              data={[
+                { label: 'Feb', value: 12 },
+                { label: 'Mar', value: 19 },
+                { label: 'Apr', value: 15 },
+                { label: 'May', value: 28 },
+                { label: 'Jun', value: 24 },
+                { label: 'Jul', value: 34 },
+              ]}
+              color="var(--cobalt)"
+            />
+          </div>
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(240,237,229,0.75)',
+          }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)' }}>
+              Coming Soon
+            </p>
+          </div>
+        </div>
+
+        {/* Sentiment Analysis */}
+        <div style={{
+          background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px',
+          overflow: 'hidden', position: 'relative',
+        }}>
+          <div style={{ padding: '18px 20px 0', borderBottom: '1px solid var(--line)', paddingBottom: '14px' }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sentiment Analysis</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', marginTop: '2px' }}>Audience & brand sentiment</p>
+          </div>
+          <div style={{ padding: '16px 8px 8px', opacity: 0.25, pointerEvents: 'none' }}>
+            <PortalLineChart
+              data={[
+                { label: 'Feb', value: 62 },
+                { label: 'Mar', value: 70 },
+                { label: 'Apr', value: 65 },
+                { label: 'May', value: 74 },
+                { label: 'Jun', value: 71 },
+                { label: 'Jul', value: 80 },
+              ]}
+              color="var(--coral)"
+              unit="%"
+            />
+          </div>
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(240,237,229,0.75)',
+          }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)' }}>
+              Coming Soon
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Section 4 — Active Ops */}
@@ -210,41 +252,59 @@ export default async function ClientOverviewPage() {
             )}
           </div>
 
-          {/* Right — Scope Completion MoM */}
+          {/* Right — Scope Completion MoM (line chart) */}
           <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px', overflow: 'hidden' }}>
-            <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--line)' }}>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Scope Completion</p>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', marginTop: '2px' }}>Last 6 months</p>
+            <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Scope Completion</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', marginTop: '2px' }}>Last 6 months · % tasks completed on time</p>
+              </div>
+              {/* Latest month badge */}
+              {(() => {
+                const latest = [...scopeByMonth].reverse().find(m => m.pct !== null);
+                if (!latest) return null;
+                const col = latest.pct! >= 80 ? '#1a7a45' : latest.pct! >= 50 ? '#e07d00' : 'var(--red)';
+                return (
+                  <span style={{
+                    fontFamily: 'var(--f-mono)', fontSize: '12px', fontWeight: 600,
+                    color: col, flexShrink: 0,
+                  }}>
+                    {latest.pct}%
+                  </span>
+                );
+              })()}
             </div>
-            <div style={{ padding: '20px' }}>
+            <div style={{ padding: '12px 8px 8px' }}>
               {scopeByMonth.every(m => m.total === 0) ? (
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', textAlign: 'center', padding: '20px 0' }}>No task data yet.</p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                  {scopeByMonth.map(({ label, total, completed, pct }) => (
-                    <div key={label}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</p>
-                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: pct === null ? 'var(--gray)' : pct >= 80 ? '#1a7a45' : pct >= 50 ? '#e07d00' : 'var(--red)' }}>
-                          {pct === null ? '—' : `${pct}%`}
-                          {total > 0 && <span style={{ color: 'var(--gray)', marginLeft: '6px' }}>({completed}/{total})</span>}
-                        </p>
-                      </div>
-                      <div style={{ height: '6px', background: 'var(--line)', borderRadius: '999px', overflow: 'hidden' }}>
-                        {pct !== null && (
-                          <div style={{
-                            height: '100%', borderRadius: '999px',
-                            width: `${pct}%`,
-                            background: pct >= 80 ? '#1a7a45' : pct >= 50 ? '#e07d00' : 'var(--red)',
-                            transition: 'width 0.3s ease',
-                          }} />
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>No task data yet.</p>
                 </div>
+              ) : (
+                <PortalLineChart
+                  data={scopeByMonth.map(({ label, pct }) => ({ label, value: pct }))}
+                  color="var(--cobalt)"
+                  unit="%"
+                  showGrid
+                />
               )}
             </div>
+            {/* Breakdown table below chart */}
+            {!scopeByMonth.every(m => m.total === 0) && (
+              <div style={{ borderTop: '1px solid var(--line)', padding: '10px 20px', display: 'flex', gap: '0', justifyContent: 'space-between' }}>
+                {scopeByMonth.map(({ label, completed, total, pct }) => (
+                  <div key={label} style={{ textAlign: 'center' }}>
+                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '8px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray)' }}>{label}</p>
+                    <p style={{
+                      fontFamily: 'var(--f-mono)', fontSize: '10px', marginTop: '2px',
+                      color: pct === null ? 'var(--gray)' : pct >= 80 ? '#1a7a45' : pct >= 50 ? '#e07d00' : 'var(--red)',
+                    }}>
+                      {pct === null ? '—' : `${pct}%`}
+                    </p>
+                    {total > 0 && <p style={{ fontFamily: 'var(--f-mono)', fontSize: '8px', color: 'var(--gray)' }}>{completed}/{total}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
