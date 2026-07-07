@@ -5,6 +5,7 @@ import BrandEditButton from '@/components/brand-edit-button';
 import BrandDocuments from '@/components/brand-documents';
 import BrandTasksList from '@/components/brand-tasks-list';
 import ClientFilesSection from '@/components/client-files-section';
+import ClientAccountsList from '@/components/client-accounts-list';
 
 type Brand = {
   id: string;
@@ -65,17 +66,18 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       .eq('brand_id', b.id)
       .order('created_at', { ascending: false }),
     isAdminOrOps
-      ? supabase.from('client_accounts').select('id, email, is_active').eq('brand_id', b.id).eq('is_active', true).order('created_at')
+      ? supabase.from('client_accounts').select('id, email, is_active').eq('brand_id', b.id).order('created_at')
       : Promise.resolve({ data: [] }),
   ]);
 
   const brandDocs = brandDocsResult.data;
-  const clientAccounts = (clientAccountsResult.data ?? []) as { id: string; email: string }[];
+  const allClientAccounts = (clientAccountsResult.data ?? []) as { id: string; email: string; is_active: boolean }[];
+  const activeClientAccounts = allClientAccounts.filter(a => a.is_active);
 
-  // Fetch client files for each account
+  // Fetch client files for each active account
   const clientFilesMap: Record<string, any[]> = {};
-  if (isAdminOrOps && clientAccounts.length > 0) {
-    await Promise.all(clientAccounts.map(async (acc) => {
+  if (isAdminOrOps && activeClientAccounts.length > 0) {
+    await Promise.all(activeClientAccounts.map(async (acc) => {
       const { data } = await supabase
         .from('client_files')
         .select('id, file_name, file_url, created_at')
@@ -229,11 +231,19 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         canUpload={canLogMeeting}
       />
 
+      {/* Client logins — admin/operations only */}
+      {isAdminOrOps && (
+        <ClientAccountsList
+          brandId={b.id}
+          initialAccounts={allClientAccounts}
+        />
+      )}
+
       {/* Client files — admin/operations only */}
       {isAdminOrOps && (
         <ClientFilesSection
           brandId={b.id}
-          clientAccounts={clientAccounts}
+          clientAccounts={activeClientAccounts}
           initialFiles={clientFilesMap}
         />
       )}
