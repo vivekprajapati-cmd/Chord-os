@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import BrandsClient from './brands-client';
 
 export default async function BrandsPage() {
@@ -17,7 +18,8 @@ export default async function BrandsPage() {
 
   let clientAccounts: { id: string; email: string; is_active: boolean; brand_id: string }[] = [];
   if (isAdminOrOps) {
-    const { data } = await supabase
+    const admin = createAdminClient();
+    const { data } = await admin
       .from('client_accounts')
       .select('id, email, is_active, brand_id')
       .order('created_at');

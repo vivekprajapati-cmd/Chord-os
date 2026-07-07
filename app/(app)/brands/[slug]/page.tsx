@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import BrandEditButton from '@/components/brand-edit-button';
 import BrandDocuments from '@/components/brand-documents';
 import BrandTasksList from '@/components/brand-tasks-list';
@@ -66,7 +67,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
       .eq('brand_id', b.id)
       .order('created_at', { ascending: false }),
     isAdminOrOps
-      ? supabase.from('client_accounts').select('id, email, is_active').eq('brand_id', b.id).order('created_at')
+      ? createAdminClient().from('client_accounts').select('id, email, is_active').eq('brand_id', b.id).order('created_at')
       : Promise.resolve({ data: [] }),
   ]);
 
