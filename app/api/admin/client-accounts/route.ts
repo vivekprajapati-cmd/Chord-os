@@ -52,19 +52,18 @@ export async function POST(req: Request) {
   }
 
   // Insert into client_accounts
-  const { error: insertError } = await admin.from('client_accounts').insert({
+  const { data: inserted, error: insertError } = await admin.from('client_accounts').insert({
     auth_user_id: newUser.user.id,
     email,
     brand_id,
     created_by_person_id: person?.id ?? null,
     is_active: true,
-  });
+  }).select('id').single();
 
-  if (insertError) {
-    // Rollback: delete the auth user we just created
+  if (insertError || !inserted) {
     await admin.auth.admin.deleteUser(newUser.user.id);
-    return NextResponse.json({ error: insertError.message }, { status: 500 });
+    return NextResponse.json({ error: insertError?.message ?? 'Insert failed.' }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, email });
+  return NextResponse.json({ success: true, id: inserted.id, email });
 }

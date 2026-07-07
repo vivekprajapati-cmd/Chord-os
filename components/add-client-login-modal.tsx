@@ -3,19 +3,22 @@
 import { useState } from 'react';
 
 type Brand = { id: string; name: string };
+type NewAccount = { id: string; email: string; is_active: boolean; brand_id: string };
 
 export default function AddClientLoginModal({
   brands,
+  preselectedBrandId,
   onClose,
   onAdded,
 }: {
   brands: Brand[];
+  preselectedBrandId?: string;
   onClose: () => void;
-  onAdded: () => void;
+  onAdded: (newAccount?: NewAccount) => void;
 }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [brandId, setBrandId] = useState(brands[0]?.id ?? '');
+  const [brandId, setBrandId] = useState(preselectedBrandId ?? brands[0]?.id ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -45,7 +48,13 @@ export default function AddClientLoginModal({
       return;
     }
     setSuccess(`Client login created for ${email.trim()}.`);
-    setTimeout(() => onAdded(), 1500);
+    const newAccount: NewAccount = {
+      id: data.id,
+      email: email.trim(),
+      is_active: true,
+      brand_id: brandId,
+    };
+    setTimeout(() => onAdded(newAccount), 1200);
   }
 
   function handleBackdrop(e: React.MouseEvent<HTMLDivElement>) {
@@ -58,7 +67,6 @@ export default function AddClientLoginModal({
       style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
     >
       <div style={{ width: '100%', maxWidth: '460px', background: 'var(--cream)', border: '1.5px solid var(--ink)', borderRadius: '18px', boxShadow: '10px 10px 0 var(--ink)', overflow: 'hidden' }}>
-        {/* Header */}
         <div style={{ padding: '24px 28px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '4px' }}>Admin</p>
@@ -67,7 +75,6 @@ export default function AddClientLoginModal({
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '24px', color: 'var(--gray)', cursor: 'pointer' }}>×</button>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
           <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
@@ -111,7 +118,6 @@ export default function AddClientLoginModal({
             {success && <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: '#2a9d5c' }}>{success}</p>}
           </div>
 
-          {/* Footer */}
           <div style={{ padding: '16px 28px', borderTop: '1px solid var(--line)', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
             <button
               type="button"

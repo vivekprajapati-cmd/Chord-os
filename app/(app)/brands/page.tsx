@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import BrandsClient from './brands-client';
 
@@ -16,5 +15,21 @@ export default async function BrandsPage() {
     .select('id, slug, name, category, tier, status')
     .order('name');
 
-  return <BrandsClient brands={brands ?? []} isLead={isLead} isAdminOrOps={isAdminOrOps} />;
+  let clientAccounts: { id: string; email: string; is_active: boolean; brand_id: string }[] = [];
+  if (isAdminOrOps) {
+    const { data } = await supabase
+      .from('client_accounts')
+      .select('id, email, is_active, brand_id')
+      .order('created_at');
+    clientAccounts = data ?? [];
+  }
+
+  return (
+    <BrandsClient
+      brands={brands ?? []}
+      isLead={isLead}
+      isAdminOrOps={isAdminOrOps}
+      clientAccounts={clientAccounts}
+    />
+  );
 }
