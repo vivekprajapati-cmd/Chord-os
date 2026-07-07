@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import BrandEditButton from '@/components/brand-edit-button';
 import BrandDocuments from '@/components/brand-documents';
 import BrandTasksList from '@/components/brand-tasks-list';
+import ClientFilesSection from '@/components/client-files-section';
 
 type Brand = {
   id: string;
@@ -35,8 +36,10 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: self } = await supabase.from('people').select('is_team_lead').eq('email', user?.email ?? '').maybeSingle();
+  const { data: self } = await supabase.from('people').select('is_team_lead, access_tier').eq('email', user?.email ?? '').maybeSingle();
   const canLogMeeting = !!self?.is_team_lead;
+  const tier = (self as any)?.access_tier ?? 'staff';
+  const isAdminOrOps = tier === 'admin' || tier === 'operations';
 
   const [brandResult] = await Promise.all([
     supabase
@@ -54,12 +57,33 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
   const knowledge = b.knowledge;
 
 
-  // Fetch brand documents
-  const { data: brandDocs } = await supabase
-    .from('brand_documents')
-    .select('id, name, file_path, file_type, file_size, created_at, uploaded_by:people!brand_documents_uploaded_by_id_fkey(name)')
-    .eq('brand_id', b.id)
-    .order('created_at', { ascending: false });
+  // Fetch brand documents + client accounts + client files
+  const [brandDocsResult, clientAccountsResult] = await Promise.all([
+    supabase
+      .from('brand_documents')
+      .select('id, name, file_path, file_type, file_size, created_at, uploaded_by:people!brand_documents_uploaded_by_id_fkey(name)')
+      .eq('brand_id', b.id)
+      .order('created_at', { ascending: false }),
+    isAdminOrOps
+      ? supabase.from('client_accounts').select('id, email, is_active').eq('brand_id', b.id).eq('is_active', true).order('created_at')
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const brandDocs = brandDocsResult.data;
+  const clientAccounts = (clientAccountsResult.data ?? []) as { id: string; email: string }[];
+
+  // Fetch client files for each account
+  const clientFilesMap: Record<string, any[]> = {};
+  if (isAdminOrOps && clientAccounts.length > 0) {
+    await Promise.all(clientAccounts.map(async (acc) => {
+      const { data } = await supabase
+        .from('client_files')
+        .select('id, file_name, file_url, created_at')
+        .eq('client_account_id', acc.id)
+        .order('created_at', { ascending: false });
+      clientFilesMap[acc.id] = data ?? [];
+    }));
+  }
 
   return (
     <div className="space-y-8">
@@ -204,6 +228,15 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
         initialDocs={(brandDocs ?? []) as any}
         canUpload={canLogMeeting}
       />
+
+      {/* Client files — admin/operations only */}
+      {isAdminOrOps && (
+        <ClientFilesSection
+          brandId={b.id}
+          clientAccounts={clientAccounts}
+          initialFiles={clientFilesMap}
+        />
+      )}
 
       {/* Active tasks */}
       <BrandTasks brandId={b.id} supabase={supabase} />

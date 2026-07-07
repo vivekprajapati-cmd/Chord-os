@@ -1,0 +1,93 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+
+// GET — fetch files for a client account (admin/operations only)
+export async function GET(req: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  const clientAccountId = searchParams.get('client_account_id');
+  if (!clientAccountId) return NextResponse.json({ error: 'client_account_id required.' }, { status: 400 });
+
+  const admin = createAdminClient();
+  const { data: files } = await admin
+    .from('client_files')
+    .select('id, file_name, file_url, created_at')
+    .eq('client_account_id', clientAccountId)
+    .order('created_at', { ascending: false });
+
+  return NextResponse.json({ files: files ?? [] });
+}
+
+// POST — upload a file for a client account (admin/operations only)
+export async function POST(req: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+
+  const { data: person } = await supabase
+    .from('people')
+    .select('id, access_tier')
+    .eq('email', user.email!)
+    .maybeSingle();
+
+  const tier = (person as any)?.access_tier ?? 'staff';
+  if (tier !== 'admin' && tier !== 'operations') {
+    return NextResponse.json({ error: 'Only admin or operations can upload client files.' }, { status: 403 });
+  }
+
+  const formData = await req.formData();
+  const file = formData.get('file') as File | null;
+  const clientAccountId = formData.get('client_account_id') as string | null;
+  const brandId = formData.get('brand_id') as string | null;
+
+  if (!file || !clientAccountId || !brandId) {
+    return NextResponse.json({ error: 'file, client_account_id, and brand_id are required.' }, { status: 400 });
+  }
+
+  const admin = createAdminClient();
+
+  // Verify client account belongs to this brand
+  const { data: clientAccount } = await admin
+    .from('client_accounts')
+    .select('id')
+    .eq('id', clientAccountId)
+    .eq('brand_id', brandId)
+    .maybeSingle();
+
+  if (!clientAccount) {
+    return NextResponse.json({ error: 'Client account not found for this brand.' }, { status: 404 });
+  }
+
+  const fileExt = file.name.split('.').pop();
+  const storagePath = `${clientAccountId}/${Date.now()}-${file.name}`;
+  const arrayBuffer = await file.arrayBuffer();
+
+  const { error: uploadError } = await admin.storage
+    .from('client-files')
+    .upload(storagePath, arrayBuffer, { contentType: file.type, upsert: false });
+
+  if (uploadError) {
+    return NextResponse.json({ error: uploadError.message }, { status: 500 });
+  }
+
+  const { data: { publicUrl } } = admin.storage.from('client-files').getPublicUrl(storagePath);
+
+  const { error: insertError } = await admin.from('client_files').insert({
+    client_account_id: clientAccountId,
+    brand_id: brandId,
+    file_name: file.name,
+    file_url: publicUrl,
+    uploaded_by_person_id: person?.id ?? null,
+  });
+
+  if (insertError) {
+    await admin.storage.from('client-files').remove([storagePath]);
+    return NextResponse.json({ error: insertError.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true, file_name: file.name });
+}

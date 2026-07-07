@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import ClientPortalNav from '@/components/client-portal-nav';
 
 export default async function ClientPortalLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
   if (!user) redirect('/client/login');
 
   const { data: clientAccount } = await supabase
@@ -21,13 +21,9 @@ export default async function ClientPortalLayout({ children }: { children: React
     <div style={{ minHeight: '100vh', background: 'var(--cream)', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <header style={{
-        borderBottom: '1.5px solid var(--ink)',
-        padding: '0 32px',
-        height: '56px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        background: 'var(--paper)',
+        borderBottom: '1.5px solid var(--ink)', padding: '0 32px', height: '56px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        background: 'var(--paper)', position: 'sticky', top: 0, zIndex: 10,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <p style={{ fontFamily: 'var(--f-display)', fontSize: '20px', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
@@ -44,26 +40,21 @@ export default async function ClientPortalLayout({ children }: { children: React
         </div>
         <form action="/api/client/auth/logout" method="POST">
           <button type="submit" style={{
-            fontFamily: 'var(--f-mono)',
-            fontSize: '10px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            background: 'transparent',
-            border: '1px solid var(--line)',
-            borderRadius: '999px',
-            padding: '6px 14px',
-            cursor: 'pointer',
-            color: 'var(--gray)',
+            fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase',
+            letterSpacing: '0.08em', background: 'transparent', border: '1px solid var(--line)',
+            borderRadius: '999px', padding: '6px 14px', cursor: 'pointer', color: 'var(--gray)',
           }}>
             Sign out
           </button>
         </form>
       </header>
 
-      {/* Page content */}
-      <main style={{ flex: 1, padding: '32px', maxWidth: '960px', width: '100%', margin: '0 auto' }}>
-        {children}
-      </main>
+      <div style={{ display: 'flex', flex: 1 }}>
+        <ClientPortalNav />
+        <main style={{ flex: 1, padding: '32px 40px', minWidth: 0 }}>
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
