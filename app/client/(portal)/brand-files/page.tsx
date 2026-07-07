@@ -2,17 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import BrandFilesClient from './brand-files-client';
-
-export const FILE_SECTIONS = [
-  'Brand Identity',
-  'Finance',
-  'Reports',
-  'Contracts',
-  'Creatives',
-  'General',
-] as const;
-
-export type FileSection = (typeof FILE_SECTIONS)[number];
+import { FILE_SECTIONS, type FileSection } from './sections';
 
 export default async function BrandFilesPage() {
   const supabase = await createClient();

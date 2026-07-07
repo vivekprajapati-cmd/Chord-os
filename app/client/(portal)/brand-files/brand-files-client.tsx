@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FILE_SECTIONS, FileSection } from './page';
+import { FILE_SECTIONS, type FileSection } from './sections';
 
 type ClientFile = {
   id: string;
