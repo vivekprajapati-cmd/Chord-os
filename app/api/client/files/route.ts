@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const admin = createAdminClient();
   const { data: files } = await admin
     .from('client_files')
-    .select('id, file_name, storage_path, file_url, created_at')
+    .select('id, file_name, storage_path, file_url, created_at, section')
     .eq('client_account_id', clientAccountId)
     .order('created_at', { ascending: false });
 
@@ -51,10 +51,14 @@ export async function POST(req: Request) {
   const file = formData.get('file') as File | null;
   const clientAccountId = formData.get('client_account_id') as string | null;
   const brandId = formData.get('brand_id') as string | null;
+  const section = (formData.get('section') as string | null) ?? 'General';
 
   if (!file || !clientAccountId || !brandId) {
     return NextResponse.json({ error: 'file, client_account_id, and brand_id are required.' }, { status: 400 });
   }
+
+  const validSections = ['Brand Identity', 'Finance', 'Reports', 'Contracts', 'Creatives', 'General'];
+  const safeSection = validSections.includes(section) ? section : 'General';
 
   const admin = createAdminClient();
 
@@ -89,6 +93,7 @@ export async function POST(req: Request) {
     file_url: storagePath,
     storage_path: storagePath,
     uploaded_by_person_id: person?.id ?? null,
+    section: safeSection,
   });
 
   if (insertError) {

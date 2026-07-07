@@ -5,8 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const NAV = [
   { href: '/client', label: 'Overview' },
-  { href: '/client/files', label: 'Files' },
-  { href: '/client/brand', label: 'Brand HQ' },
+  { href: '/client/brand-files', label: 'Brand Files' },
 ];
 
 export default function ClientPortalNav() {
