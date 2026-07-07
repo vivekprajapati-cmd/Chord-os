@@ -24,6 +24,7 @@ export default function BrandsClient({
   const [preselectedBrandId, setPreselectedBrandId] = useState<string | undefined>();
   const [clientAccounts, setClientAccounts] = useState(initialClientAccounts);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loginsOpen, setLoginsOpen] = useState(false);
   const [expandedBrands, setExpandedBrands] = useState<Set<string>>(new Set());
   const panelRef = useRef<HTMLDivElement>(null);
@@ -51,6 +52,16 @@ export default function BrandsClient({
       next.has(brandId) ? next.delete(brandId) : next.add(brandId);
       return next;
     });
+  }
+
+  async function deleteAccount(id: string) {
+    if (!confirm('Delete this client login permanently? This cannot be undone.')) return;
+    setDeletingId(id);
+    const res = await fetch(`/api/admin/client-accounts/${id}`, { method: 'DELETE' });
+    setDeletingId(null);
+    if (res.ok) {
+      setClientAccounts(prev => prev.filter(a => a.id !== id));
+    }
   }
 
   async function toggleActive(id: string, current: boolean) {
@@ -194,20 +205,40 @@ export default function BrandsClient({
                                       </span>
                                       <p style={{ fontSize: '12px' }}>{acc.email}</p>
                                     </div>
-                                    <button
-                                      onClick={() => toggleActive(acc.id, acc.is_active)}
-                                      disabled={busy}
-                                      style={{
-                                        fontFamily: 'var(--f-mono)', fontSize: '8px', textTransform: 'uppercase',
-                                        background: 'transparent',
-                                        color: acc.is_active ? 'var(--coral)' : 'var(--ink)',
-                                        border: `1px solid ${acc.is_active ? 'var(--coral)' : 'var(--ink)'}`,
-                                        borderRadius: '999px', padding: '4px 10px', cursor: busy ? 'not-allowed' : 'pointer',
-                                        opacity: busy ? 0.5 : 1,
-                                      }}
-                                    >
-                                      {busy ? '…' : acc.is_active ? 'Deactivate' : 'Reactivate'}
-                                    </button>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <button
+                                        onClick={() => toggleActive(acc.id, acc.is_active)}
+                                        disabled={busy}
+                                        style={{
+                                          fontFamily: 'var(--f-mono)', fontSize: '8px', textTransform: 'uppercase',
+                                          background: 'transparent',
+                                          color: acc.is_active ? 'var(--coral)' : 'var(--ink)',
+                                          border: `1px solid ${acc.is_active ? 'var(--coral)' : 'var(--ink)'}`,
+                                          borderRadius: '999px', padding: '4px 10px', cursor: busy ? 'not-allowed' : 'pointer',
+                                          opacity: busy ? 0.5 : 1,
+                                        }}
+                                      >
+                                        {busy ? '…' : acc.is_active ? 'Deactivate' : 'Reactivate'}
+                                      </button>
+                                      <button
+                                        onClick={() => deleteAccount(acc.id)}
+                                        disabled={deletingId === acc.id}
+                                        title="Delete login"
+                                        style={{
+                                          background: 'transparent', border: '1px solid var(--line)',
+                                          borderRadius: '999px', padding: '4px 8px', cursor: deletingId === acc.id ? 'not-allowed' : 'pointer',
+                                          color: 'var(--gray)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                          opacity: deletingId === acc.id ? 0.4 : 1,
+                                        }}
+                                      >
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <polyline points="3 6 5 6 21 6" />
+                                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                          <path d="M10 11v6M14 11v6" />
+                                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                                        </svg>
+                                      </button>
+                                    </div>
                                   </div>
                                 );
                               })}
