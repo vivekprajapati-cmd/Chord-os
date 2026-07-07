@@ -43,6 +43,7 @@ export default function BrandsClient({
     }
   }
 
+  const [loginsOpen, setLoginsOpen] = useState(false);
   const [expandedBrands, setExpandedBrands] = useState<Set<string>>(new Set());
 
   function toggleExpanded(brandId: string) {
@@ -110,18 +111,39 @@ export default function BrandsClient({
 
       {/* Client logins panel — admin/ops only */}
       {isAdminOrOps && (
-        <div>
-          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '16px' }}>
-            Client Logins
-          </p>
+        <div style={{ border: '1px solid var(--line)', borderRadius: '16px', overflow: 'hidden', background: 'var(--paper)' }}>
+          {/* Outer accordion header */}
+          <button
+            onClick={() => setLoginsOpen(o => !o)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '16px 20px', background: 'none', border: 'none', cursor: 'pointer',
+              borderBottom: loginsOpen ? '1px solid var(--line)' : 'none', textAlign: 'left',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
+                Client Logins
+              </p>
+              <span style={{
+                fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.06em',
+                padding: '3px 8px', borderRadius: '999px',
+                background: 'rgba(13,13,11,0.06)', color: 'var(--gray)', border: '1px solid var(--line)',
+              }}>
+                {clientAccounts.filter(a => a.is_active).length} active
+              </span>
+            </div>
+            <span style={{ fontFamily: 'var(--f-mono)', fontSize: '14px', color: 'var(--gray)', display: 'inline-block', transform: loginsOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>▾</span>
+          </button>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {loginsOpen && (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             {initialBrands.map(b => {
               const accounts = accountsByBrand[b.id] ?? [];
               return (
                 <div
                   key={b.id}
-                  style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px', overflow: 'hidden' }}
+                  style={{ borderBottom: '1px solid var(--line)' }}
                 >
                   {/* Clickable brand tab header */}
                   <button
@@ -220,6 +242,7 @@ export default function BrandsClient({
               );
             })}
           </div>
+          )}
         </div>
       )}
 
