@@ -40,20 +40,37 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'A client login already exists for this email.' }, { status: 409 });
   }
 
-  // Create the Supabase auth user
+  // Try to create the Supabase auth user
+  let authUserId: string;
   const { data: newUser, error: authError } = await admin.auth.admin.createUser({
     email,
     password,
-    email_confirm: true, // skip email verification
+    email_confirm: true,
   });
 
-  if (authError || !newUser?.user) {
-    return NextResponse.json({ error: authError?.message ?? 'Failed to create auth user.' }, { status: 500 });
+  if (authError) {
+    // If already registered in auth.users, look up existing user and reuse
+    if (authError.message.toLowerCase().includes('already been registered') || authError.message.toLowerCase().includes('already exists')) {
+      const { data: userList } = await admin.auth.admin.listUsers();
+      const existingAuthUser = userList?.users?.find(u => u.email === email);
+      if (!existingAuthUser) {
+        return NextResponse.json({ error: 'Auth user exists but could not be found. Contact support.' }, { status: 500 });
+      }
+      // Update password so the provided one is set
+      await admin.auth.admin.updateUserById(existingAuthUser.id, { password });
+      authUserId = existingAuthUser.id;
+    } else {
+      return NextResponse.json({ error: authError.message }, { status: 500 });
+    }
+  } else if (!newUser?.user) {
+    return NextResponse.json({ error: 'Failed to create auth user.' }, { status: 500 });
+  } else {
+    authUserId = newUser.user.id;
   }
 
   // Insert into client_accounts
   const { data: inserted, error: insertError } = await admin.from('client_accounts').insert({
-    auth_user_id: newUser.user.id,
+    auth_user_id: authUserId,
     email,
     brand_id,
     created_by_person_id: person?.id ?? null,
@@ -61,7 +78,8 @@ export async function POST(req: Request) {
   }).select('id').single();
 
   if (insertError || !inserted) {
-    await admin.auth.admin.deleteUser(newUser.user.id);
+    // Only delete the auth user if we just created it
+    if (newUser?.user) await admin.auth.admin.deleteUser(authUserId);
     return NextResponse.json({ error: insertError?.message ?? 'Insert failed.' }, { status: 500 });
   }
 
