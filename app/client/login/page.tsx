@@ -17,17 +17,13 @@ export default function ClientLoginPage() {
     setError('');
     setLoading(true);
 
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: { user }, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (authError) {
+    if (authError || !user) {
       setError('Invalid email or password.');
       setLoading(false);
       return;
     }
-
-    // Verify this is a client account, not an internal staff member
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setError('Login failed.'); setLoading(false); return; }
 
     const { data: clientAccount } = await supabase
       .from('client_accounts')
