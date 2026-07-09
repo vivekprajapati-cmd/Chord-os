@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import ClientReviewBar from '@/components/client-review-bar';
 import PortalLineChart from '@/components/portal-line-chart';
-import { fetchOpenTasks, fetchMonthlySummary, fetchSowAchievement } from '@/lib/google-sheets';
+import { fetchOpenTasks, fetchMonthlySummary } from '@/lib/google-sheets';
 
 const RAG_COLOR: Record<string, string> = {
   'on track': '#1a7a45',
@@ -41,22 +41,15 @@ export default async function ClientOverviewPage() {
   const sheetId = (brand as any)?.ops_tracker_sheet_id as string | null;
 
   // Fetch sheet data in parallel — gracefully fall back if sheet not configured
-  const [openTasks, monthlySummary, sowData] = await Promise.all([
+  const [openTasks, monthlySummary] = await Promise.all([
     sheetId ? fetchOpenTasks(sheetId).catch(() => []) : Promise.resolve([]),
     sheetId ? fetchMonthlySummary(sheetId).catch(() => []) : Promise.resolve([]),
-    sheetId ? fetchSowAchievement(sheetId).catch(() => []) : Promise.resolve([]),
   ]);
 
-  // MoM line chart data — only months with tasks
   const momChartData = monthlySummary.map(m => ({
     label: m.month.replace('-20', "'"),
     value: m.closureRate,
   }));
-
-  // SOW line chart data
-  const sowChartData = sowData
-    .filter(m => m.pct !== null)
-    .map(m => ({ label: m.month, value: m.pct }));
 
   // Latest closure rate for badge
   const latestMonth = [...monthlySummary].reverse().find(m => m.aligned > 0);
@@ -99,7 +92,7 @@ export default async function ClientOverviewPage() {
         </div>
       </div>
 
-      {/* Section 3 — MoM Closure + SOW Achievement */}
+      {/* Section 3 — MoM Closure + Sentiment Analysis */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
 
         {/* MoM Closure Rate */}
@@ -127,7 +120,6 @@ export default async function ClientOverviewPage() {
               <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>No data yet.</p>
             </div>
           )}
-          {/* Month breakdown */}
           {monthlySummary.length > 0 && (
             <div style={{ borderTop: '1px solid var(--line)', padding: '10px 20px', display: 'flex', justifyContent: 'space-between' }}>
               {monthlySummary.map(m => (
@@ -146,43 +138,22 @@ export default async function ClientOverviewPage() {
           )}
         </div>
 
-        {/* SOW Achievement */}
-        <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px', overflow: 'hidden' }}>
+        {/* Sentiment Analysis — Coming Soon */}
+        <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px', overflow: 'hidden', position: 'relative', minHeight: '220px' }}>
           <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--line)' }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Statement of Work</p>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', marginTop: '2px' }}>% scope delivered monthly</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sentiment Analysis</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', marginTop: '2px' }}>Audience & brand sentiment</p>
           </div>
-          {sowChartData.length > 0 ? (
-            <>
-              <div style={{ padding: '12px 8px 8px' }}>
-                <PortalLineChart data={sowChartData} color="var(--coral)" unit="%" showGrid />
-              </div>
-              <div style={{ borderTop: '1px solid var(--line)', padding: '10px 20px', display: 'flex', justifyContent: 'space-between' }}>
-                {sowData.filter(m => m.pct !== null).map(m => (
-                  <div key={m.month} style={{ textAlign: 'center' }}>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '8px', textTransform: 'uppercase', color: 'var(--gray)' }}>{m.month}</p>
-                    <p style={{
-                      fontFamily: 'var(--f-mono)', fontSize: '10px', marginTop: '2px',
-                      color: (m.pct ?? 0) >= 80 ? '#1a7a45' : (m.pct ?? 0) >= 50 ? '#e07d00' : 'var(--red)',
-                    }}>{m.pct}%</p>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div style={{ padding: '40px', textAlign: 'center', position: 'relative', minHeight: '180px' }}>
-              <div style={{ opacity: 0.1 }}>
-                <PortalLineChart
-                  data={[{ label: 'Mar', value: 100 }, { label: 'Apr', value: 100 }, { label: 'May', value: 67 }, { label: 'Jun', value: 60 }]}
-                  color="var(--coral)" unit="%"
-                />
-              </div>
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(240,237,229,0.85)' }}>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)' }}>Coming Soon</p>
-              </div>
-            </div>
-          )}
+          <div style={{ padding: '20px', opacity: 0.1 }}>
+            {[70, 45, 80, 55, 65].map((w, i) => (
+              <div key={i} style={{ height: '8px', width: `${w}%`, background: 'var(--ink)', borderRadius: '4px', marginBottom: '12px' }} />
+            ))}
+          </div>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(240,237,229,0.85)' }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)' }}>Coming Soon</p>
+          </div>
         </div>
+
       </div>
 
       {/* Section 4 — Active Ops */}
@@ -256,7 +227,7 @@ export default async function ClientOverviewPage() {
             )}
           </div>
 
-          {/* Right — Scope Completion line chart */}
+          {/* Right — Scope Completion progress bars */}
           <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px', overflow: 'hidden' }}>
             <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
@@ -272,29 +243,41 @@ export default async function ClientOverviewPage() {
                 </span>
               )}
             </div>
-            {momChartData.length > 0 ? (
-              <>
-                <div style={{ padding: '12px 8px 8px' }}>
-                  <PortalLineChart data={momChartData} color="var(--cobalt)" unit="%" showGrid />
-                </div>
-                <div style={{ borderTop: '1px solid var(--line)', padding: '10px 20px', display: 'flex', justifyContent: 'space-between' }}>
-                  {monthlySummary.map(m => (
-                    <div key={m.month} style={{ textAlign: 'center' }}>
-                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '8px', textTransform: 'uppercase', color: 'var(--gray)' }}>
-                        {m.month.replace('-20', "'")}
-                      </p>
-                      <p style={{
-                        fontFamily: 'var(--f-mono)', fontSize: '10px', marginTop: '2px',
-                        color: m.closureRate >= 80 ? '#1a7a45' : m.closureRate >= 50 ? '#e07d00' : 'var(--red)',
-                      }}>{m.closureRate}%</p>
-                      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '8px', color: 'var(--gray)' }}>{m.closed}/{m.aligned}</p>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
+            {monthlySummary.length === 0 ? (
               <div style={{ padding: '32px', textAlign: 'center' }}>
                 <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>No data yet.</p>
+              </div>
+            ) : (
+              <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {monthlySummary.map(m => {
+                  const pct = m.closureRate;
+                  const color = pct >= 80 ? '#1a7a45' : pct >= 50 ? '#e07d00' : 'var(--red)';
+                  return (
+                    <div key={m.month}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                          {m.month.replace('-20', "'")}
+                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)' }}>
+                            {m.closed}/{m.aligned}
+                          </span>
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', fontWeight: 600, color }}>
+                            {pct}%
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ height: '6px', background: 'var(--line)', borderRadius: '999px', overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%', borderRadius: '999px',
+                          width: `${pct}%`,
+                          background: color,
+                          transition: 'width 0.3s ease',
+                        }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
