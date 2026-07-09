@@ -17,12 +17,12 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Only team leads can edit brands.' }, { status: 403 });
   }
 
-  const { id, category, tier, voice_summary, colors, typography } = await req.json();
+  const { id, category, tier, voice_summary, colors, typography, ops_tracker_sheet_id } = await req.json();
 
   const admin = createAdminClient();
   const { error } = await admin
     .from('brands')
-    .update({ category, tier, voice_summary, colors, typography })
+    .update({ category, tier, voice_summary, colors, typography, ops_tracker_sheet_id })
     .eq('id', id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

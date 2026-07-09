@@ -12,6 +12,7 @@ type Brand = {
   voice_summary: string | null;
   colors: Record<string, string>;
   typography: Record<string, string>;
+  ops_tracker_sheet_id?: string | null;
 };
 
 const inputStyle = {
@@ -59,6 +60,7 @@ export default function EditBrandModal({ brand, onClose, onSaved }: {
   const [typoDisplay, setTypoDisplay] = useState(brand.typography?.display ?? '');
   const [typoBody, setTypoBody] = useState(brand.typography?.body ?? '');
   const [typoLabels, setTypoLabels] = useState(brand.typography?.labels ?? '');
+  const [sheetUrl, setSheetUrl] = useState(brand.ops_tracker_sheet_id ?? '');
 
   function addColor() {
     setColors(c => [...c, { name: '', hex: '#000000' }]);
@@ -82,6 +84,11 @@ export default function EditBrandModal({ brand, onClose, onSaved }: {
     if (typoBody.trim()) typographyObj.body = typoBody.trim();
     if (typoLabels.trim()) typographyObj.labels = typoLabels.trim();
 
+    // Extract sheet ID from full URL or use as-is if already just an ID
+    const sheetInput = sheetUrl.trim();
+    const sheetMatch = sheetInput.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    const sheetId = sheetMatch ? sheetMatch[1] : (sheetInput || null);
+
     const res = await fetch('/api/brands/update', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -92,6 +99,7 @@ export default function EditBrandModal({ brand, onClose, onSaved }: {
         voice_summary: voice.trim() || null,
         colors: colorsObj,
         typography: typographyObj,
+        ops_tracker_sheet_id: sheetId,
       }),
     });
 
@@ -205,6 +213,20 @@ export default function EditBrandModal({ brand, onClose, onSaved }: {
               placeholder="Describe the brand voice — tone, what to avoid, key phrases, feeling."
               style={{ ...inputStyle, resize: 'none', lineHeight: 1.55 }}
             />
+          </div>
+
+          {/* Ops Tracker Sheet */}
+          <div>
+            <label style={labelStyle}>Ops Tracker Sheet URL</label>
+            <input
+              value={sheetUrl}
+              onChange={e => setSheetUrl(e.target.value)}
+              placeholder="Paste Google Sheets URL or sheet ID"
+              style={inputStyle}
+            />
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', marginTop: '5px' }}>
+              Used to sync client dashboard — paste the full URL, the ID will be extracted automatically.
+            </p>
           </div>
 
           {error && <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--red)' }}>{error}</p>}

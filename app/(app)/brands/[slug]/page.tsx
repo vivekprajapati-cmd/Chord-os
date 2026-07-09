@@ -115,6 +115,7 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
               voice_summary: b.voice_summary,
               colors: b.colors ?? {},
               typography: b.typography ?? {},
+              ops_tracker_sheet_id: (b as any).ops_tracker_sheet_id ?? null,
             }} />
           )}
         </div>
