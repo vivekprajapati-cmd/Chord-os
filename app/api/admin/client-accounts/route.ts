@@ -69,6 +69,7 @@ export async function POST(req: Request) {
   }
 
   // Insert into client_accounts
+  console.log('[debug] service role key prefix:', process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0, 20));
   const { data: inserted, error: insertError } = await admin.from('client_accounts').insert({
     auth_user_id: authUserId,
     email,
