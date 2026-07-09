@@ -51,7 +51,7 @@ export default function PortalLineChart({ data, color = 'var(--cobalt)', unit = 
           axisLine={false}
           tickLine={false}
           tickFormatter={v => `${v}${unit}`}
-          domain={['auto', 'auto']}
+          domain={[0, 100]}
         />
         <Tooltip content={<CustomTooltip unit={unit} />} />
         <Line
