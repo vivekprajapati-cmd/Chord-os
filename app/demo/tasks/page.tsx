@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import { MOCK_TASKS, MOCK_PEOPLE } from '@/lib/mock-data';
 
-type Task = typeof MOCK_TASKS[number] & { estimated_hours: number | null; owner_id: string };
+type Task = typeof MOCK_TASKS[number] & { estimated_hours: number | null; owner_id: string; meeting_id: string | null };
 
 const PRIORITY_STYLE: Record<string, CSSProperties> = {
   P0: { background: 'var(--red)', color: '#fff' },
@@ -154,7 +154,7 @@ export default function DemoTasksPage() {
 
   function handleSave(updated: Partial<Task>) {
     if (!editingTask) return;
-    setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...updated } : t));
+    setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...updated } as Task : t));
     setEditingTask(null);
   }
 

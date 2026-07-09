@@ -26,6 +26,21 @@ type TaskDetail = {
 
 type Person = { id: string; name: string; department: string };
 
+type ActivityEntry = {
+  id: string;
+  action: string;
+  details: Record<string, string> | null;
+  created_at: string;
+};
+
+type RevisionEntry = {
+  id: string;
+  round: number;
+  feedback_notes: string | null;
+  reviewed_by_id: string | null;
+  created_at: string;
+};
+
 function HoursLabel({ hours, notes }: { hours: number; notes: string | null }) {
   const recurringMatch = notes?.match(/Recurring:.*?(\d+)\s+occurrence/i);
   const occurrences = recurringMatch ? parseInt(recurringMatch[1]) : null;
@@ -68,6 +83,8 @@ export default function TaskDetailModal({
   const [submissionLink, setSubmissionLink] = useState('');
   const [savingLink, setSavingLink] = useState(false);
   const [people, setPeople] = useState<Person[]>([]);
+  const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
+  const [revisions, setRevisions] = useState<RevisionEntry[]>([]);
   const [showReassign, setShowReassign] = useState(false);
   const [newOwnerId, setNewOwnerId] = useState('');
   const [reassigning, setReassigning] = useState(false);
@@ -112,9 +129,27 @@ export default function TaskDetailModal({
       setPeople((data ?? []) as Person[]);
     }
 
+    async function fetchHistory() {
+      const [logResult, revResult] = await Promise.all([
+        supabase
+          .from('activity_log')
+          .select('id, action, details, created_at')
+          .eq('task_id', taskId)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('task_revisions')
+          .select('id, round, feedback_notes, reviewed_by_id, created_at')
+          .eq('task_id', taskId)
+          .order('round', { ascending: true }),
+      ]);
+      setActivityLog((logResult.data ?? []) as ActivityEntry[]);
+      setRevisions((revResult.data ?? []) as RevisionEntry[]);
+    }
+
     fetchTask();
     fetchUser();
     fetchPeople();
+    fetchHistory();
   }, [taskId]);
 
   async function saveLink() {
@@ -418,6 +453,70 @@ export default function TaskDetailModal({
                 <div>
                   <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '4px' }}>Revision</p>
                   <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--red)' }}>Round {task.revision_round}</p>
+                </div>
+              )}
+
+              {/* Task history */}
+              {activityLog.length > 0 && (
+                <div>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '10px' }}>History</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                    {activityLog.map((entry, idx) => {
+                      const d = entry.details ?? {};
+                      const date = new Date(entry.created_at).toLocaleString('en-IN', {
+                        day: 'numeric', month: 'short', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata',
+                      });
+
+                      let label = '';
+                      let sub = '';
+
+                      if (entry.action === 'task_created') {
+                        label = 'Task created';
+                        if (d.by) sub = `by ${d.by}`;
+                      } else if (entry.action === 'task_reassigned') {
+                        label = 'Reassigned';
+                        if (d.from && d.to) sub = `${d.from} → ${d.to}`;
+                        if (d.by) sub += ` (by ${d.by})`;
+                      } else {
+                        label = entry.action.replace(/_/g, ' ');
+                      }
+
+                      // find matching revision for this log entry index (rework rounds)
+                      const revForEntry = entry.action === 'task_reassigned' ? null
+                        : revisions.find(r => {
+                            const rDate = new Date(r.created_at).getTime();
+                            const eDate = new Date(entry.created_at).getTime();
+                            return Math.abs(rDate - eDate) < 5000;
+                          });
+
+                      const isLast = idx === activityLog.length - 1;
+
+                      return (
+                        <div key={entry.id} style={{ display: 'flex', gap: '12px', paddingBottom: isLast ? 0 : '14px', position: 'relative' }}>
+                          {/* Timeline dot + line */}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: '16px' }}>
+                            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: entry.action === 'task_created' ? 'var(--cobalt)' : entry.action === 'task_reassigned' ? 'var(--coral)' : 'var(--ink)', border: '2px solid var(--cream)', boxShadow: '0 0 0 1.5px currentColor', marginTop: '2px', flexShrink: 0 }} />
+                            {!isLast && <div style={{ width: '1px', flex: 1, background: 'var(--line)', marginTop: '4px' }} />}
+                          </div>
+                          {/* Content */}
+                          <div style={{ flex: 1, paddingBottom: isLast ? 0 : '2px' }}>
+                            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', fontWeight: 600, textTransform: 'capitalize', color: 'var(--ink)', marginBottom: '2px' }}>{label}</p>
+                            {sub && <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', marginBottom: '2px' }}>{sub}</p>}
+                            {revForEntry?.feedback_notes && (
+                              <p style={{ fontSize: '12px', color: 'var(--gray)', fontStyle: 'italic', marginBottom: '2px' }}>"{revForEntry.feedback_notes}"</p>
+                            )}
+                            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', opacity: 0.7 }}>{date}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {revisions.length > 0 && (
+                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', marginTop: '10px' }}>
+                      {revisions.length} revision{revisions.length !== 1 ? 's' : ''} total
+                    </p>
+                  )}
                 </div>
               )}
             </div>
