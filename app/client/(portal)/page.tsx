@@ -55,21 +55,21 @@ export default async function ClientOverviewPage() {
   const latestMonth = [...monthlySummary].reverse().find(m => m.aligned > 0);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
       {/* Section 1 — Brand header */}
       <div>
-        <h1 style={{ fontFamily: 'var(--f-display)', fontSize: '52px', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 1 }}>
+        <h1 style={{ fontFamily: 'var(--f-display)', fontSize: '64px', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 1 }}>
           {brand?.name ?? 'Your Brand'}
         </h1>
-        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginTop: '6px' }}>
+        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginTop: '8px' }}>
           Client Dashboard
         </p>
       </div>
 
       {/* Section 2 — Growth Bench (Coming Soon) */}
       <div>
-        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '12px' }}>
+        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '14px' }}>
           Growth Bench
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
@@ -78,14 +78,14 @@ export default async function ClientOverviewPage() {
               background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px',
               padding: '24px', position: 'relative', overflow: 'hidden', minHeight: '140px',
             }}>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '10px' }}>{metric}</p>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '10px' }}>{metric}</p>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '60px', marginBottom: '12px', opacity: 0.15 }}>
                 {[40, 55, 35, 65, 50, 70].map((h, i) => (
                   <div key={i} style={{ flex: 1, height: `${h}%`, background: 'var(--ink)', borderRadius: '3px 3px 0 0' }} />
                 ))}
               </div>
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(240,237,229,0.85)' }}>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)' }}>Coming Soon</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)' }}>Coming Soon</p>
               </div>
             </div>
           ))}
@@ -97,14 +97,14 @@ export default async function ClientOverviewPage() {
 
         {/* MoM Closure Rate */}
         <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px', overflow: 'hidden' }}>
-          <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Month on Month Closure</p>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', marginTop: '2px' }}>Task closure rate by month</p>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Month on Month Closure</p>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', marginTop: '3px' }}>Task closure rate by month</p>
             </div>
             {latestMonth && (
               <span style={{
-                fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 600, flexShrink: 0,
+                fontFamily: 'var(--f-mono)', fontSize: '16px', fontWeight: 600, flexShrink: 0,
                 color: latestMonth.closureRate >= 80 ? '#1a7a45' : latestMonth.closureRate >= 50 ? '#e07d00' : 'var(--red)',
               }}>
                 {latestMonth.closureRate}%
@@ -117,21 +117,21 @@ export default async function ClientOverviewPage() {
             </div>
           ) : (
             <div style={{ padding: '40px', textAlign: 'center' }}>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>No data yet.</p>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--gray)' }}>No data yet.</p>
             </div>
           )}
           {monthlySummary.length > 0 && (
-            <div style={{ borderTop: '1px solid var(--line)', padding: '10px 20px', display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ borderTop: '1px solid var(--line)', padding: '12px 24px', display: 'flex', justifyContent: 'space-between' }}>
               {monthlySummary.map(m => (
                 <div key={m.month} style={{ textAlign: 'center' }}>
-                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '8px', textTransform: 'uppercase', color: 'var(--gray)' }}>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', color: 'var(--gray)' }}>
                     {m.month.replace('-20', "'")}
                   </p>
                   <p style={{
-                    fontFamily: 'var(--f-mono)', fontSize: '10px', marginTop: '2px',
+                    fontFamily: 'var(--f-mono)', fontSize: '12px', marginTop: '2px',
                     color: m.closureRate >= 80 ? '#1a7a45' : m.closureRate >= 50 ? '#e07d00' : 'var(--red)',
                   }}>{m.closureRate}%</p>
-                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '8px', color: 'var(--gray)' }}>{m.closed}/{m.aligned}</p>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>{m.closed}/{m.aligned}</p>
                 </div>
               ))}
             </div>
@@ -140,9 +140,9 @@ export default async function ClientOverviewPage() {
 
         {/* Sentiment Analysis — Coming Soon */}
         <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px', overflow: 'hidden', position: 'relative', minHeight: '220px' }}>
-          <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--line)' }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sentiment Analysis</p>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', marginTop: '2px' }}>Audience & brand sentiment</p>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--line)' }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sentiment Analysis</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', marginTop: '3px' }}>Audience & brand sentiment</p>
           </div>
           <div style={{ padding: '20px', opacity: 0.1 }}>
             {[70, 45, 80, 55, 65].map((w, i) => (
@@ -150,7 +150,7 @@ export default async function ClientOverviewPage() {
             ))}
           </div>
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(240,237,229,0.85)' }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)' }}>Coming Soon</p>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--gray)' }}>Coming Soon</p>
           </div>
         </div>
 
@@ -158,56 +158,56 @@ export default async function ClientOverviewPage() {
 
       {/* Section 4 — Active Ops */}
       <div>
-        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '12px' }}>
+        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray)', marginBottom: '14px' }}>
           Active Ops
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
 
           {/* Left — Open Tasks from sheet */}
           <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px', overflow: 'hidden' }}>
-            <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Open Tasks</p>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Open Tasks</p>
               <span style={{
-                fontFamily: 'var(--f-mono)', fontSize: '9px', padding: '3px 8px', borderRadius: '999px',
+                fontFamily: 'var(--f-mono)', fontSize: '11px', padding: '4px 10px', borderRadius: '999px',
                 background: 'rgba(13,13,11,0.06)', color: 'var(--gray)', border: '1px solid var(--line)',
               }}>
                 {openTasks.length}
               </span>
             </div>
             {openTasks.length === 0 ? (
-              <div style={{ padding: '32px', textAlign: 'center' }}>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>
+              <div style={{ padding: '36px', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--gray)' }}>
                   {sheetId ? 'No open tasks right now.' : 'Ops tracker not connected yet.'}
                 </p>
               </div>
             ) : (
-              <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+              <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
                 {openTasks.map((task, i) => {
                   const isLast = i === openTasks.length - 1;
                   const rag = task.ragFlag.toLowerCase();
                   const ragColor = RAG_COLOR[rag] ?? 'var(--gray)';
                   return (
                     <div key={task.id} style={{
-                      padding: '14px 20px', borderBottom: isLast ? 'none' : '1px solid var(--line)',
+                      padding: '16px 24px', borderBottom: isLast ? 'none' : '1px solid var(--line)',
                       display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px',
                     }}>
                       <div style={{ minWidth: 0 }}>
-                        <p style={{ fontSize: '13px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p style={{ fontSize: '14px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {task.description}
                         </p>
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '5px', alignItems: 'center' }}>
                           {task.dueDate && (
-                            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>Due {task.dueDate}</p>
+                            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>Due {task.dueDate}</p>
                           )}
                           {task.owner && (
-                            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>· {task.owner}</p>
+                            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>· {task.owner}</p>
                           )}
                         </div>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', flexShrink: 0 }}>
                         {task.ragFlag && (
                           <span style={{
-                            fontFamily: 'var(--f-mono)', fontSize: '8px', textTransform: 'uppercase',
+                            fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase',
                             letterSpacing: '0.06em', padding: '3px 8px', borderRadius: '999px',
                             border: `1px solid ${ragColor}`, color: ragColor, whiteSpace: 'nowrap',
                           }}>
@@ -215,7 +215,7 @@ export default async function ClientOverviewPage() {
                           </span>
                         )}
                         {task.category && (
-                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '8px', color: 'var(--gray)' }}>
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>
                             {task.category}
                           </span>
                         )}
@@ -229,14 +229,14 @@ export default async function ClientOverviewPage() {
 
           {/* Right — Scope Completion progress bars */}
           <div style={{ background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '16px', overflow: 'hidden' }}>
-            <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Scope Completion</p>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', marginTop: '2px' }}>Tasks closed per month</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Scope Completion</p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', marginTop: '3px' }}>Tasks closed per month</p>
               </div>
               {latestMonth && (
                 <span style={{
-                  fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 600, flexShrink: 0,
+                  fontFamily: 'var(--f-mono)', fontSize: '16px', fontWeight: 600, flexShrink: 0,
                   color: latestMonth.closureRate >= 80 ? '#1a7a45' : latestMonth.closureRate >= 50 ? '#e07d00' : 'var(--red)',
                 }}>
                   {latestMonth.closureRate}%
@@ -244,30 +244,30 @@ export default async function ClientOverviewPage() {
               )}
             </div>
             {monthlySummary.length === 0 ? (
-              <div style={{ padding: '32px', textAlign: 'center' }}>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>No data yet.</p>
+              <div style={{ padding: '36px', textAlign: 'center' }}>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--gray)' }}>No data yet.</p>
               </div>
             ) : (
-              <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
                 {monthlySummary.map(m => {
                   const pct = m.closureRate;
                   const color = pct >= 80 ? '#1a7a45' : pct >= 50 ? '#e07d00' : 'var(--red)';
                   return (
                     <div key={m.month}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '7px' }}>
+                        <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                           {m.month.replace('-20', "'")}
                         </p>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)' }}>
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>
                             {m.closed}/{m.aligned}
                           </span>
-                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', fontWeight: 600, color }}>
+                          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', fontWeight: 600, color }}>
                             {pct}%
                           </span>
                         </div>
                       </div>
-                      <div style={{ height: '6px', background: 'var(--line)', borderRadius: '999px', overflow: 'hidden' }}>
+                      <div style={{ height: '7px', background: 'var(--line)', borderRadius: '999px', overflow: 'hidden' }}>
                         <div style={{
                           height: '100%', borderRadius: '999px',
                           width: `${pct}%`,

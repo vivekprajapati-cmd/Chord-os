@@ -59,8 +59,8 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
   const knowledge = b.knowledge;
 
 
-  // Fetch brand documents + client accounts + client files
-  const [brandDocsResult, clientAccountsResult] = await Promise.all([
+  // Fetch brand documents + client accounts + client reviews
+  const [brandDocsResult, clientAccountsResult, clientReviewsResult] = await Promise.all([
     supabase
       .from('brand_documents')
       .select('id, name, file_path, file_type, file_size, created_at, uploaded_by:people!brand_documents_uploaded_by_id_fkey(name)')
@@ -69,10 +69,14 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
     isAdminOrOps
       ? createAdminClient().from('client_accounts').select('id, email, is_active').eq('brand_id', b.id).order('created_at')
       : Promise.resolve({ data: [] }),
+    isAdminOrOps
+      ? createAdminClient().from('client_reviews').select('id, type, message, created_at').eq('brand_id', b.id).order('created_at', { ascending: false })
+      : Promise.resolve({ data: [] }),
   ]);
 
   const brandDocs = brandDocsResult.data;
   const allClientAccounts = (clientAccountsResult.data ?? []) as { id: string; email: string; is_active: boolean }[];
+  const clientReviews = (clientReviewsResult.data ?? []) as { id: string; type: string; message: string; created_at: string }[];
   const activeClientAccounts = allClientAccounts.filter(a => a.is_active);
 
   // Fetch client files for all active accounts in a single query
@@ -249,6 +253,36 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
           clientAccounts={activeClientAccounts}
           initialFiles={clientFilesMap}
         />
+      )}
+
+      {/* Client reviews — admin/operations only */}
+      {isAdminOrOps && clientReviews.length > 0 && (
+        <div>
+          <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--gray)] mb-3">
+            Client Feedback ({clientReviews.length})
+          </p>
+          <div className="space-y-3">
+            {clientReviews.map(r => (
+              <div key={r.id} className="bg-[var(--paper)] border border-[var(--line)] rounded-2xl p-5">
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <span
+                    className="text-[10px] font-mono uppercase tracking-[0.08em] px-3 py-1 rounded-full border"
+                    style={r.type === 'attention'
+                      ? { background: 'rgba(220,50,50,0.08)', color: 'var(--red)', borderColor: 'var(--red)' }
+                      : { background: 'rgba(13,13,11,0.06)', color: 'var(--ink)', borderColor: 'var(--line)' }
+                    }
+                  >
+                    {r.type === 'attention' ? 'Flag Attention' : 'Review'}
+                  </span>
+                  <p className="text-[10px] font-mono text-[var(--gray)] shrink-0">
+                    {new Date(r.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+                <p className="text-sm leading-relaxed">{r.message}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Active tasks */}
