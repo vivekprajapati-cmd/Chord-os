@@ -64,9 +64,6 @@ function LoginForm() {
         Client Portal Login
       </a>
 
-      <p className="text-xs text-[var(--gray)] mt-6 font-mono text-center">
-        edernityteam.slack.com · 1702 Digital + Chord
-      </p>
     </div>
   );
 }
