@@ -68,21 +68,19 @@ export async function POST(req: Request) {
     authUserId = newUser.user.id;
   }
 
-  // Insert into client_accounts
-  console.log('[debug] service role key prefix:', process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0, 20));
-  const { data: inserted, error: insertError } = await admin.from('client_accounts').insert({
-    auth_user_id: authUserId,
-    email,
-    brand_id,
-    created_by_person_id: person?.id ?? null,
-    is_active: true,
-  }).select('id').single();
+  // Insert via RPC (security definer — bypasses RLS)
+  const { data: insertedId, error: insertError } = await admin.rpc('insert_client_account', {
+    p_auth_user_id: authUserId,
+    p_email: email,
+    p_brand_id: brand_id,
+    p_created_by: person?.id ?? null,
+    p_is_active: true,
+  });
 
-  if (insertError || !inserted) {
-    // Only delete the auth user if we just created it
+  if (insertError || !insertedId) {
     if (newUser?.user) await admin.auth.admin.deleteUser(authUserId);
     return NextResponse.json({ error: insertError?.message ?? 'Insert failed.' }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, id: inserted.id, email });
+  return NextResponse.json({ success: true, id: insertedId, email });
 }

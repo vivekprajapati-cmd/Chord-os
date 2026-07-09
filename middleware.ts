@@ -30,13 +30,13 @@ export async function middleware(request: NextRequest) {
     path.startsWith('/demo') ||
     path.startsWith('/api/auth') ||
     path.startsWith('/client/login') ||
-    path.startsWith('/api/client/auth') ||
+    path.startsWith('/api/client') ||
     path.startsWith('/_next') ||
     path === '/manifest.json' ||
     path === '/favicon.ico' ||
     path.startsWith('/icon-');
 
-  const isClientRoute = path.startsWith('/client') && !path.startsWith('/client/login');
+  const isClientRoute = path.startsWith('/client') && !path.startsWith('/client/login') && !path.startsWith('/api/client');
   const isInternalRoute = !isClientRoute && !isPublic;
 
   // Single client_accounts lookup for authenticated users on non-fully-public paths
