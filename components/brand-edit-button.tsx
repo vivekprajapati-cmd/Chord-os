@@ -12,6 +12,7 @@ type Brand = {
   voice_summary: string | null;
   colors: Record<string, string>;
   typography: Record<string, string>;
+  ops_tracker_sheet_id?: string | null;
 };
 
 export default function BrandEditButton({ brand }: { brand: Brand }) {
