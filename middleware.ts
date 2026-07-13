@@ -39,9 +39,10 @@ export async function middleware(request: NextRequest) {
   const isClientRoute = path.startsWith('/client') && !path.startsWith('/client/login') && !path.startsWith('/api/client');
   const isInternalRoute = !isClientRoute && !isPublic;
 
-  // Single client_accounts lookup for authenticated users on non-fully-public paths
+  // Only check client_accounts when the route actually needs it
   let clientAccount: { id: string; is_active: boolean } | null = null;
-  if (user && !path.startsWith('/demo') && !path.startsWith('/_next')) {
+  const needsClientCheck = user && (isClientRoute || path === '/login' || path.startsWith('/client/login'));
+  if (needsClientCheck) {
     const { data } = await supabase
       .from('client_accounts')
       .select('id, is_active')
