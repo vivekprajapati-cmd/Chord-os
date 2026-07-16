@@ -36,7 +36,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   // Fetch original task for comparison
   const { data: original } = await supabase
     .from('tasks')
-    .select('id, deliverable, owner_id, priority, start_date, deadline, brands(name), owner:people!tasks_owner_id_fkey(name)')
+    .select('id, deliverable, owner_id, reviewer_id, brand_id, priority, task_type, start_date, deadline, brands(name), owner:people!tasks_owner_id_fkey(name)')
     .eq('id', id)
     .maybeSingle();
 
@@ -136,9 +136,28 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (deliverable && deliverable !== original.deliverable) changes.push(`deliverable → "${deliverable}"`);
   if (personChanged) changes.push(`reassigned to ${body.ownerName ?? owner_id}`);
   if (priority && priority !== original.priority) changes.push(`priority → ${priority}`);
+  if (task_type && task_type !== original.task_type) changes.push(`type → ${task_type}`);
   if (timeChanged) changes.push(`time updated`);
 
-  const brand = (original.brands as any)?.name ?? '';
+  const brandChanged = brand_id && brand_id !== original.brand_id;
+  if (brandChanged) {
+    const { data: newBrand } = await supabase.from('brands').select('name').eq('id', brand_id).maybeSingle();
+    changes.push(`brand → ${(newBrand as any)?.name ?? brand_id}`);
+  }
+
+  const reviewerChanged = reviewer_id !== undefined && reviewer_id !== original.reviewer_id;
+  if (reviewerChanged) {
+    if (!reviewer_id) {
+      changes.push(`reviewer removed`);
+    } else {
+      const { data: newReviewer } = await supabase.from('people').select('name').eq('id', reviewer_id).maybeSingle();
+      changes.push(`reviewer → ${(newReviewer as any)?.name ?? reviewer_id}`);
+    }
+  }
+
+  const brand = brandChanged
+    ? changes.find(c => c.startsWith('brand →'))?.replace('brand → ', '') ?? (original.brands as any)?.name ?? ''
+    : (original.brands as any)?.name ?? '';
   const taskLabel = deliverable ?? original.deliverable;
   await notifySlack(
     `✏️ *Task updated* — "${taskLabel}"${brand ? ` · ${brand}` : ''} · by ${person!.name}${changes.length ? ` · ${changes.join(', ')}` : ''}`
