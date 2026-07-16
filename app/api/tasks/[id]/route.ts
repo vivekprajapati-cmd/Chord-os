@@ -57,7 +57,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   // Conflict detection if time or person changed
-  const timeChanged = startAt !== original.start_date || endAt !== original.deadline;
+  const normalize = (v: string | null | undefined) => v ? new Date(v).toISOString() : null;
+  const timeChanged = normalize(startAt) !== normalize(original.start_date) || normalize(endAt) !== normalize(original.deadline);
   const personChanged = owner_id && owner_id !== original.owner_id;
 
   if (startAt && endAt && (timeChanged || personChanged)) {
