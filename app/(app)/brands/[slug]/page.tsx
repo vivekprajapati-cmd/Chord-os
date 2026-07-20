@@ -38,9 +38,9 @@ export default async function BrandPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: self } = await supabase.from('people').select('is_team_lead, access_tier').eq('email', user?.email ?? '').maybeSingle();
-  const canLogMeeting = !!self?.is_team_lead;
+  const { data: self } = await supabase.from('people').select('access_tier').eq('email', user?.email ?? '').maybeSingle();
   const tier = (self as any)?.access_tier ?? 'staff';
+  const canLogMeeting = tier === 'admin' || tier === 'lead';
   const isAdminOrOps = tier === 'admin' || tier === 'operations';
 
   const [brandResult] = await Promise.all([

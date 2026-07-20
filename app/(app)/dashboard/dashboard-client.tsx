@@ -19,7 +19,7 @@ type Person = {
   name: string;
   role: string;
   department: string;
-  is_team_lead: boolean;
+  access_tier: string;
   default_hours_per_day: number;
 };
 
@@ -42,13 +42,14 @@ export default function DashboardClient() {
 
       const { data: p } = await supabase
         .from('people')
-        .select('id, name, role, department, is_team_lead, default_hours_per_day')
+        .select('id, name, role, department, access_tier, default_hours_per_day')
         .eq('email', session.user.email!)
         .maybeSingle();
 
       if (!p) return;
       setPerson(p);
-      setCanDelete(!!p.is_team_lead);
+      const pt = (p as any).access_tier ?? 'staff';
+      setCanDelete(pt === 'admin' || pt === 'lead');
 
       const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
       const nowIST = new Date(Date.now() + IST_OFFSET_MS);
@@ -57,7 +58,7 @@ export default function DashboardClient() {
       const todayEnd = new Date(`${istDateStr}T23:59:59+05:30`);
       const weekEnd = new Date(todayEnd.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-      const isLead = !!p.is_team_lead;
+      const isLead = pt === 'admin' || pt === 'lead';
 
       const [
         { data: tb },
@@ -117,7 +118,7 @@ export default function DashboardClient() {
     return 'wrapping up';
   })();
 
-  const isLead = !!person?.is_team_lead;
+  const isLead = (person as any)?.access_tier === 'admin' || (person as any)?.access_tier === 'lead';
   const hasToday = todayBlocks.length > 0;
   const blocksToShow = hasToday ? todayBlocks : upcomingBlocks;
   const blocksLabel = hasToday ? "Today's blocks" : "Coming up";

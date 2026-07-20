@@ -8,11 +8,12 @@ export default async function ChatPage() {
 
   const { data: person } = await supabase
     .from('people')
-    .select('is_team_lead')
+    .select('access_tier')
     .eq('email', user?.email ?? '')
     .maybeSingle();
 
-  if (!person?.is_team_lead) redirect('/dashboard');
+  const personTier = (person as any)?.access_tier ?? 'staff';
+  if (personTier !== 'admin' && personTier !== 'lead') redirect('/dashboard');
 
   if (!process.env.ANTHROPIC_API_KEY?.trim()) {
     return (

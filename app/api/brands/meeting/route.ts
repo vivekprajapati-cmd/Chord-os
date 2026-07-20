@@ -76,11 +76,12 @@ export async function POST(req: Request) {
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, is_team_lead')
+    .select('id, access_tier')
     .eq('email', user.email!)
     .maybeSingle();
 
-  if (!person?.is_team_lead) {
+  const personTier = (person as any)?.access_tier ?? 'staff';
+  if (personTier !== 'admin' && personTier !== 'lead') {
     return NextResponse.json({ error: 'Only team leads can log meetings.' }, { status: 403 });
   }
 
