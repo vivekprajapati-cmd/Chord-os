@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { notifySlack } from '@/lib/slack';
+import { logActivity } from '@/lib/activity';
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -47,7 +48,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   // Conflict detection if time or person changed
-  const timeChanged = startAt !== original.start_date || endAt !== original.deadline;
+  const normalize = (v: string | null | undefined) => v ? new Date(v).toISOString() : null;
+  const timeChanged = normalize(startAt) !== normalize(original.start_date) || normalize(endAt) !== normalize(original.deadline);
   const personChanged = owner_id && owner_id !== original.owner_id;
 
   if (startAt && endAt && (timeChanged || personChanged)) {
@@ -121,18 +123,46 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
-  // Build change summary for Slack
+  // Build change summary for Slack + logs
   const changes: string[] = [];
   if (deliverable && deliverable !== original.deliverable) changes.push(`deliverable → "${deliverable}"`);
   if (personChanged) changes.push(`reassigned to ${body.ownerName ?? owner_id}`);
   if (priority && priority !== original.priority) changes.push(`priority → ${priority}`);
+  if (task_type && task_type !== original.task_type) changes.push(`type → ${task_type}`);
   if (timeChanged) changes.push(`time updated`);
+
+  const brandChanged = brand_id && brand_id !== original.brand_id;
+  if (brandChanged) {
+    const { data: newBrand } = await supabase.from('brands').select('name').eq('id', brand_id).maybeSingle();
+    changes.push(`brand → ${(newBrand as any)?.name ?? brand_id}`);
+  }
+
+  const reviewerChanged = reviewer_id !== undefined && reviewer_id !== original.reviewer_id;
+  if (reviewerChanged) {
+    if (!reviewer_id) {
+      changes.push(`reviewer removed`);
+    } else {
+      const { data: newReviewer } = await supabase.from('people').select('name').eq('id', reviewer_id).maybeSingle();
+      changes.push(`reviewer → ${(newReviewer as any)?.name ?? reviewer_id}`);
+    }
+  }
 
   const brand = (original.brands as any)?.name ?? '';
   const taskLabel = deliverable ?? original.deliverable;
+
   await notifySlack(
     `✏️ *Task updated* — "${taskLabel}"${brand ? ` · ${brand}` : ''} · by ${person!.name}${changes.length ? ` · ${changes.join(', ')}` : ''}`
   );
+
+  await logActivity({
+    actor_name: person!.name,
+    actor_email: user.email!,
+    action: 'task.edit',
+    entity_type: 'task',
+    entity_id: id,
+    description: `Task "${taskLabel}"${brand ? ` · ${brand}` : ''} edited by ${person!.name}${changes.length ? ` · ${changes.join(', ')}` : ''}`,
+    metadata: { changes },
+  });
 
   return NextResponse.json({ ok: true });
 }
@@ -155,9 +185,20 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     return NextResponse.json({ error: 'Not authorized to delete tasks.' }, { status: 403 });
   }
 
+  const { data: taskToDelete } = await supabase.from('tasks').select('deliverable, brands(name)').eq('id', id).maybeSingle();
+
   const { error } = await supabase.from('tasks').delete().eq('id', id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  await logActivity({
+    actor_name: user.email!,
+    actor_email: user.email!,
+    action: 'task.delete',
+    entity_type: 'task',
+    entity_id: id,
+    description: `Task "${taskToDelete?.deliverable ?? id}" deleted · ${(taskToDelete?.brands as any)?.name ?? ''}`,
+  });
 
   return NextResponse.json({ ok: true });
 }

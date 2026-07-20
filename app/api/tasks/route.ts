@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { notifySlack } from '@/lib/slack';
+import { logActivity } from '@/lib/activity';
 
 // ─── Recurrence slot generator ────────────────────────────────────────────────
 type RecurrenceConfig = {
@@ -374,6 +375,16 @@ export async function POST(req: Request) {
   await notifySlack(
     `📋 *New task assigned* — ${ownerData?.name ?? 'Someone'} · *${brandData?.name ?? ''}* · "${deliverable}" · ${priority} · Due: ${deadlineStr} · Assigned by ${assignerData?.name ?? 'lead'}${reviewerData?.name ? ` · Reviewer: ${reviewerData.name}` : ''}`
   );
+
+  await logActivity({
+    actor_name: assignerData?.name ?? user.email!,
+    actor_email: user.email!,
+    action: 'task.create',
+    entity_type: 'task',
+    entity_id: task.id,
+    description: `Task "${deliverable}" assigned to ${ownerData?.name ?? owner_id} · ${brandData?.name ?? ''} · ${priority}`,
+    metadata: { brand: brandData?.name, owner: ownerData?.name, priority, deadline },
+  });
 
   return NextResponse.json({ id: task.id });
 }

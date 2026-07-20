@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { logActivity } from '@/lib/activity';
 
 // GET — fetch files for a client account (admin/operations only)
 export async function GET(req: Request) {
@@ -100,6 +101,15 @@ export async function POST(req: Request) {
     await admin.storage.from('client-files').remove([storagePath]);
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
+
+  await logActivity({
+    actor_name: user.email!,
+    actor_email: user.email!,
+    action: 'file.upload',
+    entity_type: 'file',
+    description: `File "${file.name}" uploaded to client account · section: ${safeSection}`,
+    metadata: { file_name: file.name, section: safeSection, client_account_id: clientAccountId, brand_id: brandId },
+  });
 
   return NextResponse.json({ success: true, file_name: file.name });
 }

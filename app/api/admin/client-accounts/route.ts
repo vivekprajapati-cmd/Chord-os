@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { logActivity } from '@/lib/activity';
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -82,6 +83,16 @@ export async function POST(req: Request) {
     if (newUser?.user) await admin.auth.admin.deleteUser(authUserId);
     return NextResponse.json({ error: insertError?.message ?? 'Insert failed.' }, { status: 500 });
   }
+
+  await logActivity({
+    actor_name: user.email!,
+    actor_email: user.email!,
+    action: 'client_account.create',
+    entity_type: 'client_account',
+    entity_id: inserted.id,
+    description: `Client login created for ${email}`,
+    metadata: { email, brand_id },
+  });
 
   return NextResponse.json({ success: true, id: inserted.id, email });
 }
