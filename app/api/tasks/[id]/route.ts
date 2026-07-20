@@ -12,12 +12,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, name, access_tier, is_team_lead')
+    .select('id, name, access_tier')
     .eq('email', user.email!)
     .maybeSingle();
 
   const tier = (person as any)?.access_tier ?? 'staff';
-  const isAdminOrLead = tier === 'admin' || tier === 'lead' || person?.is_team_lead;
+  const isAdminOrLead = tier === 'admin' || tier === 'lead';
 
   if (!isAdminOrLead) {
     // Staff can only edit tasks they own
@@ -186,12 +186,12 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, access_tier, is_team_lead')
+    .select('id, access_tier')
     .eq('email', user.email!)
     .maybeSingle();
 
   const tier = (person as any)?.access_tier ?? 'staff';
-  if (tier !== 'admin' && tier !== 'lead' && !person?.is_team_lead) {
+  if (tier !== 'admin' && tier !== 'lead') {
     return NextResponse.json({ error: 'Not authorized to delete tasks.' }, { status: 403 });
   }
 

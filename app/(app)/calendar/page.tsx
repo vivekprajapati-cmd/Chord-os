@@ -62,7 +62,7 @@ export default async function CalendarPage() {
 
   const tier = (person as any).access_tier ?? 'staff';
   const isAdmin = tier === 'admin' || tier === 'operations';
-  const isLead = tier === 'lead' || !!(person as any).is_team_lead;
+  const isLead = tier === 'lead';
 
   // Fetch team members for person switcher (leads/admins/operations only)
   let teamMembers: TeamMember[] = [];

@@ -10,11 +10,12 @@ export async function PATCH(req: Request) {
 
   const { data: person } = await supabase
     .from('people')
-    .select('is_team_lead')
+    .select('access_tier')
     .eq('email', user.email!)
     .maybeSingle();
 
-  if (!person?.is_team_lead) {
+  const personTier = (person as any)?.access_tier ?? 'staff';
+  if (personTier !== 'admin' && personTier !== 'lead') {
     return NextResponse.json({ error: 'Only team leads can edit brands.' }, { status: 403 });
   }
 

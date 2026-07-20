@@ -8,11 +8,12 @@ export default async function TeamPage() {
 
   const { data: person } = await supabase
     .from('people')
-    .select('is_team_lead')
+    .select('access_tier')
     .eq('email', user!.email!)
     .maybeSingle();
 
-  if (!person?.is_team_lead) redirect('/dashboard');
+  const personTier = (person as any)?.access_tier ?? 'staff';
+  if (personTier !== 'admin' && personTier !== 'lead') redirect('/dashboard');
 
   // IST day boundaries
   const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
