@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { notifySlack } from '@/lib/slack';
+import { logActivity } from '@/lib/activity';
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -36,7 +37,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   // Fetch original task for comparison
   const { data: original } = await supabase
     .from('tasks')
-    .select('id, deliverable, owner_id, reviewer_id, brand_id, priority, task_type, start_date, deadline, brands(name), owner:people!tasks_owner_id_fkey(name)')
+    .select('id, deliverable, owner_id, reviewer_id, brand_id, task_type, priority, start_date, deadline, brands(name), owner:people!tasks_owner_id_fkey(name)')
     .eq('id', id)
     .maybeSingle();
 
@@ -132,7 +133,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
-  // Build change summary for Slack
+  // Build change summary for Slack + logs
   const changes: string[] = [];
   if (deliverable && deliverable !== original.deliverable) changes.push(`deliverable → "${deliverable}"`);
   if (personChanged) changes.push(`reassigned to ${body.ownerName ?? owner_id}`);
@@ -156,13 +157,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
   }
 
-  const brand = brandChanged
-    ? changes.find(c => c.startsWith('brand →'))?.replace('brand → ', '') ?? (original.brands as any)?.name ?? ''
-    : (original.brands as any)?.name ?? '';
+  const brand = (original.brands as any)?.name ?? '';
   const taskLabel = deliverable ?? original.deliverable;
+
   await notifySlack(
     `✏️ *Task updated* — "${taskLabel}"${brand ? ` · ${brand}` : ''} · by ${person!.name}${changes.length ? ` · ${changes.join(', ')}` : ''}`
   );
+
+  void logActivity({
+    actor_name: person!.name,
+    actor_email: user.email!,
+    action: 'task.edit',
+    entity_type: 'task',
+    entity_id: id,
+    description: `Task "${taskLabel}"${brand ? ` · ${brand}` : ''} edited by ${person!.name}${changes.length ? ` · ${changes.join(', ')}` : ''}`,
+    metadata: { changes },
+  });
 
   return NextResponse.json({ ok: true });
 }
@@ -185,9 +195,20 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     return NextResponse.json({ error: 'Not authorized to delete tasks.' }, { status: 403 });
   }
 
+  const { data: taskToDelete } = await supabase.from('tasks').select('deliverable, brands(name)').eq('id', id).maybeSingle();
+
   const { error } = await supabase.from('tasks').delete().eq('id', id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  void logActivity({
+    actor_name: user.email!,
+    actor_email: user.email!,
+    action: 'task.delete',
+    entity_type: 'task',
+    entity_id: id,
+    description: `Task "${taskToDelete?.deliverable ?? id}" deleted · ${(taskToDelete?.brands as any)?.name ?? ''}`,
+  });
 
   return NextResponse.json({ ok: true });
 }

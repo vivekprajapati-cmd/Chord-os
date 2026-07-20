@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { logActivity } from '@/lib/activity';
 
 export async function PATCH(req: Request) {
   const supabase = await createClient();
@@ -26,6 +27,16 @@ export async function PATCH(req: Request) {
     .eq('id', id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  void logActivity({
+    actor_name: user.email!,
+    actor_email: user.email!,
+    action: 'brand.edit',
+    entity_type: 'brand',
+    entity_id: id,
+    description: `Brand edited`,
+    metadata: { category, tier },
+  });
 
   return NextResponse.json({ ok: true });
 }
