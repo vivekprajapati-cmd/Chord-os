@@ -204,7 +204,7 @@ export async function POST(req: Request) {
       .from('brand_meetings')
       .insert({
         brand_id: brand.id,
-        logged_by_id: person.id,
+        logged_by_id: person!.id,
         meeting_date: meeting_date || new Date().toISOString().split('T')[0],
         raw_notes,
         ai_summary: extracted.summary,
@@ -246,7 +246,7 @@ export async function POST(req: Request) {
           deliverable: t.deliverable,
           task_type: t.task_type,
           owner_id,
-          assigned_by_id: person.id,
+          assigned_by_id: person!.id,
           priority: t.priority ?? 'P1',
           estimated_hours: t.estimated_hours,
           brief: t.brief,

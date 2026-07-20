@@ -433,7 +433,7 @@ export async function POST(req: Request) {
   }));
 
   const { messages } = await req.json();
-  const systemText = buildSystemPrompt(person, brands ?? [], peopleForPrompt, meetingsForPrompt);
+  const systemText = buildSystemPrompt(person!, brands ?? [], peopleForPrompt, meetingsForPrompt);
 
   const claudeMessages: Anthropic.Messages.MessageParam[] = messages.map((m: { role: string; content: string }) => ({
     role: m.role as 'user' | 'assistant',
@@ -473,8 +473,8 @@ export async function POST(req: Request) {
           if (!toolUse) break;
 
           const toolResult = toolUse.name === 'reassign_task'
-            ? await executeReassignTool(toolUse.input as Record<string, unknown>, person.id, supabase)
-            : await executeTool(toolUse.input as Record<string, unknown>, person.id, supabase);
+            ? await executeReassignTool(toolUse.input as Record<string, unknown>, person!.id, supabase)
+            : await executeTool(toolUse.input as Record<string, unknown>, person!.id, supabase);
 
           claudeMessages.push({ role: 'assistant', content: response.content });
           claudeMessages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: toolUse.id, content: toolResult }] });
@@ -553,8 +553,8 @@ export async function POST(req: Request) {
             const toolInput = JSON.parse(toolCall.function.arguments ?? '{}');
 
             const toolResult = toolName === 'reassign_task'
-              ? await executeReassignTool(toolInput, person.id, supabase)
-              : await executeTool(toolInput, person.id, supabase);
+              ? await executeReassignTool(toolInput, person!.id, supabase)
+              : await executeTool(toolInput, person!.id, supabase);
 
             groqMessages.push({
               role: 'tool',
@@ -631,8 +631,8 @@ export async function POST(req: Request) {
           const toolInput = funcPart.functionCall.args ?? {};
 
           const toolResult = toolName === 'reassign_task'
-            ? await executeReassignTool(toolInput, person.id, supabase)
-            : await executeTool(toolInput, person.id, supabase);
+            ? await executeReassignTool(toolInput, person!.id, supabase)
+            : await executeTool(toolInput, person!.id, supabase);
 
           // Add assistant + tool result to messages
           geminiMessages.push({ role: 'model', parts });
