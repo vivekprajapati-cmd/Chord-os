@@ -27,7 +27,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   // Fetch original task for comparison
   const { data: original } = await supabase
     .from('tasks')
-    .select('id, deliverable, owner_id, priority, start_date, deadline, brands(name), owner:people!tasks_owner_id_fkey(name)')
+    .select('id, deliverable, owner_id, reviewer_id, brand_id, task_type, priority, start_date, deadline, brands(name), owner:people!tasks_owner_id_fkey(name)')
     .eq('id', id)
     .maybeSingle();
 
@@ -154,7 +154,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     `✏️ *Task updated* — "${taskLabel}"${brand ? ` · ${brand}` : ''} · by ${person!.name}${changes.length ? ` · ${changes.join(', ')}` : ''}`
   );
 
-  await logActivity({
+  void logActivity({
     actor_name: person!.name,
     actor_email: user.email!,
     action: 'task.edit',
@@ -191,7 +191,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await logActivity({
+  void logActivity({
     actor_name: user.email!,
     actor_email: user.email!,
     action: 'task.delete',

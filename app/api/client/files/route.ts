@@ -102,7 +102,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  await logActivity({
+  void logActivity({
     actor_name: user.email!,
     actor_email: user.email!,
     action: 'file.upload',

@@ -28,7 +28,7 @@ export async function PATCH(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await logActivity({
+  void logActivity({
     actor_name: user.email!,
     actor_email: user.email!,
     action: 'brand.edit',

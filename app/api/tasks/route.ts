@@ -376,7 +376,7 @@ export async function POST(req: Request) {
     `📋 *New task assigned* — ${ownerData?.name ?? 'Someone'} · *${brandData?.name ?? ''}* · "${deliverable}" · ${priority} · Due: ${deadlineStr} · Assigned by ${assignerData?.name ?? 'lead'}${reviewerData?.name ? ` · Reviewer: ${reviewerData.name}` : ''}`
   );
 
-  await logActivity({
+  void logActivity({
     actor_name: assignerData?.name ?? user.email!,
     actor_email: user.email!,
     action: 'task.create',

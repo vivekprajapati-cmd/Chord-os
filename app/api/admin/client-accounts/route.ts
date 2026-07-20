@@ -84,7 +84,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: insertError?.message ?? 'Insert failed.' }, { status: 500 });
   }
 
-  await logActivity({
+  void logActivity({
     actor_name: user.email!,
     actor_email: user.email!,
     action: 'client_account.create',
