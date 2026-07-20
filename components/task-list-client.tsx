@@ -103,6 +103,20 @@ export default function TaskListClient({
       }),
     });
 
+    void fetch('/api/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        actor_name: currentUserName ?? 'unknown',
+        actor_email: '',
+        action: 'task.submit',
+        entity_type: 'task',
+        entity_id: submittingTask.id,
+        description: `Task "${submittingTask.deliverable}"${submittingTask.brands?.name ? ` · ${submittingTask.brands.name}` : ''} submitted for review`,
+        metadata: { link: submissionLink.trim(), on_time: onTime },
+      }),
+    });
+
     setSubmitting(false);
     setSubmittingTask(null);
     setSubmissionLink('');

@@ -177,6 +177,18 @@ export default function TaskDetailModal({
         person: task.owner?.name,
       }),
     });
+    void fetch('/api/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        actor_name: currentUserName,
+        actor_email: '',
+        action: 'task.approve',
+        entity_type: 'task',
+        entity_id: task.id,
+        description: `Task "${task.deliverable}"${(task.brands as any)?.name ? ` · ${(task.brands as any).name}` : ''} approved by ${currentUserName}`,
+      }),
+    });
     setApproving(false);
     onClose();
     onDeleted?.();
@@ -209,6 +221,19 @@ export default function TaskDetailModal({
         person: task.owner?.name,
         round: newRound,
         notes: feedbackNotes.trim(),
+      }),
+    });
+    void fetch('/api/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        actor_name: currentUserName,
+        actor_email: '',
+        action: reviewAction === 'reject' ? 'task.reject' : 'task.rework',
+        entity_type: 'task',
+        entity_id: task.id,
+        description: `Task "${task.deliverable}" ${reviewAction === 'reject' ? 'rejected' : 'sent for rework'} by ${currentUserName} · round ${newRound}`,
+        metadata: { notes: feedbackNotes.trim(), round: newRound },
       }),
     });
     setReworking(false);
