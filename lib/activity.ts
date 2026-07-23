@@ -11,6 +11,11 @@ type LogParams = {
 };
 
 export async function logActivity(params: LogParams) {
-  const admin = createAdminClient();
-  await admin.from('activity_logs').insert(params);
+  try {
+    const admin = createAdminClient();
+    const { error } = await admin.from('activity_logs').insert(params);
+    if (error) console.error('[activity] insert failed:', error.message, JSON.stringify(params));
+  } catch (e) {
+    console.error('[activity] unexpected error:', e);
+  }
 }
