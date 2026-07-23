@@ -186,28 +186,32 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, access_tier')
+    .select('id, name, access_tier')
     .eq('email', user.email!)
     .maybeSingle();
 
   const tier = (person as any)?.access_tier ?? 'staff';
-  if (tier !== 'admin' && tier !== 'lead') {
-    return NextResponse.json({ error: 'Not authorized to delete tasks.' }, { status: 403 });
-  }
+  const isAdminOrLead = tier === 'admin' || tier === 'lead';
 
-  const { data: taskToDelete } = await supabase.from('tasks').select('deliverable, brands(name)').eq('id', id).maybeSingle();
+  const { data: taskToDelete } = await supabase.from('tasks').select('deliverable, owner_id, brands(name)').eq('id', id).maybeSingle();
+
+  if (!isAdminOrLead) {
+    if (!taskToDelete || taskToDelete.owner_id !== person?.id) {
+      return NextResponse.json({ error: 'Not authorized to delete tasks.' }, { status: 403 });
+    }
+  }
 
   const { error } = await supabase.from('tasks').delete().eq('id', id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   void logActivity({
-    actor_name: user.email!,
+    actor_name: person?.name ?? user.email!,
     actor_email: user.email!,
     action: 'task.delete',
     entity_type: 'task',
     entity_id: id,
-    description: `Task "${taskToDelete?.deliverable ?? id}" deleted · ${(taskToDelete?.brands as any)?.name ?? ''}`,
+    description: `Task "${taskToDelete?.deliverable ?? id}" deleted by ${person?.name ?? user.email!} · ${(taskToDelete?.brands as any)?.name ?? ''}`,
   });
 
   return NextResponse.json({ ok: true });
