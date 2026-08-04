@@ -112,7 +112,7 @@ Your job:
 3. After all tool calls complete, confirm in a short summary. For bulk, list each assignment in one line each. No fluff.
 
 Rules:
-- Due date: if not specified, default to today. Never ask for it.
+- Due date: if not mentioned by the lead, leave the deadline field EMPTY — do not guess or invent a date. The system will default it to today at 7:30pm IST automatically.
 - If hours not specified, ask ONCE. If the lead says no or skips it, proceed without hours — no calendar block will be created, task will have deadline only.
 - If priority not specified, default P1.
 - If start time not specified, default tomorrow 10am IST.
@@ -150,7 +150,7 @@ const TOOLS: Anthropic.Messages.Tool[] = [
         start_at: { type: 'string', description: 'ISO 8601 UTC. Only relevant if estimated_hours is provided. Default: tomorrow 10am IST.' },
         references: { type: 'array', description: 'List of reference URLs (mood boards, inspiration, storyboards, etc.)', items: { type: 'string' } },
       },
-      required: ['brand_slug', 'owner_first_name', 'deliverable', 'task_type', 'deadline', 'priority'],
+      required: ['brand_slug', 'owner_first_name', 'deliverable', 'task_type', 'priority'],
     },
   },
   {
