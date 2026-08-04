@@ -22,7 +22,7 @@ function parseCSV(text: string): string[][] {
   });
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
@@ -38,8 +38,12 @@ export async function GET() {
   const sheetId = extractSheetId(sheetUrl);
   if (!sheetId) return NextResponse.json({ error: 'invalid_url' }, { status: 400 });
 
+  // Month param e.g. "Aug 2026" — maps to sheet tab name
+  const { searchParams } = new URL((req as Request).url);
+  const month = searchParams.get('month') ?? '';
+
   // Fetch as public CSV export (works if sheet is shared with "anyone with link can view")
-  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&sheet=0`;
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv${month ? `&sheetName=${encodeURIComponent(month)}` : ''}`;
   const res = await fetch(csvUrl);
   if (!res.ok) return NextResponse.json({ error: 'fetch_failed', status: res.status }, { status: 502 });
 

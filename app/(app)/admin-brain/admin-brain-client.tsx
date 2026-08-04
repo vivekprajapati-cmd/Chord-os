@@ -48,11 +48,22 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'snapshot' | 'stages' | 'teams' | 'status' | 'priority' | 'tracker' | 'log'>('snapshot');
 
-  const fetchData = useCallback(async () => {
+  const now = new Date();
+  const currentMonth = now.toLocaleString('en-US', { month: 'short' }) + ' ' + now.getFullYear();
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+
+  // Generate last 6 months + next month as options
+  const monthOptions = Array.from({ length: 8 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    return d.toLocaleString('en-US', { month: 'short' }) + ' ' + d.getFullYear();
+  });
+
+  const fetchData = useCallback(async (month: string = selectedMonth) => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/admin-brain/sheet');
+      const m = month ?? selectedMonth;
+      const res = await fetch(`/api/admin-brain/sheet?month=${encodeURIComponent(m)}`);
       if (!res.ok) {
         const e = await res.json();
         if (e.error === 'no_sheet_url') { setError('No sheet URL set. Add one above.'); return; }
@@ -67,7 +78,7 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
     }
   }, []);
 
-  useEffect(() => { if (sheetUrl) fetchData(); }, [sheetUrl, fetchData]);
+  useEffect(() => { if (sheetUrl) fetchData(selectedMonth); }, [sheetUrl]); // eslint-disable-line
 
   async function saveUrl() {
     setSaving(true);
@@ -107,10 +118,24 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
           {saving ? 'Saving…' : 'Save & Sync'}
         </button>
         {sheetUrl && (
-          <button onClick={fetchData} disabled={loading} style={{ ...mono, background: 'transparent', border: '1px solid var(--line)', color: 'var(--gray)', padding: '9px 16px', borderRadius: '999px', cursor: 'pointer' }}>
+          <button onClick={() => fetchData()} disabled={loading} style={{ ...mono, background: 'transparent', border: '1px solid var(--line)', color: 'var(--gray)', padding: '9px 16px', borderRadius: '999px', cursor: 'pointer' }}>
             {loading ? '…' : 'Refresh'}
           </button>
         )}
+      </div>
+
+      {/* Month selector */}
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <span style={label}>Month:</span>
+        {monthOptions.map(m => (
+          <button
+            key={m}
+            onClick={() => { setSelectedMonth(m); fetchData(m); }}
+            style={{ ...mono, padding: '5px 12px', borderRadius: '999px', border: `1px solid ${selectedMonth === m ? 'var(--ink)' : 'var(--line)'}`, background: selectedMonth === m ? 'var(--ink)' : 'transparent', color: selectedMonth === m ? 'var(--cream)' : 'var(--gray)', cursor: 'pointer' }}
+          >
+            {m}
+          </button>
+        ))}
       </div>
 
       {error && <p style={{ ...mono, color: 'var(--red)', marginBottom: '16px' }}>{error}</p>}
@@ -163,30 +188,80 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
             </div>
           )}
 
-          {/* By Team */}
-          {activeTab === 'teams' && (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
-                <thead><tr><Th>Team</Th><Th>Open Tasks</Th></tr></thead>
-                <tbody>{data.teamBreakdown.map((r, i) => <tr key={i}><Td>{r.team}</Td><Td>{r.open}</Td></tr>)}</tbody>
-              </table>
-            </div>
-          )}
+          {/* By Team — bar chart */}
+          {activeTab === 'teams' && (() => {
+            const max = Math.max(...data.teamBreakdown.map(r => parseInt(r.open) || 0));
+            const W = 560, H = 260, pad = { top: 20, right: 20, bottom: 60, left: 50 };
+            const bW = Math.floor((W - pad.left - pad.right) / data.teamBreakdown.length);
+            const gap = Math.floor(bW * 0.25);
+            return (
+              <div style={{ background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', padding: '24px', overflowX: 'auto' }}>
+                <p style={{ ...mono, marginBottom: '16px' }}>Open Tasks by Team</p>
+                <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: W }}>
+                  {/* Y gridlines */}
+                  {[0, 0.25, 0.5, 0.75, 1].map(t => {
+                    const y = pad.top + (1 - t) * (H - pad.top - pad.bottom);
+                    return <g key={t}>
+                      <line x1={pad.left} x2={W - pad.right} y1={y} y2={y} stroke="var(--line)" strokeWidth="1" />
+                      <text x={pad.left - 6} y={y + 4} textAnchor="end" fontSize="9" fill="var(--gray)" fontFamily="var(--f-mono)">{Math.round(t * max)}</text>
+                    </g>;
+                  })}
+                  {/* Bars */}
+                  {data.teamBreakdown.map((r, i) => {
+                    const val = parseInt(r.open) || 0;
+                    const bH = max > 0 ? (val / max) * (H - pad.top - pad.bottom) : 0;
+                    const x = pad.left + i * bW + gap / 2;
+                    const y = pad.top + (H - pad.top - pad.bottom) - bH;
+                    return <g key={i}>
+                      <rect x={x} y={y} width={bW - gap} height={bH} fill="var(--cobalt)" rx="3" />
+                      <text x={x + (bW - gap) / 2} y={y - 5} textAnchor="middle" fontSize="10" fill="var(--ink)" fontFamily="var(--f-mono)">{val}</text>
+                      <text x={x + (bW - gap) / 2} y={H - pad.bottom + 16} textAnchor="middle" fontSize="9" fill="var(--gray)" fontFamily="var(--f-mono)">{r.team.replace(' Team', '')}</text>
+                    </g>;
+                  })}
+                  {/* X axis */}
+                  <line x1={pad.left} x2={W - pad.right} y1={H - pad.bottom} y2={H - pad.bottom} stroke="var(--ink)" strokeWidth="1" />
+                </svg>
+              </div>
+            );
+          })()}
 
-          {/* Status Breakdown */}
-          {activeTab === 'status' && (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
-                <thead><tr><Th>Status</Th><Th>Count</Th></tr></thead>
-                <tbody>{data.statusBreakdown.map((r, i) => (
-                  <tr key={i}>
-                    <td style={{ ...mono, fontSize: '11px', textTransform: 'none', padding: '8px 12px', borderBottom: '1px solid var(--line)', color: statusColor(r.status) }}>{r.status}</td>
-                    <Td>{r.count}</Td>
-                  </tr>
-                ))}</tbody>
-              </table>
-            </div>
-          )}
+          {/* Status Breakdown — pie chart */}
+          {activeTab === 'status' && (() => {
+            const items = data.statusBreakdown.filter(r => parseInt(r.count) > 0);
+            const total = items.reduce((s, r) => s + (parseInt(r.count) || 0), 0);
+            const COLORS = ['#22c55e', '#3b82f6', 'var(--coral)', '#f59e0b', 'var(--red)', 'var(--gray)'];
+            const cx = 120, cy = 110, r = 90;
+            let angle = -Math.PI / 2;
+            const slices = items.map((item, i) => {
+              const pct = (parseInt(item.count) || 0) / (total || 1);
+              const start = angle;
+              angle += pct * 2 * Math.PI;
+              const end = angle;
+              const x1 = cx + r * Math.cos(start), y1 = cy + r * Math.sin(start);
+              const x2 = cx + r * Math.cos(end), y2 = cy + r * Math.sin(end);
+              const large = end - start > Math.PI ? 1 : 0;
+              return { path: `M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`, color: COLORS[i % COLORS.length], label: item.status, count: item.count };
+            });
+            return (
+              <div style={{ background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', padding: '24px' }}>
+                <p style={{ ...mono, marginBottom: '16px' }}>Status Breakdown</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '32px', flexWrap: 'wrap' }}>
+                  <svg viewBox="0 0 240 220" style={{ width: 220, flexShrink: 0 }}>
+                    {slices.map((s, i) => <path key={i} d={s.path} fill={s.color} stroke="var(--paper)" strokeWidth="2" />)}
+                  </svg>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {slices.map((s, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: 12, height: 12, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                        <span style={{ ...mono, fontSize: '11px', color: 'var(--ink)' }}>{s.label}</span>
+                        <span style={{ ...mono, fontSize: '11px', color: 'var(--gray)' }}>{s.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Priority Tasks */}
           {activeTab === 'priority' && (
