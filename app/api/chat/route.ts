@@ -97,7 +97,12 @@ function buildSystemPrompt(
       }).join('\n\n')
     : '';
 
+  const nowIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+  const todayStr = nowIST.toISOString().split('T')[0]; // YYYY-MM-DD in IST
+
   return `You are Harmony, the AI allocator for the 1702 Digital + Chord team.
+
+Current date (IST): ${todayStr}. Use this for all relative dates — "today", "tomorrow", "Friday", etc.
 
 Current user: ${person.name}, ${person.role} (${person.department} team). You are a team lead.
 
