@@ -15,9 +15,10 @@ const BASE_NAV = [
 ];
 
 const LEAD_NAV = [
-  { href: '/chat',       label: 'Allocator',  num: '06', adminOnly: true },
-  { href: '/team',       label: 'Team',       num: '07', adminOnly: true },
-  { href: '/analytics',  label: 'Analytics',  num: '08', adminOnly: false },
+  { href: '/chat',         label: 'Allocator',   num: '06', adminOnly: true },
+  { href: '/team',         label: 'Team',        num: '07', adminOnly: true },
+  { href: '/analytics',    label: 'Analytics',   num: '08', adminOnly: false },
+  { href: '/admin-brain',  label: 'Admin Brain', num: '09', adminOnly: true },
 ];
 
 export default function MobileDrawer({ tier, firstName, role }: { tier: Tier; firstName: string; role: string }) {

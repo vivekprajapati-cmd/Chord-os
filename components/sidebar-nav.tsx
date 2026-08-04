@@ -61,6 +61,7 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
       {tier === 'admin' && navLink('/chat', 'Allocator', '06')}
       {tier === 'admin' && navLink('/team', 'Team', '07')}
       {(tier === 'admin' || tier === 'poc') && navLink('/analytics', 'Analytics', '08')}
+      {tier === 'admin' && navLink('/admin-brain', 'Admin Brain', '09')}
     </nav>
   );
 }
