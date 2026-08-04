@@ -225,8 +225,8 @@ async function executeTool(
   if (!owner) return `No one named "${owner_first_name}" found on the team.`;
 
   const hasHours = !!estimated_hours && estimated_hours > 0;
-  const rawStart = start_at ?? tomorrowAt10amIST();
-  const effectiveDeadline = deadline || todayAt7_30pmIST();
+  const rawStart = (start_at && !isNaN(new Date(start_at).getTime())) ? start_at : tomorrowAt10amIST();
+  const effectiveDeadline = (deadline && !isNaN(new Date(deadline).getTime())) ? deadline : todayAt7_30pmIST();
 
   let startAt = rawStart;
   let endAt: string | null = null;
