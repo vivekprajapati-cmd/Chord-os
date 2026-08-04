@@ -159,7 +159,7 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
           {/* Snapshot */}
           {activeTab === 'snapshot' && (
             <div>
-              <p style={{ ...label, marginBottom: '16px' }}>As of {data.snapshot.as_of}</p>
+              <p style={{ ...label, marginBottom: '16px' }}>As of {data.snapshot.as_of} — all months aggregate</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '24px' }}>
                 {[
                   { label: 'Total Backlog', value: data.snapshot.total },
@@ -264,11 +264,15 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
           })()}
 
           {/* Priority Tasks */}
-          {activeTab === 'priority' && (
+          {activeTab === 'priority' && (() => {
+            const shortMonth = selectedMonth.split(' ')[0];
+            const filtered = data.priorityTasks.filter(r => r.month === shortMonth);
+            return (
             <div style={{ overflowX: 'auto' }}>
+              {filtered.length === 0 && <p style={{ ...label, marginBottom: '12px' }}>No priority tasks for {selectedMonth}.</p>}
               <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
                 <thead><tr><Th>#</Th><Th>Brand</Th><Th>Month</Th><Th>Remaining</Th><Th>Deadline</Th><Th>Days Left</Th><Th>Status</Th><Th>Priority</Th></tr></thead>
-                <tbody>{data.priorityTasks.map((r, i) => (
+                <tbody>{filtered.map((r, i) => (
                   <tr key={i}>
                     <Td>{r.rank}</Td><Td>{r.brand}</Td><Td>{r.month}</Td><Td red={parseInt(r.remaining) > 0}>{r.remaining}</Td>
                     <Td>{r.deadline}</Td>
@@ -279,7 +283,8 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
                 ))}</tbody>
               </table>
             </div>
-          )}
+            );
+          })()}
 
           {/* Tracker */}
           {activeTab === 'tracker' && (() => {
