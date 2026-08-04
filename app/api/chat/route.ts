@@ -16,6 +16,38 @@ function tomorrowAt10amIST(): string {
   return new Date(ist.getTime() - IST_OFFSET).toISOString();
 }
 
+function todayAt7_30pmIST(): string {
+  const now = Date.now();
+  const ist = new Date(now + IST_OFFSET);
+  ist.setHours(19, 30, 0, 0);
+  return new Date(ist.getTime() - IST_OFFSET).toISOString();
+}
+
+function clampToWorkingHoursIST(startISO: string, hours: number): { start: string; end: string } {
+  const WORK_START = 9 * 60;   // 9:00am in minutes
+  const WORK_END   = 19 * 60 + 30; // 7:30pm in minutes
+
+  const startUtc = new Date(startISO);
+  const istMs = startUtc.getTime() + IST_OFFSET;
+  const ist = new Date(istMs);
+
+  const startMin = ist.getHours() * 60 + ist.getMinutes();
+  // Clamp start to [9am, 7:30pm)
+  const clampedStartMin = Math.max(WORK_START, Math.min(startMin, WORK_END - 1));
+  ist.setHours(Math.floor(clampedStartMin / 60), clampedStartMin % 60, 0, 0);
+
+  const endMin = clampedStartMin + hours * 60;
+  const cappedEndMin = Math.min(endMin, WORK_END);
+
+  const endIst = new Date(ist);
+  endIst.setHours(Math.floor(cappedEndMin / 60), cappedEndMin % 60, 0, 0);
+
+  return {
+    start: new Date(ist.getTime() - IST_OFFSET).toISOString(),
+    end: new Date(endIst.getTime() - IST_OFFSET).toISOString(),
+  };
+}
+
 type BrandForPrompt = {
   slug: string;
   name: string;
@@ -65,7 +97,12 @@ function buildSystemPrompt(
       }).join('\n\n')
     : '';
 
+  const nowIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+  const todayStr = nowIST.toISOString().split('T')[0]; // YYYY-MM-DD in IST
+
   return `You are Harmony, the AI allocator for the 1702 Digital + Chord team.
+
+Current date (IST): ${todayStr}. Use this for all relative dates — "today", "tomorrow", "Friday", etc.
 
 Current user: ${person.name}, ${person.role} (${person.department} team). You are a team lead.
 
@@ -80,10 +117,11 @@ Your job:
 3. After all tool calls complete, confirm in a short summary. For bulk, list each assignment in one line each. No fluff.
 
 Rules:
-- Due date is REQUIRED. If not specified, ask before doing anything else.
+- Due date: if not mentioned by the lead, leave the deadline field EMPTY — do not guess or invent a date. The system will default it to today at 7:30pm IST automatically.
 - If hours not specified, ask ONCE. If the lead says no or skips it, proceed without hours — no calendar block will be created, task will have deadline only.
 - If priority not specified, default P1.
 - If start time not specified, default tomorrow 10am IST.
+- All calendar blocks must fall within working hours: 9:00am–7:30pm IST. Never schedule outside this window.
 - Match person by first name (case-insensitive).
 - Match brand by name or slug (case-insensitive).
 - Check active task load before assigning — if someone already has 20h+ active, flag it and ask if intentional.
@@ -117,7 +155,7 @@ const TOOLS: Anthropic.Messages.Tool[] = [
         start_at: { type: 'string', description: 'ISO 8601 UTC. Only relevant if estimated_hours is provided. Default: tomorrow 10am IST.' },
         references: { type: 'array', description: 'List of reference URLs (mood boards, inspiration, storyboards, etc.)', items: { type: 'string' } },
       },
-      required: ['brand_slug', 'owner_first_name', 'deliverable', 'task_type', 'deadline', 'priority'],
+      required: ['brand_slug', 'owner_first_name', 'deliverable', 'task_type', 'priority'],
     },
   },
   {
@@ -192,10 +230,16 @@ async function executeTool(
   if (!owner) return `No one named "${owner_first_name}" found on the team.`;
 
   const hasHours = !!estimated_hours && estimated_hours > 0;
-  const startAt = start_at ?? tomorrowAt10amIST();
-  const endAt = hasHours
-    ? new Date(new Date(startAt).getTime() + estimated_hours! * 3600000).toISOString()
-    : null;
+  const rawStart = (start_at && !isNaN(new Date(start_at).getTime())) ? start_at : tomorrowAt10amIST();
+  const effectiveDeadline = (deadline && !isNaN(new Date(deadline).getTime())) ? deadline : todayAt7_30pmIST();
+
+  let startAt = rawStart;
+  let endAt: string | null = null;
+  if (hasHours) {
+    const clamped = clampToWorkingHoursIST(rawStart, estimated_hours!);
+    startAt = clamped.start;
+    endAt = clamped.end;
+  }
 
   // Check for conflicting blocks only if hours provided
   if (hasHours && endAt) {
@@ -226,7 +270,7 @@ async function executeTool(
       priority,
       estimated_hours: estimated_hours ?? null,
       status: 'scheduled',
-      deadline: deadline,
+      deadline: effectiveDeadline,
     })
     .select('id')
     .single();
@@ -275,7 +319,7 @@ async function executeTool(
   });
 
   // Notify Slack — always show deadline in IST
-  const deadlineStr = new Date(deadline).toLocaleString('en-IN', {
+  const deadlineStr = new Date(effectiveDeadline).toLocaleString('en-IN', {
     weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata',
   });
 
@@ -518,7 +562,7 @@ export async function POST(req: Request) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: process.env.GROQ_MODEL_ID || 'llama3-groq-70b-8192-tool-use-preview',
+            model: process.env.GROQ_MODEL_ID || 'llama-3.3-70b-versatile',
             messages: groqMessages,
             tools: groqTools,
             tool_choice: 'auto',

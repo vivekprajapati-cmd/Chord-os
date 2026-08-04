@@ -142,7 +142,7 @@ export async function POST(req: Request) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: process.env.GROQ_MODEL_ID || 'llama3-groq-70b-8192-tool-use-preview',
+            model: process.env.GROQ_MODEL_ID || 'llama-3.3-70b-versatile',
             messages: [{ role: 'user', content: prompt }],
             max_tokens: 2048,
           }),
