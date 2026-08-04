@@ -282,11 +282,14 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
           )}
 
           {/* Tracker */}
-          {activeTab === 'tracker' && (
+          {activeTab === 'tracker' && (() => {
+            const shortMonth = selectedMonth.split(' ')[0]; // "Aug 2026" → "Aug"
+            const filtered = data.tracker.filter(r => !r.month || r.month === shortMonth);
+            return (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
                 <thead><tr><Th>Brand</Th><Th>Month</Th><Th>Total</Th><Th>Static</Th><Th>Pend. Shoot</Th><Th>In Progress</Th><Th>Shot-NE</Th><Th>AI/MG</Th><Th>Influencer</Th><Th>Stories</Th><Th>Done</Th><Th>Remaining</Th><Th>Deadline</Th><Th>Days Left</Th><Th>%</Th><Th>Status</Th></tr></thead>
-                <tbody>{data.tracker.map((r, i) => (
+                <tbody>{filtered.map((r, i) => (
                   <tr key={i}>
                     <Td>{r.brand}</Td><Td>{r.month}</Td><Td>{r.total}</Td>
                     <Td>{r.static || '-'}</Td><Td>{r.pending_shoot || '-'}</Td><Td>{r.in_progress || '-'}</Td>
@@ -299,7 +302,8 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
                 ))}</tbody>
               </table>
             </div>
-          )}
+            );
+          })()}
 
           {/* Daily Log */}
           {activeTab === 'log' && (
