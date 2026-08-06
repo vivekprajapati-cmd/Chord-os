@@ -307,7 +307,7 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
               <div style={{ overflowX: 'auto' }}>
                 {filtered.length === 0 && <p style={label}>No tracker data for {selectedMonth}.</p>}
                 {filtered.length > 0 && (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
+                  <table style={{ width: '100%', minWidth: '1100px', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
                     <thead><tr><Th>Brand</Th><Th>Month</Th><Th>Total</Th><Th>Static</Th><Th>Pend. Shoot</Th><Th>In Progress</Th><Th>Shot-NE</Th><Th>AI/MG</Th><Th>Influencer</Th><Th>Stories</Th><Th>Done</Th><Th>Remaining</Th><Th>Deadline</Th><Th>Days Left</Th><Th>%</Th><Th>Status</Th></tr></thead>
                     <tbody>{filtered.map((r, i) => {
                       const isOverdue = r.status === 'Overdue';
