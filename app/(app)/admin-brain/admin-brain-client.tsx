@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 type Snapshot = { total: string; completed: string; remaining: string; pct_complete: string; overdue: string; high_priority: string; as_of: string };
 type StageRow = { stage: string; team: string; open: string };
@@ -46,23 +46,25 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<'snapshot' | 'stages' | 'teams' | 'status' | 'priority' | 'tracker' | 'log'>('snapshot');
 
   const now = new Date();
   const currentMonth = now.toLocaleString('en-US', { month: 'short' }) + ' ' + now.getFullYear();
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+  const selectedMonthRef = useRef(selectedMonth);
+  selectedMonthRef.current = selectedMonth;
 
-  // Generate last 6 months + next month as options
   const monthOptions = Array.from({ length: 8 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
     return d.toLocaleString('en-US', { month: 'short' }) + ' ' + d.getFullYear();
   });
 
-  const fetchData = useCallback(async (month: string = selectedMonth) => {
+  const fetchData = useCallback(async (month?: string) => {
+    const m = month ?? selectedMonthRef.current;
     setLoading(true);
     setError('');
     try {
-      const m = month ?? selectedMonth;
       const res = await fetch(`/api/admin-brain/sheet?month=${encodeURIComponent(m)}`);
       if (!res.ok) {
         const e = await res.json();
@@ -71,6 +73,7 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
         return;
       }
       setData(await res.json());
+      setLastSynced(new Date());
     } catch {
       setError('Network error.');
     } finally {
@@ -78,13 +81,28 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
     }
   }, []);
 
-  useEffect(() => { if (sheetUrl) fetchData(selectedMonth); }, [sheetUrl]); // eslint-disable-line
+  // Initial load
+  useEffect(() => { if (sheetUrl) fetchData(); }, [sheetUrl]); // eslint-disable-line
+
+  // Auto-refresh on page focus
+  useEffect(() => {
+    const onFocus = () => { if (sheetUrl) fetchData(); };
+    window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') onFocus(); });
+    return () => window.removeEventListener('visibilitychange', onFocus);
+  }, [sheetUrl, fetchData]);
 
   async function saveUrl() {
     setSaving(true);
     await fetch('/api/settings', { method: 'POST', body: JSON.stringify({ key: 'backlog_sheet_url', value: inputUrl.trim() }), headers: { 'Content-Type': 'application/json' } });
     setSheetUrl(inputUrl.trim());
     setSaving(false);
+  }
+
+  function formatSynced(d: Date) {
+    const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    return `${Math.floor(diff / 3600)}h ago`;
   }
 
   const tabs = [
@@ -99,7 +117,12 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
 
   return (
     <div>
-      <h1 className="font-display text-5xl uppercase tracking-tight mb-1">Admin Brain</h1>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px', marginBottom: '4px' }}>
+        <h1 className="font-display text-5xl uppercase tracking-tight">Admin Brain</h1>
+        {lastSynced && (
+          <span style={{ ...label }}>Synced {formatSynced(lastSynced)}</span>
+        )}
+      </div>
       <p style={{ ...label, marginBottom: '24px' }}>Backlog dashboard — live from Google Sheets</p>
 
       {/* Sheet URL input */}
@@ -110,11 +133,7 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
           placeholder="Paste Google Sheet URL (must be shared: anyone with link can view)"
           style={{ flex: 1, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: '999px', padding: '9px 18px', fontFamily: 'var(--f-mono)', fontSize: '11px', outline: 'none', color: 'var(--ink)' }}
         />
-        <button
-          onClick={saveUrl}
-          disabled={saving || !inputUrl.trim()}
-          style={{ ...mono, background: 'var(--ink)', color: 'var(--cream)', padding: '9px 20px', borderRadius: '999px', border: 'none', cursor: 'pointer', opacity: saving ? 0.5 : 1 }}
-        >
+        <button onClick={saveUrl} disabled={saving || !inputUrl.trim()} style={{ ...mono, background: 'var(--ink)', color: 'var(--cream)', padding: '9px 20px', borderRadius: '999px', border: 'none', cursor: 'pointer', opacity: saving ? 0.5 : 1 }}>
           {saving ? 'Saving…' : 'Save & Sync'}
         </button>
         {sheetUrl && (
@@ -128,11 +147,8 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
       <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={label}>Month:</span>
         {monthOptions.map(m => (
-          <button
-            key={m}
-            onClick={() => { setSelectedMonth(m); fetchData(m); }}
-            style={{ ...mono, padding: '5px 12px', borderRadius: '999px', border: `1px solid ${selectedMonth === m ? 'var(--ink)' : 'var(--line)'}`, background: selectedMonth === m ? 'var(--ink)' : 'transparent', color: selectedMonth === m ? 'var(--cream)' : 'var(--gray)', cursor: 'pointer' }}
-          >
+          <button key={m} onClick={() => { setSelectedMonth(m); fetchData(m); }}
+            style={{ ...mono, padding: '5px 12px', borderRadius: '999px', border: `1px solid ${selectedMonth === m ? 'var(--ink)' : 'var(--line)'}`, background: selectedMonth === m ? 'var(--ink)' : 'transparent', color: selectedMonth === m ? 'var(--cream)' : 'var(--gray)', cursor: 'pointer' }}>
             {m}
           </button>
         ))}
@@ -146,11 +162,8 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
           {/* Tab bar */}
           <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', flexWrap: 'wrap' }}>
             {tabs.map(t => (
-              <button
-                key={t.key}
-                onClick={() => setActiveTab(t.key)}
-                style={{ ...mono, padding: '6px 14px', borderRadius: '999px', border: `1px solid ${activeTab === t.key ? 'var(--ink)' : 'var(--line)'}`, background: activeTab === t.key ? 'var(--ink)' : 'transparent', color: activeTab === t.key ? 'var(--cream)' : 'var(--gray)', cursor: 'pointer' }}
-              >
+              <button key={t.key} onClick={() => setActiveTab(t.key)}
+                style={{ ...mono, padding: '6px 14px', borderRadius: '999px', border: `1px solid ${activeTab === t.key ? 'var(--ink)' : 'var(--line)'}`, background: activeTab === t.key ? 'var(--ink)' : 'transparent', color: activeTab === t.key ? 'var(--cream)' : 'var(--gray)', cursor: 'pointer' }}>
                 {t.label}
               </button>
             ))}
@@ -198,7 +211,6 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
               <div style={{ background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', padding: '24px', overflowX: 'auto' }}>
                 <p style={{ ...mono, marginBottom: '16px' }}>Open Tasks by Team</p>
                 <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: W }}>
-                  {/* Y gridlines */}
                   {[0, 0.25, 0.5, 0.75, 1].map(t => {
                     const y = pad.top + (1 - t) * (H - pad.top - pad.bottom);
                     return <g key={t}>
@@ -206,7 +218,6 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
                       <text x={pad.left - 6} y={y + 4} textAnchor="end" fontSize="9" fill="var(--gray)" fontFamily="var(--f-mono)">{Math.round(t * max)}</text>
                     </g>;
                   })}
-                  {/* Bars */}
                   {data.teamBreakdown.map((r, i) => {
                     const val = parseInt(r.open) || 0;
                     const bH = max > 0 ? (val / max) * (H - pad.top - pad.bottom) : 0;
@@ -218,7 +229,6 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
                       <text x={x + (bW - gap) / 2} y={H - pad.bottom + 16} textAnchor="middle" fontSize="9" fill="var(--gray)" fontFamily="var(--f-mono)">{r.team.replace(' Team', '')}</text>
                     </g>;
                   })}
-                  {/* X axis */}
                   <line x1={pad.left} x2={W - pad.right} y1={H - pad.bottom} y2={H - pad.bottom} stroke="var(--ink)" strokeWidth="1" />
                 </svg>
               </div>
@@ -268,61 +278,76 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
             const shortMonth = selectedMonth.split(' ')[0];
             const filtered = data.priorityTasks.filter(r => r.month === shortMonth);
             return (
-            <div style={{ overflowX: 'auto' }}>
-              {filtered.length === 0 && <p style={{ ...label, marginBottom: '12px' }}>No priority tasks for {selectedMonth}.</p>}
-              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
-                <thead><tr><Th>#</Th><Th>Brand</Th><Th>Month</Th><Th>Remaining</Th><Th>Deadline</Th><Th>Days Left</Th><Th>Status</Th><Th>Priority</Th></tr></thead>
-                <tbody>{filtered.map((r, i) => (
-                  <tr key={i}>
-                    <Td>{r.rank}</Td><Td>{r.brand}</Td><Td>{r.month}</Td><Td red={parseInt(r.remaining) > 0}>{r.remaining}</Td>
-                    <Td>{r.deadline}</Td>
-                    <Td red={parseInt(r.days_left) <= 0}>{parseInt(r.days_left) <= 0 ? 'Overdue' : r.days_left}</Td>
-                    <td style={{ ...mono, fontSize: '11px', textTransform: 'none', padding: '8px 12px', borderBottom: '1px solid var(--line)', color: statusColor(r.status) }}>{r.status}</td>
-                    <Td>{r.priority}</Td>
-                  </tr>
-                ))}</tbody>
-              </table>
-            </div>
+              <div style={{ overflowX: 'auto' }}>
+                {filtered.length === 0 && <p style={{ ...label, marginBottom: '12px' }}>No priority tasks for {selectedMonth}.</p>}
+                {filtered.length > 0 && (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
+                    <thead><tr><Th>#</Th><Th>Brand</Th><Th>Month</Th><Th>Remaining</Th><Th>Deadline</Th><Th>Days Left</Th><Th>Status</Th><Th>Priority</Th></tr></thead>
+                    <tbody>{filtered.map((r, i) => (
+                      <tr key={i} style={{ background: r.status === 'Overdue' ? 'rgba(var(--red-rgb, 220,38,38),0.06)' : undefined }}>
+                        <Td>{r.rank}</Td><Td>{r.brand}</Td><Td>{r.month}</Td>
+                        <Td red={parseInt(r.remaining) > 0}>{r.remaining}</Td>
+                        <Td>{r.deadline}</Td>
+                        <Td red={parseInt(r.days_left) <= 0}>{parseInt(r.days_left) <= 0 ? 'Overdue' : r.days_left}</Td>
+                        <td style={{ ...mono, fontSize: '11px', textTransform: 'none', padding: '8px 12px', borderBottom: '1px solid var(--line)', color: statusColor(r.status) }}>{r.status}</td>
+                        <Td>{r.priority}</Td>
+                      </tr>
+                    ))}</tbody>
+                  </table>
+                )}
+              </div>
             );
           })()}
 
           {/* Tracker */}
           {activeTab === 'tracker' && (() => {
-            const shortMonth = selectedMonth.split(' ')[0]; // "Aug 2026" → "Aug"
-            const filtered = data.tracker.filter(r => !r.month || r.month === shortMonth);
+            const shortMonth = selectedMonth.split(' ')[0];
+            const filtered = data.tracker.filter(r => r.month === shortMonth);
             return (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
-                <thead><tr><Th>Brand</Th><Th>Month</Th><Th>Total</Th><Th>Static</Th><Th>Pend. Shoot</Th><Th>In Progress</Th><Th>Shot-NE</Th><Th>AI/MG</Th><Th>Influencer</Th><Th>Stories</Th><Th>Done</Th><Th>Remaining</Th><Th>Deadline</Th><Th>Days Left</Th><Th>%</Th><Th>Status</Th></tr></thead>
-                <tbody>{filtered.map((r, i) => (
-                  <tr key={i}>
-                    <Td>{r.brand}</Td><Td>{r.month}</Td><Td>{r.total}</Td>
-                    <Td>{r.static || '-'}</Td><Td>{r.pending_shoot || '-'}</Td><Td>{r.in_progress || '-'}</Td>
-                    <Td>{r.shot_ne || '-'}</Td><Td>{r.ai_mg || '-'}</Td><Td>{r.influencer || '-'}</Td><Td>{r.stories || '-'}</Td>
-                    <Td>{r.completed}</Td><Td red={parseInt(r.remaining) > 0}>{r.remaining}</Td>
-                    <Td>{r.deadline}</Td><Td red={parseInt(r.days_left) <= 0}>{parseInt(r.days_left) <= 0 ? 'Overdue' : r.days_left}</Td>
-                    <Td>{r.pct_complete}</Td>
-                    <td style={{ ...mono, fontSize: '11px', textTransform: 'none', padding: '8px 12px', borderBottom: '1px solid var(--line)', color: statusColor(r.status) }}>{r.status}</td>
-                  </tr>
-                ))}</tbody>
-              </table>
-            </div>
+              <div style={{ overflowX: 'auto' }}>
+                {filtered.length === 0 && <p style={label}>No tracker data for {selectedMonth}.</p>}
+                {filtered.length > 0 && (
+                  <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
+                    <thead><tr><Th>Brand</Th><Th>Month</Th><Th>Total</Th><Th>Static</Th><Th>Pend. Shoot</Th><Th>In Progress</Th><Th>Shot-NE</Th><Th>AI/MG</Th><Th>Influencer</Th><Th>Stories</Th><Th>Done</Th><Th>Remaining</Th><Th>Deadline</Th><Th>Days Left</Th><Th>%</Th><Th>Status</Th></tr></thead>
+                    <tbody>{filtered.map((r, i) => {
+                      const isOverdue = r.status === 'Overdue';
+                      const rowBg = isOverdue ? 'rgba(220,38,38,0.06)' : undefined;
+                      return (
+                        <tr key={i} style={{ background: rowBg }}>
+                          <Td>{r.brand}</Td><Td>{r.month}</Td><Td>{r.total}</Td>
+                          <Td>{r.static || '-'}</Td><Td>{r.pending_shoot || '-'}</Td><Td>{r.in_progress || '-'}</Td>
+                          <Td>{r.shot_ne || '-'}</Td><Td>{r.ai_mg || '-'}</Td><Td>{r.influencer || '-'}</Td><Td>{r.stories || '-'}</Td>
+                          <Td>{r.completed}</Td><Td red={parseInt(r.remaining) > 0}>{r.remaining}</Td>
+                          <Td>{r.deadline}</Td>
+                          <Td red={parseInt(r.days_left) <= 0}>{parseInt(r.days_left) <= 0 ? 'Overdue' : r.days_left}</Td>
+                          <Td>{r.pct_complete}</Td>
+                          <td style={{ ...mono, fontSize: '11px', textTransform: 'none', padding: '8px 12px', borderBottom: '1px solid var(--line)', color: statusColor(r.status) }}>{r.status}</td>
+                        </tr>
+                      );
+                    })}</tbody>
+                  </table>
+                )}
+              </div>
             );
           })()}
 
           {/* Daily Log */}
-          {activeTab === 'log' && (
-            <div style={{ overflowX: 'auto' }}>
-              {data.dailyLog.length === 0
-                ? <p style={label}>No daily log entries yet.</p>
-                : (
-                  <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
-                    <thead><tr><Th>Date</Th><Th>Brand : Month</Th><Th>Qty Completed</Th><Th>Note</Th></tr></thead>
-                    <tbody>{data.dailyLog.map((r, i) => <tr key={i}><Td>{r.date}</Td><Td>{r.brand_month}</Td><Td>{r.qty}</Td><Td>{r.note || '-'}</Td></tr>)}</tbody>
-                  </table>
-                )}
-            </div>
-          )}
+          {activeTab === 'log' && (() => {
+            const shortMonth = selectedMonth.split(' ')[0];
+            const filtered = data.dailyLog.filter(r => r.brand_month?.includes(shortMonth));
+            return (
+              <div style={{ overflowX: 'auto' }}>
+                {filtered.length === 0
+                  ? <p style={label}>No daily log entries for {selectedMonth}.</p>
+                  : (
+                    <table style={{ width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
+                      <thead><tr><Th>Date</Th><Th>Brand : Month</Th><Th>Qty Completed</Th><Th>Note</Th></tr></thead>
+                      <tbody>{filtered.map((r, i) => <tr key={i}><Td>{r.date}</Td><Td>{r.brand_month}</Td><Td>{r.qty}</Td><Td>{r.note || '-'}</Td></tr>)}</tbody>
+                    </table>
+                  )}
+              </div>
+            );
+          })()}
         </>
       )}
     </div>
