@@ -71,7 +71,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </span>
         </div>
 
-        <div style={{ maxWidth: '960px', padding: 'clamp(20px, 4vw, 52px) clamp(16px, 4vw, 48px) 80px' }}>
+        <div style={{ maxWidth: '1280px', padding: 'clamp(20px, 4vw, 52px) clamp(16px, 4vw, 48px) 80px' }}>
           <BackButton />
           {children}
         </div>

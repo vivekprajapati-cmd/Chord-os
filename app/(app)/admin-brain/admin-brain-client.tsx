@@ -304,7 +304,7 @@ export default function AdminBrainClient({ initialSheetUrl }: { initialSheetUrl:
             const shortMonth = selectedMonth.split(' ')[0];
             const filtered = data.tracker.filter(r => r.month === shortMonth);
             return (
-              <div style={{ overflowX: 'auto', marginLeft: 'clamp(-16px, -4vw, -48px)', marginRight: 'clamp(-16px, -4vw, -48px)', paddingLeft: 'clamp(16px, 4vw, 48px)', paddingRight: 'clamp(16px, 4vw, 48px)' }}>
+              <div style={{ overflowX: 'auto' }}>
                 {filtered.length === 0 && <p style={label}>No tracker data for {selectedMonth}.</p>}
                 {filtered.length > 0 && (
                   <table style={{ width: '100%', minWidth: '1100px', borderCollapse: 'collapse', background: 'var(--paper)', border: '1.5px solid var(--ink)', borderRadius: '14px', overflow: 'hidden' }}>
