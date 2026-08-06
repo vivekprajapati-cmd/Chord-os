@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export const runtime = 'nodejs';
 
@@ -30,8 +31,9 @@ export async function GET(req: Request) {
   const { data: person } = await supabase.from('people').select('access_tier').eq('email', user.email!).maybeSingle();
   if ((person as any)?.access_tier !== 'admin') return NextResponse.json({ error: 'admin only' }, { status: 403 });
 
-  // Get sheet URL from settings
-  const { data: setting } = await supabase.from('app_settings').select('value').eq('key', 'backlog_sheet_url').maybeSingle();
+  // Get sheet URL from settings — use admin client to bypass RLS
+  const admin = createAdminClient();
+  const { data: setting } = await admin.from('app_settings').select('value').eq('key', 'backlog_sheet_url').maybeSingle();
   const sheetUrl = (setting as any)?.value;
   if (!sheetUrl) return NextResponse.json({ error: 'no_sheet_url' }, { status: 404 });
 
