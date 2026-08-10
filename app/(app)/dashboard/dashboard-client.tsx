@@ -34,8 +34,8 @@ export default function DashboardClient() {
   const [canDelete, setCanDelete] = useState(false);
   const [flexibleDue, setFlexibleDue] = useState<{ id: string; deliverable: string; deadline: string; priority: string; brands: { name: string } | null }[]>([]);
   const [googleHoursToday, setGoogleHoursToday] = useState(0);
-  const [urgentTasks, setUrgentTasks] = useState<string[]>([]);
-  const [urgentIndex, setUrgentIndex] = useState(0);
+  const [urgentTasks, setUrgentTasks] = useState<{ id: string; deliverable: string; brands: { name: string } | null }[]>([]);
+  const [showUrgentList, setShowUrgentList] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -105,7 +105,7 @@ export default function DashboardClient() {
         // Regular tasks overdue or due today (not submitted)
         supabase
           .from('tasks')
-          .select('id')
+          .select('id, deliverable, brands(name)')
           .eq('owner_id', p.id)
           .eq('flexible', false)
           .in('status', ['scheduled', 'in_progress'])
@@ -118,7 +118,7 @@ export default function DashboardClient() {
       setInProgressCount(ip?.length ?? 0);
       setReviewCount(rv?.length ?? 0);
       setFlexibleDue((ft ?? []) as any[]);
-      setUrgentTasks((urgent ?? []).map((t: any) => t.id));
+      setUrgentTasks((urgent ?? []) as any[]);
 
       // Fetch Google Calendar events for today and add to blocked hours
       try {
@@ -209,7 +209,7 @@ export default function DashboardClient() {
 
       {urgentTasks.length > 0 && (
         <div
-          onClick={() => { setUrgentIndex(0); setSelectedTaskId(urgentTasks[0]); }}
+          onClick={() => setShowUrgentList(true)}
           style={{
             display: 'flex', alignItems: 'center', gap: '10px',
             background: 'var(--coral)', borderRadius: '10px',
@@ -220,11 +220,38 @@ export default function DashboardClient() {
           <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: '#fff', letterSpacing: '0.04em' }}>
             {urgentTasks.length} task{urgentTasks.length > 1 ? 's' : ''} due today or overdue — submit before end of day
           </p>
-          {urgentTasks.length > 1 && (
-            <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>
-              1 of {urgentTasks.length} →
-            </span>
-          )}
+          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>View →</span>
+        </div>
+      )}
+
+      {showUrgentList && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+          onClick={() => setShowUrgentList(false)}
+        >
+          <div
+            style={{ background: 'var(--paper)', border: '1.5px solid var(--line)', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '420px', boxShadow: '8px 8px 0 var(--ink)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--coral)', marginBottom: '16px' }}>
+              Needs attention
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {urgentTasks.map(t => (
+                <div
+                  key={t.id}
+                  onClick={() => { setShowUrgentList(false); setSelectedTaskId(t.id); }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: '10px', cursor: 'pointer' }}
+                >
+                  <div>
+                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: '3px' }}>{(t.brands as any)?.name}</p>
+                    <p style={{ fontSize: '14px', fontWeight: 500 }}>{t.deliverable}</p>
+                  </div>
+                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>→</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -361,11 +388,7 @@ export default function DashboardClient() {
       {selectedTaskId && (
         <TaskDetailModal
           taskId={selectedTaskId}
-          onClose={() => {
-            const next = urgentTasks[urgentIndex + 1];
-            if (next) { setUrgentIndex(urgentIndex + 1); setSelectedTaskId(next); }
-            else setSelectedTaskId(null);
-          }}
+          onClose={() => setSelectedTaskId(null)}
           canDelete={canDelete}
           onDeleted={() => { setSelectedTaskId(null); window.location.reload(); }}
         />
