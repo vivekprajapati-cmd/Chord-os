@@ -244,10 +244,10 @@ export default function DashboardClient() {
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: '10px', cursor: 'pointer' }}
                 >
                   <div>
-                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: '3px' }}>{(t.brands as any)?.name}</p>
-                    <p style={{ fontSize: '14px', fontWeight: 500 }}>{t.deliverable}</p>
+                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', color: 'var(--gray)', marginBottom: '4px' }}>{(t.brands as any)?.name}</p>
+                    <p style={{ fontSize: '17px', fontWeight: 500 }}>{t.deliverable}</p>
                   </div>
-                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>→</span>
+                  <span style={{ fontSize: '20px', color: 'var(--gray)' }}>→</span>
                 </div>
               ))}
             </div>
