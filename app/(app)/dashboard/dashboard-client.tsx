@@ -34,6 +34,7 @@ export default function DashboardClient() {
   const [canDelete, setCanDelete] = useState(false);
   const [flexibleDue, setFlexibleDue] = useState<{ id: string; deliverable: string; deadline: string; priority: string; brands: { name: string } | null }[]>([]);
   const [googleHoursToday, setGoogleHoursToday] = useState(0);
+  const [urgentCount, setUrgentCount] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -67,6 +68,7 @@ export default function DashboardClient() {
         { data: ip },
         { data: rv },
         { data: ft },
+        { data: urgent },
       ] = await Promise.all([
         supabase
           .from('blocks')
@@ -99,6 +101,15 @@ export default function DashboardClient() {
           .lte('start_date', todayEnd.toISOString())
           .gte('deadline', todayStart.toISOString())
           .order('deadline', { ascending: true }),
+        // Regular tasks overdue or due today (not submitted)
+        supabase
+          .from('tasks')
+          .select('id')
+          .eq('owner_id', p.id)
+          .eq('flexible', false)
+          .in('status', ['scheduled', 'in_progress'])
+          .lte('deadline', todayEnd.toISOString())
+          .is('submitted_at', null),
       ]);
 
       setTodayBlocks((tb ?? []) as unknown as Block[]);
@@ -106,6 +117,7 @@ export default function DashboardClient() {
       setInProgressCount(ip?.length ?? 0);
       setReviewCount(rv?.length ?? 0);
       setFlexibleDue((ft ?? []) as any[]);
+      setUrgentCount(urgent?.length ?? 0);
 
       // Fetch Google Calendar events for today and add to blocked hours
       try {
@@ -193,6 +205,20 @@ export default function DashboardClient() {
           {person?.role} · {person?.department}
         </p>
       </div>
+
+      {urgentCount > 0 && (
+        <Link href="/tasks" style={{
+          display: 'flex', alignItems: 'center', gap: '10px',
+          background: 'var(--coral)', borderRadius: '10px',
+          padding: '10px 16px', textDecoration: 'none',
+        }}>
+          <span style={{ fontSize: '14px' }}>⚠</span>
+          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: '#fff', letterSpacing: '0.04em' }}>
+            {urgentCount} task{urgentCount > 1 ? 's' : ''} due today or overdue — submit before end of day
+          </p>
+          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>View →</span>
+        </Link>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-5">
         <StatCard label="Blocks today" value={String(todayBlocks.length)} />
