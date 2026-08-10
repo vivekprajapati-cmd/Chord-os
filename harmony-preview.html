@@ -1,0 +1,212 @@
+<title>Harmony — Case Study v5</title>
+<style>
+  :root {
+    --bg: #F7F5F0; --ink: #111110; --muted: #6B6860; --rule: #D8D4CC; --bold: #111110;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141412; --ink: #E8E5DE; --muted: #8A8780; --rule: #2A2926; --bold: #E8E5DE; }
+  }
+  :root[data-theme="dark"] { --bg: #141412; --ink: #E8E5DE; --muted: #8A8780; --rule: #2A2926; --bold: #E8E5DE; }
+  :root[data-theme="light"] { --bg: #F7F5F0; --ink: #111110; --muted: #6B6860; --rule: #D8D4CC; --bold: #111110; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 17px; line-height: 1.78;
+    padding: 60px 24px 100px;
+    max-width: 720px; margin: 0 auto;
+    transition: background 0.2s, color 0.2s;
+  }
+  .meta {
+    font-family: 'Courier New', monospace; font-size: 11px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+    margin-bottom: 52px; display: grid; grid-template-columns: 1fr 1fr;
+    gap: 5px 32px; padding-bottom: 32px; border-bottom: 1px solid var(--rule);
+  }
+  .meta strong { color: var(--ink); }
+  h1 {
+    font-family: 'Georgia', serif; font-size: clamp(34px, 6vw, 54px);
+    font-weight: 400; line-height: 1.1; letter-spacing: -0.02em;
+    margin-bottom: 14px; text-wrap: balance;
+  }
+  .subtitle {
+    font-family: 'Courier New', monospace; font-size: 13px;
+    color: var(--muted); line-height: 1.65; margin-bottom: 40px; max-width: 56ch;
+  }
+  h2 {
+    font-family: 'Courier New', monospace; font-size: 10px; font-weight: 400;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+    margin-top: 60px; margin-bottom: 22px; padding-top: 22px;
+    border-top: 1px solid var(--rule);
+  }
+  p { margin-bottom: 20px; max-width: 64ch; }
+  strong { font-weight: 600; color: var(--bold); }
+  em { font-style: italic; color: var(--muted); }
+
+  .person { margin-bottom: 28px; padding-left: 20px; border-left: 1.5px solid var(--rule); }
+  .person-label {
+    font-family: 'Courier New', monospace; font-size: 9.5px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    margin-bottom: 8px; display: block;
+  }
+
+  .evolution-list { margin: 0 0 20px 0; padding: 0; list-style: none; }
+  .evolution-list li {
+    padding: 14px 0 14px 20px; border-bottom: 1px solid var(--rule);
+    font-size: 16px; line-height: 1.65; position: relative;
+  }
+  .evolution-list li::before {
+    content: '→'; position: absolute; left: 0;
+    color: var(--muted); font-family: 'Courier New', monospace; font-size: 11px; top: 16px;
+  }
+  .evolution-list li:last-child { border-bottom: none; }
+  .v-label {
+    font-family: 'Courier New', monospace; font-size: 9px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); display: block; margin-bottom: 4px;
+  }
+
+  .learning { margin-bottom: 28px; }
+  .learning strong { display: block; margin-bottom: 6px; }
+
+  .footer {
+    font-family: 'Courier New', monospace; font-size: 11px;
+    color: var(--muted); letter-spacing: 0.06em;
+    margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--rule);
+  }
+</style>
+
+<h1>Harmony</h1>
+<p class="subtitle">A task management system for a team that was absolutely, definitely, definitely working hard.</p>
+
+<div class="meta">
+  <span><strong>Role</strong> AI Engineer, Product Manager</span>
+  <span><strong>Type</strong> Internal Tool, Org-Wide</span>
+  <span><strong>Timeline</strong> 0 to 1, In Production</span>
+  <span><strong>Users</strong> 30–40 people</span>
+  <span><strong>Organisation</strong> Chord, Creative Marketing Agency, Mumbai</span>
+</div>
+
+<h2>The problem that everyone felt but nobody could prove</h2>
+<p>Here is a fun situation to be in: you have hired exactly the right number of people. You are paying them. They are showing up. They are, by all accounts, very busy. And somehow, the work is still not getting done.</p>
+<p>Shivangi, the CEO, had a precise way of describing this: <em>"The problem that we were facing was that X was not delivering Y and the reason for it was undetermined. There were a lot of conversations from people and management — burnout, too many feedback rounds — but it was all happening on a very personal level. You cannot track it quantitatively."</em></p>
+<p>The team was pulling ten to twelve hour days. Backlogs were growing. And the official explanation was essentially vibes. Nobody at the top could see what was actually happening — because nobody had built a place for what was actually happening to live.</p>
+
+<h2>What I saw when I showed up and paid attention</h2>
+<p>Before writing a single line of code, I decided to just watch.</p>
+<p>Every morning, the team had a meeting to decide who was doing what. It lasted at least an hour. Assignments were given out loud, into the air, to people holding nothing to write with. By the afternoon, those assignments existed only in the memory of whoever received them — which, it turns out, is not a reliable storage system.</p>
+<p>The part that really got me: watching Shivani re-brief the same task to the same interns two, sometimes three times in one day. The brief had been given. It had been discussed. It had been nodded at. And then it had completely ceased to exist, because it was never written down anywhere a person could actually find it later.</p>
+<p>This was not a people problem. The interns were not secretly sabotaging the creative pipeline. The information just had nowhere to go. When work lives entirely in conversation, it evaporates the moment the conversation ends — and then everyone acts surprised when nothing gets done.</p>
+<p>Shocking, truly.</p>
+
+<h2>What five people told me when I asked how things were going</h2>
+<p>Spoiler: not great.</p>
+
+<div class="person">
+  <span class="person-label">Shivani — Operations</span>
+  <p>Responsible for making sure thirty-plus people know what they are doing every day. Her method, pre-Harmony, involved approximately one and a half hours of logistics every morning plus repeating herself to anyone who forgot the brief — which was everyone. <em>"I have to give them the brief again and again. It is already there in the JSR. We had discussed it — but I have to give the brief again and again, once or twice in the day."</em> Her favourite part of the job, clearly.</p>
+</div>
+
+<div class="person">
+  <span class="person-label">Shanvi — Brands Manager</span>
+  <p>Juggling fifteen to twenty-five creative outputs per week across multiple brands, each of which believed its content was the most important content in the building. Getting the video team to agree on a priority order required the kind of daily negotiation typically reserved for international diplomacy. <em>"When we actually go to the video team, because there are three or four brands with all high-priority content, organising the day gets a little difficult and frustrating at times."</em> Two to three hours of a nine-hour day, just on logistics. Completely normal. Totally fine.</p>
+</div>
+
+<div class="person">
+  <span class="person-label">Pierre — Senior Art Director</span>
+  <p>Ran the creative and video team through morning meetings and word of mouth, which worked perfectly until something unexpected happened — which, at a creative agency, is every day. Ad-hoc requests would arrive, pass through three people in translation, and reach him at some point later, slightly unrecognisable. <em>"The only irritating part was the ad-hoc work because most of the time I would not really know about it. It would come to me suddenly from my juniors. Things get lost in translation."</em> A perfectly sustainable system.</p>
+</div>
+
+<div class="person">
+  <span class="person-label">Shivangi — CEO</span>
+  <p>Could see none of this. No visibility into who was overloaded, who had nothing to do, or why a particular brand was quietly falling behind every month. <em>"Conversational gaps were increasing and their everyday coordination was getting almost to zero."</em></p>
+</div>
+
+<div class="person">
+  <span class="person-label">Pratik — Graphic Designer</span>
+  <p>The outlier. Task allocation took him ten to fifteen minutes a day. His team knew what they were doing. No chaos, no re-briefing, no WhatsApp archaeology. Genuinely impressive.</p>
+  <p>The catch: nobody outside his team knew any of this. The servicing team had no way to see what Pratik's people were working on without physically asking him. His whole operation was efficient and completely invisible. <em>"Earlier I would do the face-to-face communication. Now I am assigning tasks directly from here. Anyone can come — service people can also check what tasks they did two days ago. They get a track record. That is a plus point."</em> For Pratik, the problem was not the mess. It was the opacity.</p>
+</div>
+
+<p>Five people. Five different experiences of the same missing layer. Even the person who had it together was limited by it.</p>
+
+<h2>What I built — and how it kept growing</h2>
+<p>Harmony started with four features: a dashboard, a task tab, a team view, and a brand directory. The idea was to answer exactly one question — is the right work assigned to the right person — and do nothing else.</p>
+<p>Minimalism is easy to maintain until people start actually using a product.</p>
+
+<ul class="evolution-list">
+  <li>
+    <span class="v-label">Task creation</span>
+    Content agencies run on recurring cycles — same deliverables, same brands, same calendar every month. Flexible date-range tasks were added too, because not everything has a fixed time slot.
+  </li>
+  <li>
+    <span class="v-label">Calendar</span>
+    Shivangi wanted to see each employee's blocked time before assigning new tasks on top of it — a reasonable thing to want before loading someone who is already fully booked. Synced with Google Calendar. Google Meet events overlaid. Weekly grid per person, all in IST. Built.
+  </li>
+  <li>
+    <span class="v-label">Analytics</span>
+    Task completion rates, on-time delivery, hours logged — so the original question nobody could answer finally had a place to be measured.
+  </li>
+  <li>
+    <span class="v-label">Operations tab</span>
+    The ops team was running a weekly tracker, an influencer campaign tracker, and a brand performance tracker across three separate Google Sheets. Because of course they were. All three pulled into Harmony via the Sheets API.
+  </li>
+  <li>
+    <span class="v-label">Voice allocator</span>
+    Speak a task out loud, it gets transcribed and structured by AI. Because typing is, apparently, a lot of effort.
+  </li>
+  <li>
+    <span class="v-label">Admin Brain</span>
+    A live tab connected to a Google Spreadsheet tracking the team's entire monthly content backlog. Shivangi can now see operational data without opening a separate tool and wondering which version she is looking at.
+  </li>
+</ul>
+
+<p>Nine tabs. Started as four. The product roadmap was essentially: watch what people are still doing outside Harmony, and bring it inside.</p>
+
+<h2>What the feedback sessions confirmed</h2>
+<p>After launch I ran structured sessions with each of the five primary users. They were, on the whole, polite.</p>
+<p>Shivani's request was immediate: a proper URL field inside tasks. She had been pasting Google Docs links as plain text in the brief, which technically works, in the same way a lot of things technically work. <em>"Sometimes it is easier to see the visual rather than it being in words. If it directly redirects them to that, it will be easier for them."</em> Shipped.</p>
+<p>Shanvi validated the priority system and flagged that onboarding new hires still requires a manual step to assign access tiers. Noted for the next version.</p>
+<p>Pierre had no new requests. <em>"The moment you start using it, it doesn't take you time to really understand the whole system. It's very simple."</em> High praise from someone who described pre-Harmony task management as entirely manual word of mouth.</p>
+<p>Pratik was, predictably, fine. Twenty-five to thirty tasks assigned per week, no interface confusion, no complaints. His main observation: the servicing team can now check his team's task history independently, without looping him in for every question. Which means fewer interruptions for the one person who was already managing things well. Harmony rewarded the organised one by leaving him alone more often.</p>
+<p>Shivangi gave it a 7 out of 10 for reducing operational confusion. Her exact words: <em>"The gap still is getting people to do it and use the tool."</em> The product works. Getting an entire organisation to change its daily habits is, as it turns out, a separate and considerably slower project.</p>
+
+<h2>Things I could have built but chose not to</h2>
+<p><strong>Manual time tracking.</strong> Harmony does capture hours — when a block is assigned to a task on the calendar, the duration is logged. But that is passive, a byproduct of scheduling. Making people manually log time spent on every task would have created overhead, resentment, and data that nobody trusted because everyone was gaming it.</p>
+<p><strong>A full client-facing dashboard.</strong> Clients do have access — a scoped read-only view of their own brand's tasks. But they do not see cross-brand data, internal allocation logic, or anything that would give them a reason to start questioning the agency's priorities out loud.</p>
+<p><strong>A chat layer inside tasks.</strong> Chord has Slack. Adding a second place to send messages would have created a second place to miss messages. Nobody needed that.</p>
+<p><strong>Automated task creation.</strong> The brief is the product. If a task creates itself, nobody writes the brief. If nobody writes the brief, Shivani goes back to explaining the same thing three times a day — which is exactly where this whole thing started.</p>
+<p>Shanvi put it better than I could: <em>"It's a very simple interface to understand. It's quite direct, so I really appreciate it."</em> That simplicity came from saying no to a lot of things that seemed reasonable until you thought about who was actually going to use them.</p>
+
+<h2>What actually changed</h2>
+<p>Shivani does not re-brief tasks anymore. The brief is in the task. It does not evaporate.</p>
+<p>Shanvi stopped running behind the video team at the last minute before a deadline. <em>"We get creatives in a more orderly manner and fashion now and I don't have to sort of run behind the video team or hustle in the last few hours to match a deadline. That has definitely reduced."</em></p>
+<p>Pierre opens the dashboard on Monday morning and knows what every person on his team is working on — without asking anyone, without waiting for a reply, without a meeting.</p>
+<p>Pratik's team is no longer a black box. The servicing team can see task history without interrupting him. He does the same work, in less of other people's time.</p>
+<p>Shivangi can see allocation and output at the org level. The question she started with — why is X not producing Y — now has a place to be answered rather than debated in WhatsApp.</p>
+<p>Thirty to forty people use this every day. The entire org. Not a pilot, not a proof of concept — the actual company, actually using it.</p>
+
+<h2>The part where I admit it is not perfect</h2>
+<p>The 7 out of 10 is honest. The morning meeting has not fully died. Some people still default to Slack for things that should be in Harmony. Getting thirty people to permanently change how they work every day is not something that happens because you shipped a product — it happens slowly, through accountability and repetition and visible consequences.</p>
+<p>The next version of Harmony needs to make the cost of not using it felt before a deadline slips rather than after. Smarter reminders. Signals that something is overdue before it becomes a problem. Something that makes opening Harmony feel necessary rather than optional.</p>
+<p>That is the work still left to do. And yes, it will probably require building more tabs.</p>
+
+<h2>What I actually learned from all of this</h2>
+
+<div class="learning">
+  <strong>Watch the workflow, not the complaints.</strong>
+  <p>People told me they were stressed and overworked. That was true, but it was not the thing to fix. Watching Shivani repeat herself three times in a morning told me exactly what to build. You cannot design for the feeling. You have to find the mechanism.</p>
+</div>
+
+<div class="learning">
+  <strong>The product roadmap was just a list of things people were still doing outside Harmony.</strong>
+  <p>Every new tab existed because someone was managing something in a Google Sheet that should have been inside the product. The question "why is this still happening outside?" turned out to be a better roadmap than anything I planned upfront.</p>
+</div>
+
+<div class="learning">
+  <strong>Shipping is not the hard part. Behaviour change is.</strong>
+  <p>Four features became nine because the product kept growing to meet reality. But getting people to open it every day without being told — that is the part that does not respond to better engineering. It responds to time, consequences, and leadership that holds the standard.</p>
+</div>
+
+<p class="footer">Vivek Prajapati &nbsp;·&nbsp; AI Engineer and Product Manager &nbsp;·&nbsp; Chord &nbsp;·&nbsp; Mumbai &nbsp;·&nbsp; 2026</p>
