@@ -34,7 +34,8 @@ export default function DashboardClient() {
   const [canDelete, setCanDelete] = useState(false);
   const [flexibleDue, setFlexibleDue] = useState<{ id: string; deliverable: string; deadline: string; priority: string; brands: { name: string } | null }[]>([]);
   const [googleHoursToday, setGoogleHoursToday] = useState(0);
-  const [urgentCount, setUrgentCount] = useState(0);
+  const [urgentTasks, setUrgentTasks] = useState<string[]>([]);
+  const [urgentIndex, setUrgentIndex] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -117,7 +118,7 @@ export default function DashboardClient() {
       setInProgressCount(ip?.length ?? 0);
       setReviewCount(rv?.length ?? 0);
       setFlexibleDue((ft ?? []) as any[]);
-      setUrgentCount(urgent?.length ?? 0);
+      setUrgentTasks((urgent ?? []).map((t: any) => t.id));
 
       // Fetch Google Calendar events for today and add to blocked hours
       try {
@@ -206,18 +207,25 @@ export default function DashboardClient() {
         </p>
       </div>
 
-      {urgentCount > 0 && (
-        <Link href="/tasks" style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          background: 'var(--coral)', borderRadius: '10px',
-          padding: '10px 16px', textDecoration: 'none',
-        }}>
+      {urgentTasks.length > 0 && (
+        <div
+          onClick={() => { setUrgentIndex(0); setSelectedTaskId(urgentTasks[0]); }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            background: 'var(--coral)', borderRadius: '10px',
+            padding: '10px 16px', cursor: 'pointer',
+          }}
+        >
           <span style={{ fontSize: '14px' }}>⚠</span>
           <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: '#fff', letterSpacing: '0.04em' }}>
-            {urgentCount} task{urgentCount > 1 ? 's' : ''} due today or overdue — submit before end of day
+            {urgentTasks.length} task{urgentTasks.length > 1 ? 's' : ''} due today or overdue — submit before end of day
           </p>
-          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>View →</span>
-        </Link>
+          {urgentTasks.length > 1 && (
+            <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'rgba(255,255,255,0.7)', marginLeft: 'auto' }}>
+              1 of {urgentTasks.length} →
+            </span>
+          )}
+        </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-5">
@@ -353,7 +361,11 @@ export default function DashboardClient() {
       {selectedTaskId && (
         <TaskDetailModal
           taskId={selectedTaskId}
-          onClose={() => setSelectedTaskId(null)}
+          onClose={() => {
+            const next = urgentTasks[urgentIndex + 1];
+            if (next) { setUrgentIndex(urgentIndex + 1); setSelectedTaskId(next); }
+            else setSelectedTaskId(null);
+          }}
           canDelete={canDelete}
           onDeleted={() => { setSelectedTaskId(null); window.location.reload(); }}
         />
