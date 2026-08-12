@@ -29,6 +29,7 @@ export async function middleware(request: NextRequest) {
     path.startsWith('/login') ||
     path.startsWith('/demo') ||
     path.startsWith('/api/auth') ||
+    path.startsWith('/api/cron') ||
     path.startsWith('/client/login') ||
     path.startsWith('/api/client') ||
     path.startsWith('/_next') ||
