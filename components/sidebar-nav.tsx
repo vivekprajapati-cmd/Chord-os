@@ -32,16 +32,6 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
         style={{ textDecoration: 'none', background: active ? 'var(--coral)' : 'transparent', borderRadius: '8px', transition: 'background 0.15s' }}
         className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-[var(--ink)]/6"
       >
-        <span style={{
-          fontFamily: 'var(--f-mono)',
-          fontSize: '9px',
-          opacity: active ? 0.5 : 0.3,
-          width: '16px',
-          flexShrink: 0,
-          color: active ? 'var(--paper)' : 'var(--ink)',
-        }}>
-          {num}
-        </span>
         <Icon size={14} style={{ color: active ? 'var(--paper)' : 'var(--ink)', opacity: active ? 0.9 : 0.6, flexShrink: 0 }} />
         <span style={{
           fontFamily: 'var(--f-mono)',
