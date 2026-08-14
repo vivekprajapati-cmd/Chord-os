@@ -1,16 +1,18 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { LayoutDashboard, CheckSquare, CalendarDays, Briefcase, Settings2, Mic2, Users, BarChart2, Brain, HeartHandshake } from 'lucide-react';
 
 type Tier = 'admin' | 'poc' | 'staff';
 
 const NAV = [
-  { href: '/dashboard', label: 'Dashboard', num: '01' },
-  { href: '/tasks',      label: 'Tasks',      num: '02' },
-  { href: '/calendar',   label: 'Calendar',   num: '03' },
-  { href: '/brands',     label: 'Brands',     num: '04' },
-  { href: '/operations', label: 'Operations', num: '05' },
+  { href: '/dashboard', label: 'Dashboard', num: '01', Icon: LayoutDashboard },
+  { href: '/tasks',      label: 'Tasks',      num: '02', Icon: CheckSquare },
+  { href: '/calendar',   label: 'Calendar',   num: '03', Icon: CalendarDays },
+  { href: '/brands',     label: 'Brands',     num: '04', Icon: Briefcase },
+  { href: '/operations', label: 'Operations', num: '05', Icon: Settings2 },
 ];
 
 export default function SidebarNav({ tier }: { tier: Tier }) {
@@ -21,7 +23,7 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
     return pathname.startsWith(href);
   }
 
-  function navLink(href: string, label: string, num: string) {
+  function navLink(href: string, label: string, num: string, Icon: React.ElementType) {
     const active = isActive(href);
     return (
       <Link
@@ -40,6 +42,7 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
         }}>
           {num}
         </span>
+        <Icon size={14} style={{ color: active ? 'var(--paper)' : 'var(--ink)', opacity: active ? 0.9 : 0.6, flexShrink: 0 }} />
         <span style={{
           fontFamily: 'var(--f-mono)',
           fontSize: '11px',
@@ -55,13 +58,13 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
 
   return (
     <nav className="flex-1 px-3 py-4 space-y-0.5">
-      {NAV.map(({ href, label, num }) => navLink(href, label, num))}
+      {NAV.map(({ href, label, num, Icon }) => navLink(href, label, num, Icon))}
 
-      {/* Leads + viewers */}
-      {tier === 'admin' && navLink('/chat', 'Allocator', '06')}
-      {tier === 'admin' && navLink('/team', 'Team', '07')}
-      {(tier === 'admin' || tier === 'poc') && navLink('/analytics', 'Analytics', '08')}
-      {tier === 'admin' && navLink('/admin-brain', 'Admin Brain', '09')}
+      {tier === 'admin' && navLink('/chat', 'Allocator', '06', Mic2)}
+      {tier === 'admin' && navLink('/team', 'Team', '07', Users)}
+      {(tier === 'admin' || tier === 'poc') && navLink('/analytics', 'Analytics', '08', BarChart2)}
+      {tier === 'admin' && navLink('/admin-brain', 'Admin Brain', '09', Brain)}
+      {tier === 'admin' && navLink('/hr', 'HR', '10', HeartHandshake)}
     </nav>
   );
 }
