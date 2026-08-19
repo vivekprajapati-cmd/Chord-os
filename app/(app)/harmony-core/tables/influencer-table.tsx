@@ -1,0 +1,237 @@
+'use client';
+
+import { useState } from 'react';
+
+type Props = {
+  assignments: any[];
+  entries: any[];
+  month: string;
+  personId: string;
+  canEdit: boolean;
+  onSaved: () => void;
+};
+
+function pct(a: number, b: number) {
+  if (!b) return null;
+  return Math.round((a / b) * 100);
+}
+
+function PctCell({ value }: { value: number | null }) {
+  if (value === null) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+  const color = value >= 80 ? 'var(--text-success)' : value >= 50 ? '#b45309' : 'var(--text-danger)';
+  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 500, color }}>{value}%</span>;
+}
+
+function YNBadge({ value }: { value: boolean }) {
+  return (
+    <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 500, background: value ? 'var(--bg-success)' : 'var(--bg-danger)', color: value ? 'var(--text-success)' : 'var(--text-danger)' }}>
+      {value ? 'Y' : 'N'}
+    </span>
+  );
+}
+
+export default function InfluencerTable({ assignments, entries, month, personId, canEdit, onSaved }: Props) {
+  const [editing, setEditing] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, any>>({});
+  const [saving, setSaving] = useState<string | null>(null);
+
+  function getEntry(brandId: string) {
+    return entries.find(e => e.brand_id === brandId);
+  }
+
+  function startEdit(brandId: string) {
+    const entry = getEntry(brandId);
+    const m = entry?.metrics ?? {};
+    setDrafts(prev => ({
+      ...prev,
+      [brandId]: {
+        nature: m.nature ?? 'retainer',
+        nps: m.nps ?? '',
+        scope: m.scope ?? '',
+        shortlisted: m.shortlisted ?? '',
+        executed: m.executed ?? '',
+        gone_live: m.gone_live ?? '',
+        influencer_tracker_rate: m.influencer_tracker_rate ?? '',
+        po_raised: m.po_raised ?? false,
+        advance_received: m.advance_received ?? false,
+        invoice_closed: m.invoice_closed ?? false,
+      }
+    }));
+    setEditing(brandId);
+  }
+
+  function setField(brandId: string, field: string, value: any) {
+    setDrafts(prev => ({ ...prev, [brandId]: { ...prev[brandId], [field]: value } }));
+  }
+
+  async function save(brandId: string) {
+    const d = drafts[brandId];
+    setSaving(brandId);
+    await fetch('/api/harmony-core', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        person_id: personId,
+        brand_id: brandId,
+        month,
+        role_type: 'influencer',
+        metrics: {
+          nature: d.nature,
+          nps: Number(d.nps) || 0,
+          scope: Number(d.scope) || 0,
+          shortlisted: Number(d.shortlisted) || 0,
+          executed: Number(d.executed) || 0,
+          gone_live: Number(d.gone_live) || 0,
+          influencer_tracker_rate: Number(d.influencer_tracker_rate) || 0,
+          po_raised: d.po_raised,
+          advance_received: d.advance_received,
+          invoice_closed: d.invoice_closed,
+        },
+        tracker_logs: { orm: [], ops: [], social: [] },
+      }),
+    });
+    setSaving(null);
+    setEditing(null);
+    onSaved();
+  }
+
+  function numInput(brandId: string, field: string) {
+    return (
+      <input type="number" value={drafts[brandId]?.[field] ?? ''} onChange={e => setField(brandId, field, e.target.value)}
+        style={{ width: '60px', fontFamily: 'var(--font-mono)', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius)', background: 'var(--surface-2)', color: 'var(--text-primary)' }} />
+    );
+  }
+
+  function toggleBtn(brandId: string, field: string) {
+    const val = drafts[brandId]?.[field] ?? false;
+    return (
+      <button onClick={() => setField(brandId, field, !val)}
+        style={{ padding: '3px 10px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 500, background: val ? 'var(--bg-success)' : 'var(--bg-danger)', color: val ? 'var(--text-success)' : 'var(--text-danger)' }}>
+        {val ? 'Y' : 'N'}
+      </button>
+    );
+  }
+
+  return (
+    <div style={{ overflowX: 'auto', border: '0.5px solid var(--border)', borderRadius: '12px' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '800px' }}>
+        <thead>
+          <tr style={{ background: 'var(--surface-1)' }}>
+            <th style={th}>Brand</th>
+            <th style={th}>Nature</th>
+            <th style={th}>NPS</th>
+            <th style={th}>Scope</th>
+            <th style={th}>Shortlisted</th>
+            <th style={th}>Executed</th>
+            <th style={th}>Gone Live</th>
+            <th style={{ ...th, color: 'var(--text-accent)' }}>Shortlist %</th>
+            <th style={{ ...th, color: 'var(--text-accent)' }}>Execution %</th>
+            <th style={{ ...th, color: 'var(--text-accent)' }}>Go Live %</th>
+            <th style={th}>Tracker Rate %</th>
+            <th style={th}>PO Raised</th>
+            <th style={th}>Advance</th>
+            <th style={th}>Invoice</th>
+            <th style={th}></th>
+          </tr>
+        </thead>
+        <tbody>
+          {assignments.map((a: any) => {
+            const brandId = a.brand_id;
+            const entry = getEntry(brandId);
+            const m = entry?.metrics ?? {};
+            const isEditing = editing === brandId;
+            const d = drafts[brandId] ?? {};
+
+            const shortlistPct = pct(m.shortlisted, m.scope);
+            const executionPct = pct(m.executed, m.shortlisted);
+            const goLivePct = pct(m.gone_live, m.executed);
+
+            return (
+              <tr key={brandId} style={{ borderTop: '0.5px solid var(--border)' }}>
+                <td style={td}><span style={{ fontWeight: 500 }}>{a.brands?.name ?? brandId}</span></td>
+
+                {isEditing ? (
+                  <>
+                    <td style={td}>
+                      <select value={d.nature} onChange={e => setField(brandId, 'nature', e.target.value)}
+                        style={{ fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius)', background: 'var(--surface-2)', color: 'var(--text-primary)' }}>
+                        <option value="retainer">Retainer</option>
+                        <option value="project">Project</option>
+                        <option value="monthly">Monthly</option>
+                      </select>
+                    </td>
+                    <td style={td}>{numInput(brandId, 'nps')}</td>
+                    <td style={td}>{numInput(brandId, 'scope')}</td>
+                    <td style={td}>{numInput(brandId, 'shortlisted')}</td>
+                    <td style={td}>{numInput(brandId, 'executed')}</td>
+                    <td style={td}>{numInput(brandId, 'gone_live')}</td>
+                    <td style={td}><PctCell value={pct(Number(d.shortlisted), Number(d.scope))} /></td>
+                    <td style={td}><PctCell value={pct(Number(d.executed), Number(d.shortlisted))} /></td>
+                    <td style={td}><PctCell value={pct(Number(d.gone_live), Number(d.executed))} /></td>
+                    <td style={td}>{numInput(brandId, 'influencer_tracker_rate')}</td>
+                    <td style={td}>{toggleBtn(brandId, 'po_raised')}</td>
+                    <td style={td}>{toggleBtn(brandId, 'advance_received')}</td>
+                    <td style={td}>{toggleBtn(brandId, 'invoice_closed')}</td>
+                  </>
+                ) : (
+                  <>
+                    <td style={td}><span style={{ fontSize: '12px', textTransform: 'capitalize', color: 'var(--text-secondary)' }}>{m.nature ?? '—'}</span></td>
+                    <td style={td}><Num v={m.nps} /></td>
+                    <td style={td}><Num v={m.scope} /></td>
+                    <td style={td}><Num v={m.shortlisted} /></td>
+                    <td style={td}><Num v={m.executed} /></td>
+                    <td style={td}><Num v={m.gone_live} /></td>
+                    <td style={td}><PctCell value={shortlistPct} /></td>
+                    <td style={td}><PctCell value={executionPct} /></td>
+                    <td style={td}><PctCell value={goLivePct} /></td>
+                    <td style={td}><Num v={m.influencer_tracker_rate} suffix="%" /></td>
+                    <td style={td}>{entry ? <YNBadge value={!!m.po_raised} /> : <Muted />}</td>
+                    <td style={td}>{entry ? <YNBadge value={!!m.advance_received} /> : <Muted />}</td>
+                    <td style={td}>{entry ? <YNBadge value={!!m.invoice_closed} /> : <Muted />}</td>
+                  </>
+                )}
+
+                <td style={{ ...td, textAlign: 'right' }}>
+                  {canEdit && (
+                    isEditing ? (
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button onClick={() => save(brandId)} disabled={saving === brandId}
+                          style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontSize: '11px', cursor: 'pointer' }}>
+                          {saving === brandId ? '...' : 'Save'}
+                        </button>
+                        <button onClick={() => setEditing(null)}
+                          style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: '0.5px solid var(--border)', background: 'transparent', fontSize: '11px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => startEdit(brandId)}
+                        style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: '4px 8px', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '11px' }}>
+                        Edit
+                      </button>
+                    )
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const th: React.CSSProperties = {
+  padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 500,
+  color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em',
+  borderBottom: '0.5px solid var(--border)', whiteSpace: 'nowrap',
+};
+
+const td: React.CSSProperties = { padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle' };
+
+function Num({ v, suffix = '' }: { v: any; suffix?: string }) {
+  if (v === null || v === undefined || v === '' || v === 0) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}>{Number(v).toLocaleString()}{suffix}</span>;
+}
+
+function Muted() { return <span style={{ color: 'var(--text-muted)' }}>—</span>; }
