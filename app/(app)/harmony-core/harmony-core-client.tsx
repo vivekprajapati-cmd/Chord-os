@@ -137,7 +137,7 @@ export default function HarmonyCoreClient({ me, people }: Props) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>
-            {selectedPerson?.name.split(' ')[0]}&apos;s brands — {assignments.length} active
+            {selectedPerson?.name.split(' ')[0] ?? ''}&rsquo;s brands — {assignments.length} active
           </span>
           {lastUpdated && (
             <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -189,8 +189,8 @@ export default function HarmonyCoreClient({ me, people }: Props) {
       {/* Info strip */}
       <div style={{ marginTop: '1rem', padding: '10px 14px', background: 'var(--surface-1)', borderRadius: 'var(--radius)', border: '0.5px solid var(--border)', fontSize: '12px', color: 'var(--text-secondary)' }}>
         {canEdit
-          ? `You are viewing ${selectedPerson?.name.split(' ')[0]}&apos;s data. Click the edit icon on any row to update.`
-          : `You are viewing ${selectedPerson?.name.split(' ')[0]}&apos;s data. You can only edit your own brands.`}
+          ? `You are viewing ${selectedPerson?.name.split(' ')[0] ?? ''}${String.fromCharCode(39)}s data. Click the edit icon on any row to update.`
+          : `You are viewing ${selectedPerson?.name.split(' ')[0] ?? ''}${String.fromCharCode(39)}s data. You can only edit your own brands.`}
       </div>
     </div>
   );
