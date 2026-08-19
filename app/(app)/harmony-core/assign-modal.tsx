@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 type Brand = { id: string; name: string };
 type Person = { id: string; name: string };
-type Assignment = { brand_id: string; brands: { name: string } };
+type Assignment = { brand_id: string; role_type?: string; brands: { name: string } };
 
 type Props = {
   people: Person[];
