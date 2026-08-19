@@ -30,6 +30,18 @@ function YNBadge({ value }: { value: boolean }) {
   );
 }
 
+function BrandAvatar({ name }: { name: string }) {
+  const initials = name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+  const colors = ['#e0f2fe', '#fce7f3', '#f0fdf4', '#fef9c3', '#ede9fe', '#ffedd5'];
+  const textColors = ['#0369a1', '#9d174d', '#15803d', '#a16207', '#6d28d9', '#c2410c'];
+  const idx = name.charCodeAt(0) % colors.length;
+  return (
+    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: colors[idx], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 600, color: textColors[idx], flexShrink: 0 }}>
+      {initials}
+    </div>
+  );
+}
+
 export default function InfluencerTable({ assignments, entries, month, personId, canEdit, onSaved }: Props) {
   const [editing, setEditing] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, any>>({});
@@ -148,7 +160,12 @@ export default function InfluencerTable({ assignments, entries, month, personId,
 
             return (
               <tr key={brandId} style={{ borderTop: '0.5px solid var(--border)' }}>
-                <td style={td}><span style={{ fontWeight: 500 }}>{a.brands?.name ?? brandId}</span></td>
+                <td style={td}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <BrandAvatar name={a.brands?.name ?? brandId} />
+                    <span style={{ fontWeight: 500 }}>{a.brands?.name ?? brandId}</span>
+                  </div>
+                </td>
 
                 {isEditing ? (
                   <>
