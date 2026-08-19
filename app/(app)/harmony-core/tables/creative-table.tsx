@@ -181,25 +181,25 @@ export default function CreativeTable({ assignments, entries, month, personId, c
 }
 
 const th: React.CSSProperties = {
-  padding: '10px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 500,
-  color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em',
-  border: '0.5px solid var(--border)', whiteSpace: 'nowrap',
+  padding: '10px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 700,
+  color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em',
+  border: '1px solid var(--border)', whiteSpace: 'nowrap', background: 'var(--surface-1)',
 };
 
 const thLeft: React.CSSProperties = {
-  padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 500,
-  color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em',
-  border: '0.5px solid var(--border)', whiteSpace: 'nowrap',
+  padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 700,
+  color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em',
+  border: '1px solid var(--border)', whiteSpace: 'nowrap', background: 'var(--surface-1)',
 };
 
 const td: React.CSSProperties = {
   padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
-  textAlign: 'center', border: '0.5px solid var(--border)',
+  textAlign: 'center', border: '1px solid var(--border)',
 };
 
 const tdLeft: React.CSSProperties = {
   padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
-  textAlign: 'left', border: '0.5px solid var(--border)',
+  textAlign: 'left', border: '1px solid var(--border)',
 };
 
 const inputStyle: React.CSSProperties = {

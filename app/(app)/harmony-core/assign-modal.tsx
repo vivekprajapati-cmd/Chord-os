@@ -91,28 +91,22 @@ export default function AssignModal({ people, defaultPersonId, onClose, onSaved 
 
           {/* Person selector */}
           <div>
-            <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: '8px' }}>Person</label>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <label style={labelStyle}>Person</label>
+            <select value={selectedPersonId} onChange={e => setSelectedPersonId(e.target.value)} style={selectStyle}>
               {people.map(p => (
-                <button key={p.id} onClick={() => setSelectedPersonId(p.id)}
-                  style={{ padding: '6px 14px', borderRadius: '999px', border: `1px solid ${p.id === selectedPersonId ? 'var(--ink)' : 'var(--border)'}`, background: p.id === selectedPersonId ? 'var(--ink)' : 'transparent', color: p.id === selectedPersonId ? '#F0EDE5' : 'var(--text-secondary)', fontFamily: 'var(--font-mono)', fontSize: '11px', textTransform: 'uppercase', cursor: 'pointer' }}>
-                  {p.name.split(' ')[0]}
-                </button>
+                <option key={p.id} value={p.id}>{p.name}</option>
               ))}
-            </div>
+            </select>
           </div>
 
           {/* Role type for new assignments */}
           <div>
-            <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: '8px' }}>Role type (for new assignments)</label>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <label style={labelStyle}>Role type (for new assignments)</label>
+            <select value={roleType} onChange={e => setRoleType(e.target.value as any)} style={selectStyle}>
               {ROLE_TYPES.map(r => (
-                <button key={r} onClick={() => setRoleType(r)}
-                  style={{ padding: '6px 16px', borderRadius: '999px', border: `1px solid ${r === roleType ? 'var(--ink)' : 'var(--border)'}`, background: r === roleType ? 'var(--ink)' : 'transparent', color: r === roleType ? '#F0EDE5' : 'var(--text-secondary)', fontFamily: 'var(--font-mono)', fontSize: '11px', textTransform: 'uppercase', cursor: 'pointer' }}>
-                  {r}
-                </button>
+                <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
               ))}
-            </div>
+            </select>
           </div>
 
           {/* Brand list */}
@@ -160,3 +154,15 @@ export default function AssignModal({ people, defaultPersonId, onClose, onSaved 
     </div>
   );
 }
+
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontFamily: 'var(--font-mono)', fontSize: '10px',
+  textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: '8px',
+};
+
+const selectStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 12px', borderRadius: '8px',
+  border: '1px solid var(--border)', background: 'var(--surface-1)',
+  color: 'var(--ink)', fontFamily: 'var(--font-mono)', fontSize: '12px',
+  letterSpacing: '0.04em', cursor: 'pointer',
+};
