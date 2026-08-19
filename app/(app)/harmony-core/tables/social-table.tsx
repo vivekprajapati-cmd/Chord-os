@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import TrackerModal from '../tracker-modal';
@@ -157,7 +157,7 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
         Social KPIs
       </div>
 
-      <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
+      <div style={{ overflowX: 'auto', border: '1px solid #c8c4bc', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '1000px' }}>
           <thead>
             <tr style={{ background: 'var(--surface-1)' }}>
@@ -343,26 +343,28 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
   );
 }
 
+const GRID = '1px solid #c8c4bc';
+
 const th: React.CSSProperties = {
   padding: '10px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 700,
-  color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em',
-  border: '1px solid var(--border)', whiteSpace: 'nowrap', background: 'var(--surface-1)',
+  color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
+  border: GRID, whiteSpace: 'nowrap', background: '#e8e5de',
 };
 
 const thLeft: React.CSSProperties = {
   padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 700,
-  color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em',
-  border: '1px solid var(--border)', whiteSpace: 'nowrap', background: 'var(--surface-1)',
+  color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
+  border: GRID, whiteSpace: 'nowrap', background: '#e8e5de',
 };
 
 const td: React.CSSProperties = {
   padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
-  textAlign: 'center', border: '1px solid var(--border)',
+  textAlign: 'center', border: GRID,
 };
 
 const tdLeft: React.CSSProperties = {
   padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
-  textAlign: 'left', border: '1px solid var(--border)',
+  textAlign: 'left', border: GRID,
 };
 
 function Num({ v, suffix = '' }: { v: any; suffix?: string }) {
