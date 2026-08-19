@@ -18,13 +18,13 @@ function pct(a: number, b: number) {
 
 function PctCell({ value }: { value: number | null }) {
   if (value === null) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
-  const color = value >= 80 ? 'var(--text-success)' : value >= 50 ? '#b45309' : 'var(--text-danger)';
+  const color = value >= 80 ? '#16a34a' : value >= 50 ? '#d97706' : '#dc2626';
   return <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 500, color }}>{value}%</span>;
 }
 
 function YNBadge({ value }: { value: boolean }) {
   return (
-    <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 500, background: value ? 'var(--bg-success)' : 'var(--bg-danger)', color: value ? 'var(--text-success)' : 'var(--text-danger)' }}>
+    <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 500, background: value ? '#dcfce7' : '#fee2e2', color: value ? '#16a34a' : '#dc2626' }}>
       {value ? 'Y' : 'N'}
     </span>
   );
@@ -52,8 +52,7 @@ export default function InfluencerTable({ assignments, entries, month, personId,
   }
 
   function startEdit(brandId: string) {
-    const entry = getEntry(brandId);
-    const m = entry?.metrics ?? {};
+    const m = getEntry(brandId)?.metrics ?? {};
     setDrafts(prev => ({
       ...prev,
       [brandId]: {
@@ -110,7 +109,7 @@ export default function InfluencerTable({ assignments, entries, month, personId,
   function numInput(brandId: string, field: string) {
     return (
       <input type="number" value={drafts[brandId]?.[field] ?? ''} onChange={e => setField(brandId, field, e.target.value)}
-        style={{ width: '60px', fontFamily: 'var(--font-mono)', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius)', background: 'var(--surface-2)', color: 'var(--text-primary)' }} />
+        style={inputStyle} />
     );
   }
 
@@ -118,7 +117,7 @@ export default function InfluencerTable({ assignments, entries, month, personId,
     const val = drafts[brandId]?.[field] ?? false;
     return (
       <button onClick={() => setField(brandId, field, !val)}
-        style={{ padding: '3px 10px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 500, background: val ? 'var(--bg-success)' : 'var(--bg-danger)', color: val ? 'var(--text-success)' : 'var(--text-danger)' }}>
+        style={{ padding: '3px 10px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 500, background: val ? '#dcfce7' : '#fee2e2', color: val ? '#16a34a' : '#dc2626' }}>
         {val ? 'Y' : 'N'}
       </button>
     );
@@ -126,10 +125,10 @@ export default function InfluencerTable({ assignments, entries, month, personId,
 
   return (
     <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '800px' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
         <thead>
           <tr style={{ background: 'var(--surface-1)' }}>
-            <th style={th}>Brand</th>
+            <th style={thLeft}>Brand</th>
             <th style={th}>Nature</th>
             <th style={th}>Brand NPS</th>
             <th style={th}>Scope (Monthly)</th>
@@ -143,12 +142,13 @@ export default function InfluencerTable({ assignments, entries, month, personId,
             <th style={th}>PO Raised</th>
             <th style={th}>Advance Received</th>
             <th style={th}>Invoice Closed</th>
-            <th style={th}></th>
+            <th style={{ ...th, width: '48px' }}></th>
           </tr>
         </thead>
         <tbody>
           {assignments.map((a: any) => {
             const brandId = a.brand_id;
+            const brandName = a.brands?.name ?? brandId;
             const entry = getEntry(brandId);
             const m = entry?.metrics ?? {};
             const isEditing = editing === brandId;
@@ -159,11 +159,11 @@ export default function InfluencerTable({ assignments, entries, month, personId,
             const goLivePct = pct(m.gone_live, m.executed);
 
             return (
-              <tr key={brandId} style={{ borderTop: '0.5px solid var(--border)' }}>
-                <td style={td}>
+              <tr key={brandId}>
+                <td style={{ ...tdLeft, minWidth: '160px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <BrandAvatar name={a.brands?.name ?? brandId} />
-                    <span style={{ fontWeight: 500 }}>{a.brands?.name ?? brandId}</span>
+                    <BrandAvatar name={brandName} />
+                    <span style={{ fontWeight: 500 }}>{brandName}</span>
                   </div>
                 </td>
 
@@ -208,23 +208,23 @@ export default function InfluencerTable({ assignments, entries, month, personId,
                   </>
                 )}
 
-                <td style={{ ...td, textAlign: 'right' }}>
+                <td style={{ ...td, width: '48px', padding: '6px 8px' }}>
                   {canEdit && (
                     isEditing ? (
-                      <div style={{ display: 'flex', gap: '6px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <button onClick={() => save(brandId)} disabled={saving === brandId}
-                          style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontSize: '11px', cursor: 'pointer' }}>
-                          {saving === brandId ? '...' : 'Save'}
+                          style={{ padding: '4px 8px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontSize: '11px', cursor: 'pointer' }}>
+                          {saving === brandId ? '…' : 'Save'}
                         </button>
                         <button onClick={() => setEditing(null)}
-                          style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: '0.5px solid var(--border)', background: 'transparent', fontSize: '11px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                          Cancel
+                          style={{ padding: '4px 8px', borderRadius: 'var(--radius)', border: '0.5px solid var(--border)', background: 'transparent', fontSize: '11px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                          ✕
                         </button>
                       </div>
                     ) : (
                       <button onClick={() => startEdit(brandId)}
-                        style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: '4px 8px', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '11px' }}>
-                        Edit
+                        style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', background: '#fff0ec', cursor: 'pointer', color: '#e05c3a', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                        ✏
                       </button>
                     )
                   )}
@@ -239,12 +239,32 @@ export default function InfluencerTable({ assignments, entries, month, personId,
 }
 
 const th: React.CSSProperties = {
-  padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 500,
+  padding: '10px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 500,
   color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em',
-  borderBottom: '0.5px solid var(--border)', whiteSpace: 'nowrap',
+  border: '0.5px solid var(--border)', whiteSpace: 'nowrap',
 };
 
-const td: React.CSSProperties = { padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle' };
+const thLeft: React.CSSProperties = {
+  padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 500,
+  color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em',
+  border: '0.5px solid var(--border)', whiteSpace: 'nowrap',
+};
+
+const td: React.CSSProperties = {
+  padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
+  textAlign: 'center', border: '0.5px solid var(--border)',
+};
+
+const tdLeft: React.CSSProperties = {
+  padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
+  textAlign: 'left', border: '0.5px solid var(--border)',
+};
+
+const inputStyle: React.CSSProperties = {
+  width: '60px', fontFamily: 'var(--font-mono)', fontSize: '12px',
+  padding: '4px 6px', border: '0.5px solid var(--border-strong)',
+  borderRadius: 'var(--radius)', background: 'var(--surface-2)', color: 'var(--text-primary)',
+};
 
 function Num({ v, suffix = '' }: { v: any; suffix?: string }) {
   if (v === null || v === undefined || v === '' || v === 0) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
