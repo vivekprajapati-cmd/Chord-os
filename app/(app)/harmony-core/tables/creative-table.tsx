@@ -12,12 +12,12 @@ type Props = {
 };
 
 const LINK_FIELDS = [
-  { key: 'trend_link', label: 'Trend' },
-  { key: 'moment_marketing_link', label: 'Moment' },
-  { key: 'reel_10k_link', label: 'Reel 10k' },
-  { key: 'high_vtr_link', label: 'High VTR' },
-  { key: 'high_engagement_link', label: 'Engagement' },
-  { key: 'brand_appreciated_link', label: 'Brand Pick' },
+  { key: 'trend_link', label: 'Trend Created' },
+  { key: 'moment_marketing_link', label: 'Moment/Topical' },
+  { key: 'reel_10k_link', label: 'Reel Organic 10k' },
+  { key: 'high_vtr_link', label: 'High VTR Reel (50%+)' },
+  { key: 'high_engagement_link', label: 'High Organic Engagement' },
+  { key: 'brand_appreciated_link', label: 'Brand Appreciated' },
 ];
 
 function BrandAvatar({ name }: { name: string }) {
@@ -84,13 +84,13 @@ export default function CreativeTable({ assignments, entries, month, personId, c
   }
 
   return (
-    <div style={{ overflowX: 'auto', border: '0.5px solid var(--border)', borderRadius: '12px' }}>
+    <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
         <thead>
           <tr style={{ background: 'var(--surface-1)' }}>
             <th style={th}>Brand</th>
             <th style={th}>NPS</th>
-            <th style={th}>New Idea</th>
+            <th style={th}>New Idea This Week</th>
             {LINK_FIELDS.map(f => <th key={f.key} style={th}>{f.label}</th>)}
             <th style={th}></th>
           </tr>

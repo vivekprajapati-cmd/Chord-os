@@ -162,16 +162,16 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
           <thead>
             <tr style={{ background: 'var(--surface-1)' }}>
               <th rowSpan={2} style={th}>Brand</th>
-              <th rowSpan={2} style={th}>Scope</th>
-              <th rowSpan={2} style={th}>Backlog</th>
-              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Scope %</th>
-              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Backlog %</th>
-              <th rowSpan={2} style={th}>NPS</th>
-              <th rowSpan={2} style={th}>Invoice</th>
-              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>ORM %</th>
-              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Social %</th>
-              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Ops %</th>
-              <th colSpan={5} style={{ ...th, textAlign: 'center', borderBottom: '0.5px solid var(--border)', color: 'var(--text-secondary)' }}>WoW (Week on Week)</th>
+              <th rowSpan={2} style={th}>Scope Monthly</th>
+              <th rowSpan={2} style={th}>Backlog to Complete</th>
+              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Completion Rate Scope</th>
+              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Completion Rate Backlog by EOM</th>
+              <th rowSpan={2} style={th}>Brand NPS</th>
+              <th rowSpan={2} style={th}>Invoices Cleared till PM</th>
+              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>ORM Tracker (Daily)</th>
+              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Social Tracker (Weekly)</th>
+              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Ops Tracker (Daily)</th>
+              <th colSpan={5} style={{ ...th, textAlign: 'center', borderBottom: '0.5px solid var(--border)', color: 'var(--text-secondary)' }}>Week on Week</th>
               <th rowSpan={2} style={{ ...th, width: '60px' }}></th>
             </tr>
             <tr style={{ background: 'var(--surface-1)' }}>

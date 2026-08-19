@@ -125,24 +125,24 @@ export default function InfluencerTable({ assignments, entries, month, personId,
   }
 
   return (
-    <div style={{ overflowX: 'auto', border: '0.5px solid var(--border)', borderRadius: '12px' }}>
+    <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '800px' }}>
         <thead>
           <tr style={{ background: 'var(--surface-1)' }}>
             <th style={th}>Brand</th>
             <th style={th}>Nature</th>
-            <th style={th}>NPS</th>
-            <th style={th}>Scope</th>
+            <th style={th}>Brand NPS</th>
+            <th style={th}>Scope (Monthly)</th>
             <th style={th}>Shortlisted</th>
             <th style={th}>Executed</th>
             <th style={th}>Gone Live</th>
-            <th style={{ ...th, color: 'var(--text-accent)' }}>Shortlist %</th>
-            <th style={{ ...th, color: 'var(--text-accent)' }}>Execution %</th>
-            <th style={{ ...th, color: 'var(--text-accent)' }}>Go Live %</th>
-            <th style={th}>Tracker Rate %</th>
+            <th style={{ ...th, color: 'var(--text-accent)' }}>Shortlist Rate</th>
+            <th style={{ ...th, color: 'var(--text-accent)' }}>Execution Rate</th>
+            <th style={{ ...th, color: 'var(--text-accent)' }}>Go Live Rate</th>
+            <th style={th}>Influencer Tracker (Weekly)</th>
             <th style={th}>PO Raised</th>
-            <th style={th}>Advance</th>
-            <th style={th}>Invoice</th>
+            <th style={th}>Advance Received</th>
+            <th style={th}>Invoice Closed</th>
             <th style={th}></th>
           </tr>
         </thead>
