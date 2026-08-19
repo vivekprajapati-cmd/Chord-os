@@ -73,6 +73,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/client', request.url));
   }
 
+  response.headers.set('x-pathname', path);
   return response;
 }
 

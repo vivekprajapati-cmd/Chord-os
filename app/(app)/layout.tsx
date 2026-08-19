@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import SidebarNav from '@/components/sidebar-nav';
@@ -16,6 +17,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .select('id, name, role, department, seniority, location, is_team_lead, access_tier, view_all')
     .eq('email', session.user.email!)
     .maybeSingle();
+
+  const pathname = (await headers()).get('x-pathname') ?? '';
+  const isFullWidth = pathname.startsWith('/harmony-core');
 
   const accessTier = (person as any)?.access_tier ?? 'staff';
   const tier = (accessTier === 'admin' || accessTier === 'lead' ? 'admin' : accessTier === 'viewer' ? 'poc' : 'staff') as 'admin' | 'poc' | 'staff';
@@ -71,10 +75,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </span>
         </div>
 
-        <div style={{ maxWidth: '960px', padding: 'clamp(20px, 4vw, 52px) clamp(16px, 4vw, 48px) 80px' }}>
-          <BackButton />
-          {children}
-        </div>
+        {isFullWidth ? (
+          <div style={{ padding: 'clamp(20px, 3vw, 40px) clamp(16px, 3vw, 40px) 80px', width: '100%' }}>
+            <BackButton />
+            {children}
+          </div>
+        ) : (
+          <div className="app-content-wrap">
+            <BackButton />
+            {children}
+          </div>
+        )}
       </main>
     </div>
   );

@@ -283,3 +283,5 @@ em {
 *::-webkit-scrollbar-thumb:hover {
   background: var(--gray);
 }
+
+.app-content-wrap { max-width: 960px; padding: clamp(20px, 4vw, 52px) clamp(16px, 4vw, 48px) 80px; }

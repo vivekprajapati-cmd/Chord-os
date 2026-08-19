@@ -93,7 +93,7 @@ export default function HarmonyCoreClient({ me, people }: Props) {
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '100%' }}>
+    <div style={{ width: '100%' }}>
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
         <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)' }}>Harmony Core</h1>
