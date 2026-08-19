@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
   const { data: assignments } = await admin
     .from('harmony_brand_assignments')
-    .select('brand_id, brands(id, name)')
+    .select('brand_id, role_type, brands(id, name)')
     .eq('person_id', person_id);
 
   const brandIds = (assignments ?? []).map((a: any) => a.brand_id);

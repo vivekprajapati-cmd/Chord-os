@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import SocialTable from './tables/social-table';
 import InfluencerTable from './tables/influencer-table';
 import CreativeTable from './tables/creative-table';
+import AssignModal from './assign-modal';
 
 type Person = { id: string; name: string; role: string; access_tier: string };
 
@@ -49,6 +50,7 @@ export default function HarmonyCoreClient({ me, people }: Props) {
   const [monthlyEntries, setMonthlyEntries] = useState<any[]>([]);
   const [weeklyEntries, setWeeklyEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAssign, setShowAssign] = useState(false);
 
   const selectedPerson = people.find(p => p.id === selectedPersonId) ?? people[0];
   const roleType = selectedPerson ? getRoleType(selectedPerson) : 'social';
@@ -96,7 +98,15 @@ export default function HarmonyCoreClient({ me, people }: Props) {
     <div style={{ width: '100%' }}>
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)' }}>Harmony Core</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)' }}>Harmony Core</h1>
+          {me.access_tier === 'admin' && (
+            <button onClick={() => setShowAssign(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '999px', border: '1px solid var(--ink, #0D0D0B)', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontFamily: 'var(--font-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer' }}>
+              + Assign Brand
+            </button>
+          )}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-2)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 12px' }}>
           <button onClick={() => changeMonth(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: '0 4px', fontSize: '16px' }}>‹</button>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--text-primary)', minWidth: '120px', textAlign: 'center' }}>{monthLabel}</span>
@@ -192,6 +202,15 @@ export default function HarmonyCoreClient({ me, people }: Props) {
           ? `You are viewing ${selectedPerson?.name.split(' ')[0] ?? ''}${String.fromCharCode(39)}s data. Click the edit icon on any row to update.`
           : `You are viewing ${selectedPerson?.name.split(' ')[0] ?? ''}${String.fromCharCode(39)}s data. You can only edit your own brands.`}
       </div>
+
+      {showAssign && (
+        <AssignModal
+          people={people}
+          defaultPersonId={selectedPersonId}
+          onClose={() => setShowAssign(false)}
+          onSaved={load}
+        />
+      )}
     </div>
   );
 }
