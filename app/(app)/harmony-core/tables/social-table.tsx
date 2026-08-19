@@ -30,7 +30,7 @@ function weeksInMonth(month: string) {
 
 function PctCell({ value }: { value: number | null }) {
   if (value === null) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
-  const color = value >= 80 ? 'var(--text-success)' : value >= 50 ? '#b45309' : 'var(--text-danger)';
+  const color = value >= 80 ? '#16a34a' : value >= 50 ? '#d97706' : '#dc2626';
   return <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 500, color }}>{value}%</span>;
 }
 
@@ -38,9 +38,21 @@ function Delta({ curr, prev }: { curr: number | null; prev: number | null }) {
   if (curr === null || prev === null) return null;
   const diff = curr - prev;
   if (diff === 0) return null;
-  const color = diff > 0 ? 'var(--text-success)' : 'var(--text-danger)';
+  const color = diff > 0 ? '#16a34a' : '#dc2626';
   const arrow = diff > 0 ? '↑' : '↓';
-  return <div style={{ fontSize: '11px', color }}>{arrow} {Math.abs(diff).toLocaleString()}</div>;
+  return <div style={{ fontSize: '11px', color, marginTop: '2px' }}>{arrow} {Math.abs(diff).toLocaleString()}</div>;
+}
+
+function BrandAvatar({ name }: { name: string }) {
+  const initials = name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase();
+  const colors = ['#e0f2fe', '#fce7f3', '#f0fdf4', '#fef9c3', '#ede9fe', '#ffedd5'];
+  const textColors = ['#0369a1', '#9d174d', '#15803d', '#a16207', '#6d28d9', '#c2410c'];
+  const idx = name.charCodeAt(0) % colors.length;
+  return (
+    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: colors[idx], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 600, color: textColors[idx], flexShrink: 0 }}>
+      {initials}
+    </div>
+  );
 }
 
 export default function SocialTable({ assignments, monthlyEntries, weeklyEntries, weekStart, month, personId, canEdit, onSaved }: Props) {
@@ -60,8 +72,8 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
     return weeklyEntries.find(e => e.brand_id === brandId && e.week_start === wk);
   }
 
-  function getPrevWeek(weekStart: string) {
-    const d = new Date(weekStart);
+  function getPrevWeek(ws: string) {
+    const d = new Date(ws);
     d.setDate(d.getDate() - 7);
     return d.toISOString().split('T')[0];
   }
@@ -77,7 +89,6 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
         backlog_completed: entry?.metrics?.backlog_completed ?? '',
         nps: entry?.metrics?.nps ?? '',
         invoice_cleared: entry?.metrics?.invoice_cleared ?? false,
-        // WoW
         followers: getWeekly(brandId, weekStart)?.followers ?? '',
         er: getWeekly(brandId, weekStart)?.er ?? '',
         sov: getWeekly(brandId, weekStart)?.sov ?? '',
@@ -97,16 +108,12 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
     if (!d) return;
     setSaving(brandId);
     const entry = getEntry(brandId);
-
     await Promise.all([
       fetch('/api/harmony-core', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          person_id: personId,
-          brand_id: brandId,
-          month,
-          role_type: 'social',
+          person_id: personId, brand_id: brandId, month, role_type: 'social',
           metrics: {
             scope: Number(d.scope) || 0,
             tasks_completed: Number(d.tasks_completed) || 0,
@@ -122,9 +129,7 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          person_id: personId,
-          brand_id: brandId,
-          week_start: weekStart,
+          person_id: personId, brand_id: brandId, week_start: weekStart,
           followers: Number(d.followers) || null,
           er: Number(d.er) || null,
           sov: Number(d.sov) || null,
@@ -133,35 +138,32 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
         }),
       }),
     ]);
-
     setSaving(null);
     setEditing(null);
     onSaved();
   }
 
-  function numInput(brandId: string, field: string, placeholder = '—') {
+  function numInput(brandId: string, field: string, w = '60px') {
     return (
-      <input
-        type="number"
-        value={drafts[brandId]?.[field] ?? ''}
-        onChange={e => setField(brandId, field, e.target.value)}
-        placeholder={placeholder}
-        style={{ width: '60px', fontFamily: 'var(--font-mono)', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius)', background: 'var(--surface-2)', color: 'var(--text-primary)' }}
-      />
+      <input type="number" value={drafts[brandId]?.[field] ?? ''} onChange={e => setField(brandId, field, e.target.value)}
+        style={{ width: w, fontFamily: 'var(--font-mono)', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius)', background: 'var(--surface-2)', color: 'var(--text-primary)' }} />
     );
   }
 
   return (
     <>
-      <div style={{ overflowX: 'auto', border: '0.5px solid var(--border)', borderRadius: '12px' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
+      {/* Section label */}
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--coral, #e05c3a)', marginBottom: '10px' }}>
+        Social KPIs
+      </div>
+
+      <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '1000px' }}>
           <thead>
             <tr style={{ background: 'var(--surface-1)' }}>
               <th rowSpan={2} style={th}>Brand</th>
               <th rowSpan={2} style={th}>Scope</th>
-              <th rowSpan={2} style={th}>Done</th>
               <th rowSpan={2} style={th}>Backlog</th>
-              <th rowSpan={2} style={th}>B. Done</th>
               <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Scope %</th>
               <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Backlog %</th>
               <th rowSpan={2} style={th}>NPS</th>
@@ -169,8 +171,8 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
               <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>ORM %</th>
               <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Social %</th>
               <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Ops %</th>
-              <th colSpan={5} style={{ ...th, textAlign: 'center', borderBottom: '0.5px solid var(--border)' }}>WoW (Week on Week)</th>
-              <th rowSpan={2} style={th}></th>
+              <th colSpan={5} style={{ ...th, textAlign: 'center', borderBottom: '0.5px solid var(--border)', color: 'var(--text-secondary)' }}>WoW (Week on Week)</th>
+              <th rowSpan={2} style={{ ...th, width: '60px' }}></th>
             </tr>
             <tr style={{ background: 'var(--surface-1)' }}>
               <th style={th}>Followers</th>
@@ -184,6 +186,7 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
             {assignments.map((a: any) => {
               const brand = a.brands;
               const brandId = a.brand_id;
+              const brandName = brand?.name ?? brandId;
               const entry = getEntry(brandId);
               const m = entry?.metrics ?? {};
               const logs = entry?.tracker_logs ?? { orm: [], ops: [], social: [] };
@@ -200,95 +203,109 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
 
               return (
                 <tr key={brandId} style={{ borderTop: '0.5px solid var(--border)' }}>
-                  <td style={td}><span style={{ fontWeight: 500 }}>{brand?.name ?? brandId}</span></td>
+                  {/* Brand with avatar */}
+                  <td style={{ ...td, minWidth: '140px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <BrandAvatar name={brandName} />
+                      <span style={{ fontWeight: 500, fontSize: '13px' }}>{brandName}</span>
+                    </div>
+                  </td>
 
                   {isEditing ? (
                     <>
                       <td style={td}>{numInput(brandId, 'scope')}</td>
-                      <td style={td}>{numInput(brandId, 'tasks_completed')}</td>
                       <td style={td}>{numInput(brandId, 'backlog')}</td>
-                      <td style={td}>{numInput(brandId, 'backlog_completed')}</td>
-                      <td style={td}><PctCell value={pct(Number(drafts[brandId]?.tasks_completed), Number(drafts[brandId]?.scope))} /></td>
-                      <td style={td}><PctCell value={pct(Number(drafts[brandId]?.backlog_completed), Number(drafts[brandId]?.backlog))} /></td>
-                      <td style={td}>{numInput(brandId, 'nps')}</td>
+                      {/* hidden inputs for tasks_completed and backlog_completed — needed for calc */}
+                      <td style={td}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <PctCell value={pct(Number(drafts[brandId]?.tasks_completed), Number(drafts[brandId]?.scope))} />
+                          <input type="number" value={drafts[brandId]?.tasks_completed ?? ''} onChange={e => setField(brandId, 'tasks_completed', e.target.value)}
+                            placeholder="done" style={{ width: '52px', fontFamily: 'var(--font-mono)', fontSize: '11px', padding: '3px 5px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius)', background: 'var(--surface-1)', color: 'var(--text-muted)' }} />
+                        </div>
+                      </td>
+                      <td style={td}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <PctCell value={pct(Number(drafts[brandId]?.backlog_completed), Number(drafts[brandId]?.backlog))} />
+                          <input type="number" value={drafts[brandId]?.backlog_completed ?? ''} onChange={e => setField(brandId, 'backlog_completed', e.target.value)}
+                            placeholder="done" style={{ width: '52px', fontFamily: 'var(--font-mono)', fontSize: '11px', padding: '3px 5px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius)', background: 'var(--surface-1)', color: 'var(--text-muted)' }} />
+                        </div>
+                      </td>
+                      <td style={td}>{numInput(brandId, 'nps', '50px')}</td>
                       <td style={td}>
                         <button onClick={() => setField(brandId, 'invoice_cleared', !drafts[brandId]?.invoice_cleared)}
-                          style={{ padding: '3px 10px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 500, background: drafts[brandId]?.invoice_cleared ? 'var(--bg-success)' : 'var(--bg-danger)', color: drafts[brandId]?.invoice_cleared ? 'var(--text-success)' : 'var(--text-danger)' }}>
+                          style={{ padding: '3px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: drafts[brandId]?.invoice_cleared ? '#dcfce7' : '#fee2e2', color: drafts[brandId]?.invoice_cleared ? '#16a34a' : '#dc2626' }}>
                           {drafts[brandId]?.invoice_cleared ? 'Y' : 'N'}
                         </button>
                       </td>
                       <td style={td}><PctCell value={ormPct} /></td>
                       <td style={td}><PctCell value={socialPct} /></td>
                       <td style={td}><PctCell value={opsPct} /></td>
-                      <td style={td}>{numInput(brandId, 'followers')}</td>
-                      <td style={td}>{numInput(brandId, 'er')}</td>
-                      <td style={td}>{numInput(brandId, 'sov')}</td>
-                      <td style={td}>{numInput(brandId, 'profile_visits')}</td>
-                      <td style={td}>{numInput(brandId, 'avg_vtr')}</td>
+                      <td style={td}>{numInput(brandId, 'followers', '70px')}</td>
+                      <td style={td}>{numInput(brandId, 'er', '55px')}</td>
+                      <td style={td}>{numInput(brandId, 'sov', '55px')}</td>
+                      <td style={td}>{numInput(brandId, 'profile_visits', '70px')}</td>
+                      <td style={td}>{numInput(brandId, 'avg_vtr', '55px')}</td>
                     </>
                   ) : (
                     <>
                       <td style={td}><Num v={m.scope} /></td>
-                      <td style={td}><Num v={m.tasks_completed} /></td>
                       <td style={td}><Num v={m.backlog} /></td>
-                      <td style={td}><Num v={m.backlog_completed} /></td>
                       <td style={td}><PctCell value={scopePct} /></td>
                       <td style={td}><PctCell value={backlogPct} /></td>
                       <td style={td}><Num v={m.nps} /></td>
                       <td style={td}>
-                        {entry ? (
-                          <span style={{ padding: '3px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 500, background: m.invoice_cleared ? 'var(--bg-success)' : 'var(--bg-danger)', color: m.invoice_cleared ? 'var(--text-success)' : 'var(--text-danger)' }}>
-                            {m.invoice_cleared ? 'Y' : 'N'}
-                          </span>
-                        ) : <Muted />}
+                        {entry
+                          ? <span style={{ padding: '3px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, background: m.invoice_cleared ? '#dcfce7' : '#fee2e2', color: m.invoice_cleared ? '#16a34a' : '#dc2626' }}>{m.invoice_cleared ? 'Y' : 'N'}</span>
+                          : <Muted />}
                       </td>
-                      <td style={{ ...td, cursor: canEdit ? 'pointer' : 'default' }} onClick={() => canEdit && setTrackerModal({ brandId, type: 'orm' })}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <td style={{ ...td, cursor: canEdit ? 'pointer' : 'default' }} title={canEdit ? 'Click to log daily updates' : ''} onClick={() => canEdit && setTrackerModal({ brandId, type: 'orm' })}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                           <PctCell value={ormPct} />
-                          {canEdit && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>✎</span>}
+                          {canEdit && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.7 }}>✎</span>}
                         </div>
                       </td>
-                      <td style={{ ...td, cursor: canEdit ? 'pointer' : 'default' }} onClick={() => canEdit && setTrackerModal({ brandId, type: 'social' })}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <td style={{ ...td, cursor: canEdit ? 'pointer' : 'default' }} title={canEdit ? 'Click to log weekly updates' : ''} onClick={() => canEdit && setTrackerModal({ brandId, type: 'social' })}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                           <PctCell value={socialPct} />
-                          {canEdit && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>✎</span>}
+                          {canEdit && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.7 }}>✎</span>}
                         </div>
                       </td>
-                      <td style={{ ...td, cursor: canEdit ? 'pointer' : 'default' }} onClick={() => canEdit && setTrackerModal({ brandId, type: 'ops' })}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <td style={{ ...td, cursor: canEdit ? 'pointer' : 'default' }} title={canEdit ? 'Click to log daily updates' : ''} onClick={() => canEdit && setTrackerModal({ brandId, type: 'ops' })}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                           <PctCell value={opsPct} />
-                          {canEdit && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>✎</span>}
+                          {canEdit && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.7 }}>✎</span>}
                         </div>
                       </td>
                       <td style={td}>
-                        <div><Num v={currWeek?.followers} /></div>
+                        <Num v={currWeek?.followers} />
                         <Delta curr={currWeek?.followers ?? null} prev={prevWeek?.followers ?? null} />
                       </td>
                       <td style={td}>
-                        <div><Num v={currWeek?.er} suffix="%" /></div>
+                        <Num v={currWeek?.er} suffix="%" />
                         <Delta curr={currWeek?.er ?? null} prev={prevWeek?.er ?? null} />
                       </td>
                       <td style={td}>
-                        <div><Num v={currWeek?.sov} suffix="%" /></div>
+                        <Num v={currWeek?.sov} suffix="%" />
                         <Delta curr={currWeek?.sov ?? null} prev={prevWeek?.sov ?? null} />
                       </td>
                       <td style={td}>
-                        <div><Num v={currWeek?.profile_visits} /></div>
+                        <Num v={currWeek?.profile_visits} />
                         <Delta curr={currWeek?.profile_visits ?? null} prev={prevWeek?.profile_visits ?? null} />
                       </td>
                       <td style={td}>
-                        <div><Num v={currWeek?.avg_vtr} suffix="%" /></div>
+                        <Num v={currWeek?.avg_vtr} suffix="%" />
                         <Delta curr={currWeek?.avg_vtr ?? null} prev={prevWeek?.avg_vtr ?? null} />
                       </td>
                     </>
                   )}
 
-                  <td style={{ ...td, textAlign: 'right' }}>
+                  {/* Action column */}
+                  <td style={{ ...td, textAlign: 'right', width: '60px' }}>
                     {canEdit && (
                       isEditing ? (
-                        <div style={{ display: 'flex', gap: '6px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <button onClick={() => save(brandId)} disabled={isSaving}
-                            style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontSize: '11px', cursor: 'pointer' }}>
+                            style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                             {isSaving ? '...' : 'Save'}
                           </button>
                           <button onClick={() => setEditing(null)}
@@ -297,9 +314,9 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
                           </button>
                         </div>
                       ) : (
-                        <button onClick={() => startEdit(brandId)}
-                          style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: '4px 8px', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '11px' }}>
-                          Edit
+                        <button onClick={() => startEdit(brandId)} title="Edit row"
+                          style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: '5px 7px', cursor: 'pointer', color: 'var(--coral, #e05c3a)', lineHeight: 1 }}>
+                          ✏
                         </button>
                       )
                     )}
