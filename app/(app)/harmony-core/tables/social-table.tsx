@@ -161,7 +161,7 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '1000px' }}>
           <thead>
             <tr style={{ background: 'var(--surface-1)' }}>
-              <th rowSpan={2} style={th}>Brand</th>
+              <th rowSpan={2} style={thLeft}>Brand</th>
               <th rowSpan={2} style={th}>Scope Monthly</th>
               <th rowSpan={2} style={th}>Backlog to Complete</th>
               <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Completion Rate Scope</th>
@@ -171,8 +171,8 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
               <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>ORM Tracker (Daily)</th>
               <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Social Tracker (Weekly)</th>
               <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Ops Tracker (Daily)</th>
-              <th colSpan={5} style={{ ...th, textAlign: 'center', borderBottom: '0.5px solid var(--border)', color: 'var(--text-secondary)' }}>Week on Week</th>
-              <th rowSpan={2} style={{ ...th, width: '60px' }}></th>
+              <th colSpan={5} style={{ ...th, color: 'var(--text-secondary)' }}>Week on Week</th>
+              <th rowSpan={2} style={{ ...th, width: '48px' }}></th>
             </tr>
             <tr style={{ background: 'var(--surface-1)' }}>
               <th style={th}>Followers</th>
@@ -202,9 +202,9 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
               const socialPct = weeks ? Math.round((logs.social.length / weeks) * 100) : null;
 
               return (
-                <tr key={brandId} style={{ borderTop: '0.5px solid var(--border)' }}>
+                <tr key={brandId}>
                   {/* Brand with avatar */}
-                  <td style={{ ...td, minWidth: '140px' }}>
+                  <td style={{ ...tdLeft, minWidth: '160px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <BrandAvatar name={brandName} />
                       <span style={{ fontWeight: 500, fontSize: '13px' }}>{brandName}</span>
@@ -300,22 +300,22 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
                   )}
 
                   {/* Action column */}
-                  <td style={{ ...td, textAlign: 'right', width: '60px' }}>
+                  <td style={{ ...td, width: '48px', padding: '6px 8px' }}>
                     {canEdit && (
                       isEditing ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <button onClick={() => save(brandId)} disabled={isSaving}
-                            style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                            {isSaving ? '...' : 'Save'}
+                            style={{ padding: '4px 8px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            {isSaving ? '…' : 'Save'}
                           </button>
                           <button onClick={() => setEditing(null)}
-                            style={{ padding: '4px 10px', borderRadius: 'var(--radius)', border: '0.5px solid var(--border)', background: 'transparent', fontSize: '11px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                            Cancel
+                            style={{ padding: '4px 8px', borderRadius: 'var(--radius)', border: '0.5px solid var(--border)', background: 'transparent', fontSize: '11px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                            ✕
                           </button>
                         </div>
                       ) : (
                         <button onClick={() => startEdit(brandId)} title="Edit row"
-                          style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: '5px 7px', cursor: 'pointer', color: 'var(--coral, #e05c3a)', lineHeight: 1 }}>
+                          style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', background: '#fff0ec', cursor: 'pointer', color: '#e05c3a', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
                           ✏
                         </button>
                       )
@@ -344,13 +344,25 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
 }
 
 const th: React.CSSProperties = {
+  padding: '10px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 500,
+  color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em',
+  border: '0.5px solid var(--border)', whiteSpace: 'nowrap',
+};
+
+const thLeft: React.CSSProperties = {
   padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 500,
   color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em',
-  borderBottom: '0.5px solid var(--border)', whiteSpace: 'nowrap',
+  border: '0.5px solid var(--border)', whiteSpace: 'nowrap',
 };
 
 const td: React.CSSProperties = {
   padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
+  textAlign: 'center', border: '0.5px solid var(--border)',
+};
+
+const tdLeft: React.CSSProperties = {
+  padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
+  textAlign: 'left', border: '0.5px solid var(--border)',
 };
 
 function Num({ v, suffix = '' }: { v: any; suffix?: string }) {
