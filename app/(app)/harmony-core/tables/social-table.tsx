@@ -158,32 +158,32 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
       </div>
 
       <div style={{ overflowX: 'auto', border: '1px solid #c8c4bc', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '1000px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '1100px' }}>
           <thead>
-            <tr style={{ background: 'var(--surface-1)' }}>
-              <th rowSpan={2} style={thLeft}>Brand</th>
-              <th rowSpan={2} style={th}>Scope Monthly</th>
-              <th rowSpan={2} style={th}>Backlog to Complete</th>
-              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Completion Rate Scope</th>
-              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Completion Rate Backlog by EOM</th>
-              <th rowSpan={2} style={th}>Brand NPS</th>
-              <th rowSpan={2} style={th}>Invoices Cleared till PM</th>
-              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>ORM Tracker (Daily)</th>
-              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Social Tracker (Weekly)</th>
-              <th rowSpan={2} style={{ ...th, color: 'var(--text-accent)' }}>Ops Tracker (Daily)</th>
-              <th colSpan={5} style={{ ...th, color: 'var(--text-secondary)' }}>Week on Week</th>
-              <th rowSpan={2} style={{ ...th, width: '48px' }}></th>
+            <tr>
+              <th rowSpan={2} style={{ ...thLeft, background: '#dedad2', fontSize: '10px' }}>Brand</th>
+              <th rowSpan={2} style={{ ...th, background: '#dedad2', fontSize: '10px' }}>Scope Monthly</th>
+              <th rowSpan={2} style={{ ...th, background: '#dedad2', fontSize: '10px' }}>Backlog to Complete</th>
+              <th rowSpan={2} style={{ ...th, background: '#c8e6c9', color: '#2e7d32', fontSize: '10px' }}>Scope Done %</th>
+              <th rowSpan={2} style={{ ...th, background: '#c8e6c9', color: '#2e7d32', fontSize: '10px' }}>Backlog EOM %</th>
+              <th rowSpan={2} style={{ ...th, background: '#dedad2', fontSize: '10px' }}>NPS</th>
+              <th rowSpan={2} style={{ ...th, background: '#dedad2', fontSize: '10px' }}>Invoice (Y/N)</th>
+              <th rowSpan={2} style={{ ...th, background: '#fce4d6', color: '#bf360c', fontSize: '10px' }}>ORM rate %</th>
+              <th rowSpan={2} style={{ ...th, background: '#fce4d6', color: '#bf360c', fontSize: '10px' }}>Social tracker %</th>
+              <th rowSpan={2} style={{ ...th, background: '#fce4d6', color: '#bf360c', fontSize: '10px' }}>Ops tracker %</th>
+              <th colSpan={5} style={{ ...th, background: '#e3f2fd', color: '#1565c0', fontSize: '10px' }}>WoW (Week on Week)</th>
+              <th rowSpan={2} style={{ ...th, background: '#dedad2', width: '48px', fontSize: '10px' }}></th>
             </tr>
-            <tr style={{ background: 'var(--surface-1)' }}>
-              <th style={th}>Followers</th>
-              <th style={th}>ER %</th>
-              <th style={th}>SOV %</th>
-              <th style={th}>Visits</th>
-              <th style={th}>Avg VTR %</th>
+            <tr>
+              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0', fontSize: '10px' }}>Followers</th>
+              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0', fontSize: '10px' }}>ER %</th>
+              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0', fontSize: '10px' }}>SOV %</th>
+              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0', fontSize: '10px' }}>Profile Visits</th>
+              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0', fontSize: '10px' }}>Avg VTR %</th>
             </tr>
           </thead>
           <tbody>
-            {assignments.map((a: any) => {
+            {assignments.map((a: any, rowIdx: number) => {
               const brand = a.brands;
               const brandId = a.brand_id;
               const brandName = brand?.name ?? brandId;
@@ -194,6 +194,7 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
               const prevWeek = getWeekly(brandId, getPrevWeek(weekStart));
               const isEditing = editing === brandId;
               const isSaving = saving === brandId;
+              const rowBg = rowIdx % 2 === 0 ? '#fff' : '#f9f8f5';
 
               const scopePct = pct(m.tasks_completed, m.scope);
               const backlogPct = pct(m.backlog_completed, m.backlog);
@@ -201,10 +202,13 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
               const opsPct = days ? Math.round((logs.ops.length / days) * 100) : null;
               const socialPct = weeks ? Math.round((logs.social.length / weeks) * 100) : null;
 
+              const tdR = { ...td, background: rowBg };
+              const tdLR = { ...tdLeft, background: rowBg };
+
               return (
                 <tr key={brandId}>
                   {/* Brand with avatar */}
-                  <td style={{ ...tdLeft, minWidth: '160px' }}>
+                  <td style={{ ...tdLR, minWidth: '160px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <BrandAvatar name={brandName} />
                       <span style={{ fontWeight: 500, fontSize: '13px' }}>{brandName}</span>
@@ -213,86 +217,86 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
 
                   {isEditing ? (
                     <>
-                      <td style={td}>{numInput(brandId, 'scope')}</td>
-                      <td style={td}>{numInput(brandId, 'backlog')}</td>
+                      <td style={tdR}>{numInput(brandId, 'scope')}</td>
+                      <td style={tdR}>{numInput(brandId, 'backlog')}</td>
                       {/* hidden inputs for tasks_completed and backlog_completed — needed for calc */}
-                      <td style={td}>
+                      <td style={tdR}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <PctCell value={pct(Number(drafts[brandId]?.tasks_completed), Number(drafts[brandId]?.scope))} />
                           <input type="number" value={drafts[brandId]?.tasks_completed ?? ''} onChange={e => setField(brandId, 'tasks_completed', e.target.value)}
                             placeholder="done" style={{ width: '52px', fontFamily: 'var(--font-mono)', fontSize: '11px', padding: '3px 5px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius)', background: 'var(--surface-1)', color: 'var(--text-muted)' }} />
                         </div>
                       </td>
-                      <td style={td}>
+                      <td style={tdR}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <PctCell value={pct(Number(drafts[brandId]?.backlog_completed), Number(drafts[brandId]?.backlog))} />
                           <input type="number" value={drafts[brandId]?.backlog_completed ?? ''} onChange={e => setField(brandId, 'backlog_completed', e.target.value)}
                             placeholder="done" style={{ width: '52px', fontFamily: 'var(--font-mono)', fontSize: '11px', padding: '3px 5px', border: '0.5px solid var(--border-strong)', borderRadius: 'var(--radius)', background: 'var(--surface-1)', color: 'var(--text-muted)' }} />
                         </div>
                       </td>
-                      <td style={td}>{numInput(brandId, 'nps', '50px')}</td>
-                      <td style={td}>
+                      <td style={tdR}>{numInput(brandId, 'nps', '50px')}</td>
+                      <td style={tdR}>
                         <button onClick={() => setField(brandId, 'invoice_cleared', !drafts[brandId]?.invoice_cleared)}
                           style={{ padding: '3px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: drafts[brandId]?.invoice_cleared ? '#dcfce7' : '#fee2e2', color: drafts[brandId]?.invoice_cleared ? '#16a34a' : '#dc2626' }}>
                           {drafts[brandId]?.invoice_cleared ? 'Y' : 'N'}
                         </button>
                       </td>
-                      <td style={td}><PctCell value={ormPct} /></td>
-                      <td style={td}><PctCell value={socialPct} /></td>
-                      <td style={td}><PctCell value={opsPct} /></td>
-                      <td style={td}>{numInput(brandId, 'followers', '70px')}</td>
-                      <td style={td}>{numInput(brandId, 'er', '55px')}</td>
-                      <td style={td}>{numInput(brandId, 'sov', '55px')}</td>
-                      <td style={td}>{numInput(brandId, 'profile_visits', '70px')}</td>
-                      <td style={td}>{numInput(brandId, 'avg_vtr', '55px')}</td>
+                      <td style={tdR}><PctCell value={ormPct} /></td>
+                      <td style={tdR}><PctCell value={socialPct} /></td>
+                      <td style={tdR}><PctCell value={opsPct} /></td>
+                      <td style={tdR}>{numInput(brandId, 'followers', '70px')}</td>
+                      <td style={tdR}>{numInput(brandId, 'er', '55px')}</td>
+                      <td style={tdR}>{numInput(brandId, 'sov', '55px')}</td>
+                      <td style={tdR}>{numInput(brandId, 'profile_visits', '70px')}</td>
+                      <td style={tdR}>{numInput(brandId, 'avg_vtr', '55px')}</td>
                     </>
                   ) : (
                     <>
-                      <td style={td}><Num v={m.scope} /></td>
-                      <td style={td}><Num v={m.backlog} /></td>
-                      <td style={td}><PctCell value={scopePct} /></td>
-                      <td style={td}><PctCell value={backlogPct} /></td>
-                      <td style={td}><Num v={m.nps} /></td>
-                      <td style={td}>
+                      <td style={tdR}><Num v={m.scope} /></td>
+                      <td style={tdR}><Num v={m.backlog} /></td>
+                      <td style={tdR}><PctCell value={scopePct} /></td>
+                      <td style={tdR}><PctCell value={backlogPct} /></td>
+                      <td style={tdR}><Num v={m.nps} /></td>
+                      <td style={tdR}>
                         {entry
                           ? <span style={{ padding: '3px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, background: m.invoice_cleared ? '#dcfce7' : '#fee2e2', color: m.invoice_cleared ? '#16a34a' : '#dc2626' }}>{m.invoice_cleared ? 'Y' : 'N'}</span>
                           : <Muted />}
                       </td>
-                      <td style={{ ...td, cursor: canEdit ? 'pointer' : 'default' }} title={canEdit ? 'Click to log daily updates' : ''} onClick={() => canEdit && setTrackerModal({ brandId, type: 'orm' })}>
+                      <td style={{ ...tdR, cursor: canEdit ? 'pointer' : 'default' }} title={canEdit ? 'Click to log daily updates' : ''} onClick={() => canEdit && setTrackerModal({ brandId, type: 'orm' })}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                           <PctCell value={ormPct} />
                           {canEdit && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.7 }}>✎</span>}
                         </div>
                       </td>
-                      <td style={{ ...td, cursor: canEdit ? 'pointer' : 'default' }} title={canEdit ? 'Click to log weekly updates' : ''} onClick={() => canEdit && setTrackerModal({ brandId, type: 'social' })}>
+                      <td style={{ ...tdR, cursor: canEdit ? 'pointer' : 'default' }} title={canEdit ? 'Click to log weekly updates' : ''} onClick={() => canEdit && setTrackerModal({ brandId, type: 'social' })}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                           <PctCell value={socialPct} />
                           {canEdit && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.7 }}>✎</span>}
                         </div>
                       </td>
-                      <td style={{ ...td, cursor: canEdit ? 'pointer' : 'default' }} title={canEdit ? 'Click to log daily updates' : ''} onClick={() => canEdit && setTrackerModal({ brandId, type: 'ops' })}>
+                      <td style={{ ...tdR, cursor: canEdit ? 'pointer' : 'default' }} title={canEdit ? 'Click to log daily updates' : ''} onClick={() => canEdit && setTrackerModal({ brandId, type: 'ops' })}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
                           <PctCell value={opsPct} />
                           {canEdit && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.7 }}>✎</span>}
                         </div>
                       </td>
-                      <td style={td}>
+                      <td style={tdR}>
                         <Num v={currWeek?.followers} />
                         <Delta curr={currWeek?.followers ?? null} prev={prevWeek?.followers ?? null} />
                       </td>
-                      <td style={td}>
+                      <td style={tdR}>
                         <Num v={currWeek?.er} suffix="%" />
                         <Delta curr={currWeek?.er ?? null} prev={prevWeek?.er ?? null} />
                       </td>
-                      <td style={td}>
+                      <td style={tdR}>
                         <Num v={currWeek?.sov} suffix="%" />
                         <Delta curr={currWeek?.sov ?? null} prev={prevWeek?.sov ?? null} />
                       </td>
-                      <td style={td}>
+                      <td style={tdR}>
                         <Num v={currWeek?.profile_visits} />
                         <Delta curr={currWeek?.profile_visits ?? null} prev={prevWeek?.profile_visits ?? null} />
                       </td>
-                      <td style={td}>
+                      <td style={tdR}>
                         <Num v={currWeek?.avg_vtr} suffix="%" />
                         <Delta curr={currWeek?.avg_vtr ?? null} prev={prevWeek?.avg_vtr ?? null} />
                       </td>
@@ -300,7 +304,7 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
                   )}
 
                   {/* Action column */}
-                  <td style={{ ...td, width: '48px', padding: '6px 8px' }}>
+                  <td style={{ ...tdR, width: '48px', padding: '6px 8px' }}>
                     {canEdit && (
                       isEditing ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
