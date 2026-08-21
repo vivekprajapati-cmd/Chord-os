@@ -33,6 +33,7 @@ function makeSupabase(overrides: {
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: authError ? null : user }, error: authError }),
     },
+    rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
     from: vi.fn().mockImplementation((table: string) => {
       if (table === 'people') return { ...chain(me), select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: me, error: null }) };
       return chain(null);
@@ -66,7 +67,7 @@ describe('GET /api/harmony-core', () => {
   });
 
   it('returns assignments and entries on valid request', async () => {
-    const fakeAssignments = [{ brand_id: 'b1', role_type: 'social', brands: { name: 'Brand A' } }];
+    const fakeRpcAssignments = [{ brand_id: 'b1', role_type: 'social', brand_name: 'Brand A' }];
     const fakeEntries = [{ brand_id: 'b1', metrics: { scope: 10 } }];
 
     const adminChain = {
@@ -77,10 +78,8 @@ describe('GET /api/harmony-core', () => {
     };
 
     const adminClient = {
+      rpc: vi.fn().mockResolvedValue({ data: fakeRpcAssignments, error: null }),
       from: vi.fn().mockImplementation((table: string) => {
-        if (table === 'harmony_brand_assignments') {
-          return { ...adminChain, then: (fn: any) => Promise.resolve({ data: fakeAssignments, error: null }).then(fn) };
-        }
         if (table === 'harmony_core_monthly') {
           return { ...adminChain, then: (fn: any) => Promise.resolve({ data: fakeEntries, error: null }).then(fn) };
         }

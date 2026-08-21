@@ -98,9 +98,36 @@ export default function HarmonyCoreClient({ me, people }: Props) {
   return (
     <div style={{ width: '100%' }}>
       {/* Top bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)' }}>Harmony Core</h1>
+
+          {/* Person dropdown */}
+          <select
+            value={selectedPersonId}
+            onChange={e => setSelectedPersonId(e.target.value)}
+            style={{ padding: '7px 32px 7px 12px', borderRadius: '999px', border: '0.5px solid var(--border)', background: 'var(--surface-1)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.04em', cursor: 'pointer', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+          >
+            {people.map(p => (
+              <option key={p.id} value={p.id}>{p.name.split(' ')[0]} — {getRoleType(p)}</option>
+            ))}
+          </select>
+
+          {/* Month dropdown */}
+          <select
+            value={month}
+            onChange={e => setMonth(e.target.value)}
+            style={{ padding: '7px 32px 7px 12px', borderRadius: '999px', border: '0.5px solid var(--border)', background: 'var(--surface-1)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: '12px', cursor: 'pointer', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+          >
+            {Array.from({ length: 12 }, (_, i) => {
+              const d = new Date();
+              d.setMonth(d.getMonth() - 5 + i);
+              const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+              const label = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+              return <option key={val} value={val}>{label}</option>;
+            })}
+          </select>
+
           {me.access_tier === 'admin' && (
             <button onClick={() => setShowAssign(true)}
               style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '999px', border: '1px solid var(--ink, #0D0D0B)', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontFamily: 'var(--font-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer' }}>
@@ -108,40 +135,6 @@ export default function HarmonyCoreClient({ me, people }: Props) {
             </button>
           )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface-2)', border: '0.5px solid var(--border)', borderRadius: 'var(--radius)', padding: '6px 12px' }}>
-          <button onClick={() => changeMonth(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: '0 4px', fontSize: '16px' }}>‹</button>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--text-primary)', minWidth: '120px', textAlign: 'center' }}>{monthLabel}</span>
-          <button onClick={() => changeMonth(1)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: '0 4px', fontSize: '16px' }}>›</button>
-        </div>
-      </div>
-
-      {/* Person tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        {people.map(p => {
-          const role = getRoleType(p);
-          const active = p.id === selectedPersonId;
-          return (
-            <button
-              key={p.id}
-              onClick={() => setSelectedPersonId(p.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '7px 16px', borderRadius: '999px',
-                border: `0.5px solid ${active ? 'var(--ink, #0D0D0B)' : 'var(--border)'}`,
-                background: active ? 'var(--ink, #0D0D0B)' : 'var(--surface-1)',
-                color: active ? '#F0EDE5' : 'var(--text-secondary)',
-                fontFamily: 'var(--font-mono)', fontSize: '12px',
-                textTransform: 'uppercase', letterSpacing: '0.04em',
-                cursor: 'pointer', transition: 'all .15s',
-              }}
-            >
-              {p.name.split(' ')[0]}
-              <span style={{ ...getRoleBadgeStyle(role), fontSize: '10px', padding: '2px 7px', borderRadius: '999px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                {role}
-              </span>
-            </button>
-          );
-        })}
       </div>
 
       {/* Section header */}
