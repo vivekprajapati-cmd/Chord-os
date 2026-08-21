@@ -14,7 +14,7 @@ type Person = {
   location: string;
 };
 
-export default function SidebarUser({ person, tier }: { person: Person; tier: 'admin' | 'poc' | 'staff' }) {
+export default function SidebarUser({ person, tier }: { person: Person; tier: 'admin' | 'lead' | 'operations' | 'staff' | 'viewer' | 'poc' }) {
   const [showEdit, setShowEdit] = useState(false);
   const [currentPerson, setCurrentPerson] = useState(person);
   const firstName = currentPerson.name?.split(' ')[0] ?? '';

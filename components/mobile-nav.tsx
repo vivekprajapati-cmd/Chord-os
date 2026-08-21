@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-type Tier = 'admin' | 'poc' | 'staff';
+type Tier = 'admin' | 'lead' | 'operations' | 'staff' | 'viewer' | 'poc';
 
 const BASE_NAV = [
   { href: '/dashboard', label: 'Home',     icon: '⌂' },
