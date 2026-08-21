@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, CheckSquare, CalendarDays, Briefcase, Settings2, Mic2, Users, BarChart2, Brain, HeartHandshake } from 'lucide-react';
 
-type Tier = 'admin' | 'poc' | 'staff';
+type Tier = 'admin' | 'lead' | 'operations' | 'staff' | 'viewer' | 'poc';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', num: '01', Icon: LayoutDashboard },
@@ -53,7 +53,7 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
       {tier === 'admin' && navLink('/chat', 'Allocator', '06', Mic2)}
       {tier === 'admin' && navLink('/team', 'Team', '07', Users)}
       {(tier === 'admin' || tier === 'poc') && navLink('/analytics', 'Analytics', '08', BarChart2)}
-      {tier === 'admin' && navLink('/admin-brain', 'Admin Brain', '09', Brain)}
+      {(tier === 'admin' || tier === 'lead' || tier === 'operations') && navLink('/harmony-core', 'Harmony Core', '09', Brain)}
       {/* HR tab hidden — under development */}
       {/* {tier === 'admin' && navLink('/hr', 'HR', '10', HeartHandshake)} */}
     </nav>
