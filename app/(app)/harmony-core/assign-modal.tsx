@@ -75,10 +75,10 @@ export default function AssignModal({ people, defaultPersonId, onClose, onSaved 
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(13,13,11,0.4)' }} />
 
       {/* Panel */}
-      <div style={{ position: 'relative', background: 'var(--cream, #F0EDE5)', border: '1px solid var(--ink, #0D0D0B)', borderRadius: '14px', boxShadow: '6px 6px 0 var(--ink, #0D0D0B)', width: '520px', maxWidth: '95vw', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ position: 'relative', background: '#F0EDE5', border: '1px solid #0D0D0B', borderRadius: '14px', boxShadow: '6px 6px 0 #0D0D0B', width: '520px', maxWidth: '95vw', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
 
         {/* Header */}
-        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #c8c4bc', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--coral, #e05c3a)', marginBottom: '4px' }}>Admin</div>
             <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--ink)', margin: 0 }}>Assign Brands</h2>
@@ -145,7 +145,7 @@ export default function AssignModal({ people, defaultPersonId, onClose, onSaved 
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', textAlign: 'right' }}>
+        <div style={{ padding: '14px 24px', borderTop: '1px solid #c8c4bc', textAlign: 'right' }}>
           <button onClick={onClose} style={{ padding: '8px 20px', borderRadius: '999px', border: '1px solid var(--ink)', background: 'var(--ink)', color: '#F0EDE5', fontFamily: 'var(--font-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer' }}>
             Done
           </button>
@@ -162,7 +162,7 @@ const labelStyle: React.CSSProperties = {
 
 const selectStyle: React.CSSProperties = {
   width: '100%', padding: '8px 12px', borderRadius: '8px',
-  border: '1px solid var(--border)', background: 'var(--surface-1)',
-  color: 'var(--ink)', fontFamily: 'var(--font-mono)', fontSize: '12px',
+  border: '1px solid #c8c4bc', background: '#fff',
+  color: '#0D0D0B', fontFamily: 'var(--font-mono, monospace)', fontSize: '12px',
   letterSpacing: '0.04em', cursor: 'pointer',
 };

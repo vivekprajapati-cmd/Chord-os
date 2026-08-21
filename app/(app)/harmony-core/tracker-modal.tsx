@@ -90,16 +90,16 @@ export default function TrackerModal({ brandId, type, month, personId, entry, on
     : Math.round((checked.size / days) * 100);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
-      <div style={{ background: 'var(--surface-2)', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '1.5rem', width: '420px', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={onClose}>
+      <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #c8c4bc', boxShadow: '6px 6px 0 #0D0D0B', padding: '1.5rem', width: '440px', maxHeight: '80vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <div>
-            <div style={{ fontWeight: 500, fontSize: '15px', color: 'var(--text-primary)' }}>{LABELS[type]}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            <div style={{ fontWeight: 600, fontSize: '15px', color: '#0D0D0B' }}>{LABELS[type]}</div>
+            <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
               {isWeekly ? 'Mark weeks updated' : 'Mark days updated'} — {rate}% completion
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: 'var(--text-muted)' }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#888', lineHeight: 1 }}>×</button>
         </div>
 
         {isWeekly ? (
@@ -109,22 +109,30 @@ export default function TrackerModal({ brandId, type, month, personId, entry, on
               const isChecked = checked.has(key);
               const label = `Week ${i + 1} (${week[0].slice(5)} – ${week[week.length - 1].slice(5)})`;
               return (
-                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '8px 10px', borderRadius: 'var(--radius)', background: isChecked ? 'var(--bg-success)' : 'var(--surface-1)', border: '0.5px solid var(--border)' }}>
-                  <input type="checkbox" checked={isChecked} onChange={() => toggle(key)} style={{ accentColor: 'var(--fill-success)' }} />
-                  <span style={{ fontSize: '13px', color: isChecked ? 'var(--text-success)' : 'var(--text-secondary)' }}>{label}</span>
+                <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '8px 10px', borderRadius: '6px', background: isChecked ? '#dcfce7' : '#f9f8f5', border: `1px solid ${isChecked ? '#86efac' : '#c8c4bc'}` }}>
+                  <input type="checkbox" checked={isChecked} onChange={() => toggle(key)} style={{ accentColor: '#16a34a', width: '15px', height: '15px' }} />
+                  <span style={{ fontSize: '13px', color: isChecked ? '#15803d' : '#555', fontWeight: isChecked ? 500 : 400 }}>{label}</span>
                 </label>
               );
             })}
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '5px' }}>
+            {/* Day-of-week headers */}
+            {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
+              <div key={d} style={{ textAlign: 'center', fontSize: '10px', fontFamily: 'var(--font-mono, monospace)', color: '#888', fontWeight: 600, paddingBottom: '2px', textTransform: 'uppercase' }}>{d}</div>
+            ))}
+            {/* Empty cells for offset */}
+            {Array.from({ length: new Date(month + 'T00:00:00').getDay() }, (_, i) => (
+              <div key={`empty-${i}`} />
+            ))}
             {Array.from({ length: days }, (_, i) => {
               const d = new Date(month + 'T00:00:00');
               const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`;
               const isChecked = checked.has(key);
               return (
                 <button key={key} onClick={() => toggle(key)}
-                  style={{ padding: '6px 4px', borderRadius: 'var(--radius)', border: '0.5px solid var(--border)', cursor: 'pointer', fontSize: '12px', fontFamily: 'var(--font-mono)', background: isChecked ? 'var(--bg-success)' : 'var(--surface-1)', color: isChecked ? 'var(--text-success)' : 'var(--text-secondary)', fontWeight: isChecked ? 500 : 400 }}>
+                  style={{ padding: '7px 4px', borderRadius: '5px', border: `1px solid ${isChecked ? '#86efac' : '#c8c4bc'}`, cursor: 'pointer', fontSize: '12px', fontFamily: 'var(--font-mono, monospace)', background: isChecked ? '#dcfce7' : '#fff', color: isChecked ? '#15803d' : '#555', fontWeight: isChecked ? 600 : 400 }}>
                   {i + 1}
                 </button>
               );
@@ -134,11 +142,11 @@ export default function TrackerModal({ brandId, type, month, personId, entry, on
 
         <div style={{ display: 'flex', gap: '8px', marginTop: '1.25rem' }}>
           <button onClick={save} disabled={saving}
-            style={{ flex: 1, padding: '8px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontSize: '13px', cursor: 'pointer' }}>
+            style={{ flex: 1, padding: '9px', borderRadius: '8px', border: 'none', background: '#0D0D0B', color: '#F0EDE5', fontSize: '13px', fontWeight: 500, cursor: saving ? 'wait' : 'pointer' }}>
             {saving ? 'Saving...' : 'Save'}
           </button>
           <button onClick={onClose}
-            style={{ padding: '8px 16px', borderRadius: 'var(--radius)', border: '0.5px solid var(--border)', background: 'transparent', fontSize: '13px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+            style={{ padding: '9px 18px', borderRadius: '8px', border: '1px solid #c8c4bc', background: 'transparent', fontSize: '13px', cursor: 'pointer', color: '#555' }}>
             Cancel
           </button>
         </div>
