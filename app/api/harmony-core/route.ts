@@ -17,10 +17,14 @@ export async function GET(req: Request) {
 
   const admin = createAdminClient();
 
-  const { data: assignments } = await admin
-    .from('harmony_brand_assignments')
-    .select('brand_id, role_type, brands(id, name)')
-    .eq('person_id', person_id);
+  const { data: rawAssignments } = await admin
+    .rpc('get_harmony_assignments', { p_person_id: person_id });
+
+  const assignments = (rawAssignments ?? []).map((r: any) => ({
+    brand_id: r.brand_id,
+    role_type: r.role_type,
+    brands: { id: r.brand_id, name: r.brand_name },
+  }));
 
   const { data: entries } = await admin
     .from('harmony_core_monthly')
