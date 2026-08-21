@@ -127,22 +127,22 @@ export default function InfluencerTable({ assignments, entries, month, personId,
     <div style={{ overflowX: 'auto', border: '1px solid #c8c4bc', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
         <thead>
-          <tr style={{ background: 'var(--surface-1)' }}>
-            <th style={thLeft}>Brand</th>
-            <th style={th}>Nature</th>
-            <th style={th}>Brand NPS</th>
-            <th style={th}>Scope (Monthly)</th>
-            <th style={th}>Shortlisted</th>
-            <th style={th}>Executed</th>
-            <th style={th}>Gone Live</th>
-            <th style={{ ...th, color: 'var(--text-accent)' }}>Shortlist Rate</th>
-            <th style={{ ...th, color: 'var(--text-accent)' }}>Execution Rate</th>
-            <th style={{ ...th, color: 'var(--text-accent)' }}>Go Live Rate</th>
-            <th style={th}>Influencer Tracker (Weekly)</th>
-            <th style={th}>PO Raised</th>
-            <th style={th}>Advance Received</th>
-            <th style={th}>Invoice Closed</th>
-            <th style={{ ...th, width: '48px' }}></th>
+          <tr>
+            <th style={{ ...thLeft, background: '#dedad2' }}>Brand</th>
+            <th style={{ ...th, background: '#dedad2' }}>Nature</th>
+            <th style={{ ...th, background: '#dedad2' }}>Brand NPS</th>
+            <th style={{ ...th, background: '#c8e6c9', color: '#2e7d32' }}>Scope (Monthly)</th>
+            <th style={{ ...th, background: '#dedad2' }}>Shortlisted</th>
+            <th style={{ ...th, background: '#dedad2' }}>Executed</th>
+            <th style={{ ...th, background: '#dedad2' }}>Gone Live</th>
+            <th style={{ ...th, background: '#fce4d6', color: '#bf360c' }}>Shortlist Rate</th>
+            <th style={{ ...th, background: '#fce4d6', color: '#bf360c' }}>Execution Rate</th>
+            <th style={{ ...th, background: '#fce4d6', color: '#bf360c' }}>Go Live Rate</th>
+            <th style={{ ...th, background: '#fce4d6', color: '#bf360c' }}>Influencer Tracker (Weekly)</th>
+            <th style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>PO Raised</th>
+            <th style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>Advance Received</th>
+            <th style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>Invoice Closed</th>
+            <th style={{ ...th, background: '#dedad2', width: '48px' }}></th>
           </tr>
         </thead>
         <tbody>
@@ -242,24 +242,24 @@ const GRID = '1px solid #c8c4bc';
 
 const th: React.CSSProperties = {
   padding: '10px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 700,
-  color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
+  fontFamily: 'var(--font-mono)', color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
   border: GRID, whiteSpace: 'nowrap', background: '#e8e5de',
 };
 
 const thLeft: React.CSSProperties = {
   padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 700,
-  color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
+  fontFamily: 'var(--font-mono)', color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
   border: GRID, whiteSpace: 'nowrap', background: '#e8e5de',
 };
 
 const td: React.CSSProperties = {
   padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
-  textAlign: 'center', border: GRID,
+  textAlign: 'center', border: GRID, fontFamily: 'var(--font-mono)', fontWeight: 500,
 };
 
 const tdLeft: React.CSSProperties = {
   padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
-  textAlign: 'left', border: GRID,
+  textAlign: 'left', border: GRID, fontFamily: 'var(--font-mono)', fontWeight: 500,
 };
 
 const inputStyle: React.CSSProperties = {

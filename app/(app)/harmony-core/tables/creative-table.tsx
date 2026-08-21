@@ -87,12 +87,12 @@ export default function CreativeTable({ assignments, entries, month, personId, c
     <div style={{ overflowX: 'auto', border: '1px solid #c8c4bc', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
         <thead>
-          <tr style={{ background: 'var(--surface-1)' }}>
-            <th style={thLeft}>Brand</th>
-            <th style={th}>NPS</th>
-            <th style={th}>New Idea This Week</th>
-            {LINK_FIELDS.map(f => <th key={f.key} style={th}>{f.label}</th>)}
-            <th style={{ ...th, width: '48px' }}></th>
+          <tr>
+            <th style={{ ...thLeft, background: '#dedad2' }}>Brand</th>
+            <th style={{ ...th, background: '#dedad2' }}>NPS</th>
+            <th style={{ ...th, background: '#c8e6c9', color: '#2e7d32' }}>New Idea This Week</th>
+            {LINK_FIELDS.map(f => <th key={f.key} style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>{f.label}</th>)}
+            <th style={{ ...th, background: '#dedad2', width: '48px' }}></th>
           </tr>
         </thead>
         <tbody>
@@ -184,24 +184,24 @@ const GRID = '1px solid #c8c4bc';
 
 const th: React.CSSProperties = {
   padding: '10px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 700,
-  color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
+  fontFamily: 'var(--font-mono)', color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
   border: GRID, whiteSpace: 'nowrap', background: '#e8e5de',
 };
 
 const thLeft: React.CSSProperties = {
   padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 700,
-  color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
+  fontFamily: 'var(--font-mono)', color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
   border: GRID, whiteSpace: 'nowrap', background: '#e8e5de',
 };
 
 const td: React.CSSProperties = {
   padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
-  textAlign: 'center', border: GRID,
+  textAlign: 'center', border: GRID, fontFamily: 'var(--font-mono)', fontWeight: 500,
 };
 
 const tdLeft: React.CSSProperties = {
   padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
-  textAlign: 'left', border: GRID,
+  textAlign: 'left', border: GRID, fontFamily: 'var(--font-mono)', fontWeight: 500,
 };
 
 const inputStyle: React.CSSProperties = {
