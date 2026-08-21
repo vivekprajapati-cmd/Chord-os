@@ -22,8 +22,6 @@ export async function GET(req: Request) {
     .select('brand_id, role_type, brands(id, name)')
     .eq('person_id', person_id);
 
-  const brandIds = (assignments ?? []).map((a: any) => a.brand_id);
-
   const { data: entries } = await admin
     .from('harmony_core_monthly')
     .select('*')
