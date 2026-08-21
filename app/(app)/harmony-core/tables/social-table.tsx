@@ -161,25 +161,25 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '1100px' }}>
           <thead>
             <tr>
-              <th rowSpan={2} style={{ ...thLeft, background: '#dedad2', fontSize: '10px' }}>Brand</th>
-              <th rowSpan={2} style={{ ...th, background: '#dedad2', fontSize: '10px' }}>Scope Monthly</th>
-              <th rowSpan={2} style={{ ...th, background: '#dedad2', fontSize: '10px' }}>Backlog to Complete</th>
-              <th rowSpan={2} style={{ ...th, background: '#c8e6c9', color: '#2e7d32', fontSize: '10px' }}>Scope Done %</th>
-              <th rowSpan={2} style={{ ...th, background: '#c8e6c9', color: '#2e7d32', fontSize: '10px' }}>Backlog EOM %</th>
-              <th rowSpan={2} style={{ ...th, background: '#dedad2', fontSize: '10px' }}>NPS</th>
-              <th rowSpan={2} style={{ ...th, background: '#dedad2', fontSize: '10px' }}>Invoice (Y/N)</th>
-              <th rowSpan={2} style={{ ...th, background: '#fce4d6', color: '#bf360c', fontSize: '10px' }}>ORM rate %</th>
-              <th rowSpan={2} style={{ ...th, background: '#fce4d6', color: '#bf360c', fontSize: '10px' }}>Social tracker %</th>
-              <th rowSpan={2} style={{ ...th, background: '#fce4d6', color: '#bf360c', fontSize: '10px' }}>Ops tracker %</th>
-              <th colSpan={5} style={{ ...th, background: '#e3f2fd', color: '#1565c0', fontSize: '10px' }}>WoW (Week on Week)</th>
-              <th rowSpan={2} style={{ ...th, background: '#dedad2', width: '48px', fontSize: '10px' }}></th>
+              <th rowSpan={2} style={{ ...thLeft, background: '#dedad2' }}>Brand</th>
+              <th rowSpan={2} style={{ ...th, background: '#dedad2' }}>Scope Monthly</th>
+              <th rowSpan={2} style={{ ...th, background: '#dedad2' }}>Backlog to Complete</th>
+              <th rowSpan={2} style={{ ...th, background: '#c8e6c9', color: '#2e7d32' }}>Scope Done %</th>
+              <th rowSpan={2} style={{ ...th, background: '#c8e6c9', color: '#2e7d32' }}>Backlog EOM %</th>
+              <th rowSpan={2} style={{ ...th, background: '#dedad2' }}>NPS</th>
+              <th rowSpan={2} style={{ ...th, background: '#dedad2' }}>Invoice (Y/N)</th>
+              <th rowSpan={2} style={{ ...th, background: '#fce4d6', color: '#bf360c' }}>ORM rate %</th>
+              <th rowSpan={2} style={{ ...th, background: '#fce4d6', color: '#bf360c' }}>Social tracker %</th>
+              <th rowSpan={2} style={{ ...th, background: '#fce4d6', color: '#bf360c' }}>Ops tracker %</th>
+              <th colSpan={5} style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>WoW (Week on Week)</th>
+              <th rowSpan={2} style={{ ...th, background: '#dedad2', width: '48px' }}></th>
             </tr>
             <tr>
-              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0', fontSize: '10px' }}>Followers</th>
-              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0', fontSize: '10px' }}>ER %</th>
-              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0', fontSize: '10px' }}>SOV %</th>
-              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0', fontSize: '10px' }}>Profile Visits</th>
-              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0', fontSize: '10px' }}>Avg VTR %</th>
+              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>Followers</th>
+              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>ER %</th>
+              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>SOV %</th>
+              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>Profile Visits</th>
+              <th style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>Avg VTR %</th>
             </tr>
           </thead>
           <tbody>
