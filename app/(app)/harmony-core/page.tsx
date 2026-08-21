@@ -19,13 +19,12 @@ export default async function HarmonyCorePageWrapper() {
 
   const admin = createAdminClient();
 
-  // Fetch all people who have harmony assignments (the 6 tracked leads)
+  // Fetch all leads and operations staff who are tracked in Harmony Core
   const { data: people } = await admin
     .from('people')
     .select('id, name, role, access_tier')
-    .in('id', (
-      await admin.from('harmony_brand_assignments').select('person_id')
-    ).data?.map((r: any) => r.person_id) ?? []);
+    .in('access_tier', ['lead', 'operations'])
+    .order('name');
 
   return (
     <HarmonyCoreClient
