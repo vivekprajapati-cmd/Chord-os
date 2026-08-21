@@ -97,60 +97,89 @@ export default function HarmonyCoreClient({ me, people }: Props) {
 
   return (
     <div style={{ width: '100%' }}>
-      {/* Top bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', gap: '12px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: 500, color: 'var(--text-primary)' }}>Harmony Core</h1>
-
-          {/* Person dropdown */}
-          <select
-            value={selectedPersonId}
-            onChange={e => setSelectedPersonId(e.target.value)}
-            style={{ padding: '7px 32px 7px 12px', borderRadius: '999px', border: '0.5px solid var(--border)', background: 'var(--surface-1)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.04em', cursor: 'pointer', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
-          >
-            {people.map(p => (
-              <option key={p.id} value={p.id}>{p.name.split(' ')[0]} — {getRoleType(p)}</option>
-            ))}
-          </select>
-
-          {/* Month dropdown */}
-          <select
-            value={month}
-            onChange={e => setMonth(e.target.value)}
-            style={{ padding: '7px 32px 7px 12px', borderRadius: '999px', border: '0.5px solid var(--border)', background: 'var(--surface-1)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: '12px', cursor: 'pointer', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
-          >
-            {Array.from({ length: 12 }, (_, i) => {
-              const d = new Date();
-              d.setMonth(d.getMonth() - 5 + i);
-              const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
-              const label = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-              return <option key={val} value={val}>{label}</option>;
-            })}
-          </select>
-
+      {/* Top bar: title + month nav */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <h1 style={{ fontSize: '26px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1 }}>
+            Harmony Core
+          </h1>
           {me.access_tier === 'admin' && (
             <button onClick={() => setShowAssign(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '999px', border: '1px solid var(--ink, #0D0D0B)', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontFamily: 'var(--font-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer' }}>
-              + Assign Brand
+              style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 13px', borderRadius: '999px', border: '1.5px solid var(--ink, #0D0D0B)', background: 'transparent', color: 'var(--ink, #0D0D0B)', fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.07em', cursor: 'pointer', fontWeight: 700, transition: 'all .15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--ink, #0D0D0B)'; (e.currentTarget as HTMLButtonElement).style.color = '#F0EDE5'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink, #0D0D0B)'; }}
+            >
+              <span style={{ fontSize: '14px', lineHeight: 1 }}>+</span> Assign Brand
             </button>
           )}
         </div>
+
+        {/* Month nav */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0px', border: '1.5px solid var(--border, #c8c4bc)', borderRadius: '10px', overflow: 'hidden' }}>
+          <button onClick={() => changeMonth(-1)} style={{ padding: '7px 12px', background: 'none', border: 'none', borderRight: '1px solid var(--border, #c8c4bc)', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1, display: 'flex', alignItems: 'center' }}>‹</button>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', padding: '7px 14px', minWidth: '118px', textAlign: 'center', letterSpacing: '0.02em' }}>{monthLabel}</span>
+          <button onClick={() => changeMonth(1)} style={{ padding: '7px 12px', background: 'none', border: 'none', borderLeft: '1px solid var(--border, #c8c4bc)', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1, display: 'flex', alignItems: 'center' }}>›</button>
+        </div>
       </div>
 
-      {/* Section header */}
+      {/* Person tab bar */}
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
+        {people.map(p => {
+          const role = getRoleType(p);
+          const active = p.id === selectedPersonId;
+          const roleColors: Record<string, { bg: string; text: string }> = {
+            social:     { bg: '#dbeafe', text: '#1d4ed8' },
+            influencer: { bg: '#dcfce7', text: '#15803d' },
+            creative:   { bg: '#f3e8ff', text: '#7c3aed' },
+          };
+          const rc = roleColors[role] ?? roleColors.social;
+          return (
+            <button
+              key={p.id}
+              onClick={() => setSelectedPersonId(p.id)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
+                padding: '8px 16px 8px 14px', borderRadius: '10px',
+                border: active ? '1.5px solid var(--ink, #0D0D0B)' : '1.5px solid var(--border, #c8c4bc)',
+                background: active ? 'var(--ink, #0D0D0B)' : 'var(--surface-1, #fff)',
+                color: active ? '#F0EDE5' : 'var(--text-primary)',
+                cursor: 'pointer', transition: 'all .15s',
+              }}
+            >
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                {p.name.split(' ')[0]}
+              </span>
+              <span style={{
+                fontSize: '9px', fontFamily: 'var(--font-mono)', fontWeight: 700,
+                textTransform: 'uppercase', letterSpacing: '0.06em',
+                padding: '2px 7px', borderRadius: '999px',
+                background: active ? 'rgba(255,255,255,0.15)' : rc.bg,
+                color: active ? '#F0EDE5' : rc.text,
+              }}>
+                {role}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Section subheader */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>
-            {selectedPerson?.name.split(' ')[0] ?? ''}&rsquo;s brands — {assignments.length} active
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            {selectedPerson?.name.split(' ')[0] ?? ''}&rsquo;s brands
+          </span>
+          <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', fontWeight: 700, padding: '2px 9px', borderRadius: '999px', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5' }}>
+            {assignments.length} active
           </span>
           {lastUpdated && (
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              Last updated: {formatRelative(lastUpdated)}
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+              ↻ {formatRelative(lastUpdated)}
             </span>
           )}
         </div>
         {!canEdit && (
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>View only</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>View only</span>
         )}
       </div>
 
