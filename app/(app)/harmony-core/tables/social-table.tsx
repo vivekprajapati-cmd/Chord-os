@@ -351,24 +351,24 @@ const GRID = '1px solid #c8c4bc';
 
 const th: React.CSSProperties = {
   padding: '10px 12px', textAlign: 'center', fontSize: '11px', fontWeight: 700,
-  color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
+  fontFamily: 'var(--font-mono)', color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
   border: GRID, whiteSpace: 'nowrap', background: '#e8e5de',
 };
 
 const thLeft: React.CSSProperties = {
   padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 700,
-  color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
+  fontFamily: 'var(--font-mono)', color: '#555', textTransform: 'uppercase', letterSpacing: '0.05em',
   border: GRID, whiteSpace: 'nowrap', background: '#e8e5de',
 };
 
 const td: React.CSSProperties = {
   padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
-  textAlign: 'center', border: GRID,
+  textAlign: 'center', border: GRID, fontFamily: 'var(--font-mono)', fontWeight: 500,
 };
 
 const tdLeft: React.CSSProperties = {
   padding: '10px 12px', color: 'var(--text-primary)', verticalAlign: 'middle',
-  textAlign: 'left', border: GRID,
+  textAlign: 'left', border: GRID, fontFamily: 'var(--font-mono)', fontWeight: 500,
 };
 
 function Num({ v, suffix = '' }: { v: any; suffix?: string }) {
