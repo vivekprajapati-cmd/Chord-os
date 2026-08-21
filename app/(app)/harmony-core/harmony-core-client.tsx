@@ -43,7 +43,8 @@ function getRoleBadgeStyle(role: 'social' | 'influencer' | 'creative') {
 
 export default function HarmonyCoreClient({ me, people }: Props) {
   const now = new Date();
-  const [selectedPersonId, setSelectedPersonId] = useState(me.id);
+  const isTracked = people.some(p => p.id === me.id);
+  const [selectedPersonId, setSelectedPersonId] = useState(isTracked ? me.id : (people[0]?.id ?? me.id));
   const [month, setMonth] = useState(toMonthParam(now));
   const [weekStart, setWeekStart] = useState(toWeekParam(now));
   const [assignments, setAssignments] = useState<any[]>([]);
