@@ -25,50 +25,10 @@ export async function GET(req: Request) {
     .lt('deadline', now.toISOString())
     .is('submitted_at', null);
 
-  // TRIGGER 1: Overdue tasks — disabled for now, re-enable when needed
-  // const delayUpdates: Promise<unknown>[] = [];
-  // const ownerDelayMap: Record<string, { name: string; count: number }> = {};
-  //
-  // for (const task of overdueTasks as any[]) {
-  //   const daysLate = Math.floor((now.getTime() - new Date(task.deadline).getTime()) / 86400000);
-  //   const newDelayCount = (task.delay_count ?? 0) + 1;
-  //
-  //   delayUpdates.push(
-  //     Promise.resolve(supabase.from('tasks').update({ delay_count: newDelayCount }).eq('id', task.id))
-  //   );
-  //
-  //   delayUpdates.push(
-  //     notifySlack(`⚠️ *Delayed* — "${task.deliverable}" (${task.brands?.name}) assigned to *${task.owner?.name}* is ${daysLate} day${daysLate !== 1 ? 's' : ''} overdue. No submission yet.`)
-  //   );
-  //
-  //   const ownerId = task.owner?.id;
-  //   if (ownerId) {
-  //     ownerDelayMap[ownerId] = {
-  //       name: task.owner.name,
-  //       count: (ownerDelayMap[ownerId]?.count ?? 0) + 1,
-  //     };
-  //   }
-  // }
-  //
-  // await Promise.all(delayUpdates);
+  // Trigger 1 (mark overdue + Slack per task) — disabled for now
+  // Trigger 3 (repeat delay warning) — disabled for now
 
-  // TRIGGER 3: Repeat delay warning — disabled for now, re-enable when needed
-  // const since30d = new Date(now.getTime() - 30 * 86400000).toISOString();
-  // for (const [ownerId, { name }] of Object.entries(ownerDelayMap)) {
-  //   const { count } = await supabase
-  //     .from('tasks')
-  //     .select('id', { count: 'exact', head: true })
-  //     .eq('owner_id', ownerId)
-  //     .eq('on_time', false)
-  //     .gte('created_at', since30d)
-  //     .then(r => ({ count: r.count ?? 0 }));
-  //
-  //   if (count >= 3) {
-  //     await notifySlack(`🚨 *Repeat delay* — *${name}* has accumulated ${count} delays in the last 30 days. Flag for review.`);
-  //   }
-  // }
-
-  // TRIGGER 2: Tasks due in 24 hours — active
+  // Check tasks due in 24 hours — send reminder
   const in24h = new Date(now.getTime() + 24 * 3600000).toISOString();
   const { data: upcomingTasks } = await supabase
     .from('tasks')
@@ -86,7 +46,6 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     ok: true,
-    delayed: overdueTasks?.length ?? 0, // ponytail: null-safe, overdueTasks query may return null
     reminders: upcomingTasks?.length ?? 0,
   });
 }

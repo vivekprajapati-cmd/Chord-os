@@ -55,7 +55,6 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
       {(tier === 'admin' || tier === 'poc') && navLink('/analytics', 'Analytics', '08', BarChart2)}
       {(tier === 'admin' || tier === 'lead' || tier === 'operations') && navLink('/harmony-core', 'Harmony Core', '09', Brain)}
       {/* HR tab hidden — under development */}
-      {/* {tier === 'admin' && navLink('/hr', 'HR', '10', HeartHandshake)} */}
     </nav>
   );
 }
