@@ -1,13 +1,34 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@supabase/ssr';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
 
+  const redirectResponse = NextResponse.redirect(`${origin}/dashboard`);
+
   if (code) {
-    const supabase = await createClient();
+    // Use a response-aware client so session cookies attach to the redirect response
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => request.headers.get('cookie')
+            ? request.headers.get('cookie')!.split(';').map(c => {
+                const [name, ...rest] = c.trim().split('=');
+                return { name: name.trim(), value: rest.join('=') };
+              })
+            : [],
+          setAll: (cookies) => {
+            cookies.forEach(({ name, value, options }) =>
+              redirectResponse.cookies.set(name, value, options)
+            );
+          },
+        },
+      }
+    );
     await supabase.auth.exchangeCodeForSession(code);
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -49,5 +70,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/dashboard`);
+  return redirectResponse;
 }
