@@ -138,7 +138,7 @@ export default function MobileDrawer({ tier, firstName, role }: { tier: Tier; fi
               {tier === 'admin' ? 'Lead' : 'POC'}
             </span>
           )}
-          <Link href="/api/auth/logout" style={{ display: 'block', marginTop: '12px', fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', textDecoration: 'none' }}>
+          <Link href="/api/auth/logout" prefetch={false} onClick={e => { e.preventDefault(); window.location.href = '/api/auth/logout'; }} style={{ display: 'block', marginTop: '12px', fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', textDecoration: 'none' }}>
             Sign out →
           </Link>
         </div>

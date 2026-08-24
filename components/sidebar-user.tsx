@@ -56,6 +56,7 @@ export default function SidebarUser({ person, tier }: { person: Person; tier: 'a
             href="/api/auth/logout"
             prefetch={false}
             style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', textDecoration: 'none' }}
+            onClick={e => { e.preventDefault(); window.location.href = '/api/auth/logout'; }}
           >
             Sign out
           </Link>
