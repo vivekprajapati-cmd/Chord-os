@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, CheckSquare, CalendarDays, Briefcase, Settings2, Mic2, Users, BarChart2, Brain, HeartHandshake } from 'lucide-react';
 
-type Tier = 'admin' | 'poc' | 'staff';
+type Tier = 'admin' | 'lead' | 'operations' | 'poc' | 'staff';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', num: '01', Icon: LayoutDashboard },

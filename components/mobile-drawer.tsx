@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-type Tier = 'admin' | 'poc' | 'staff';
+type Tier = 'admin' | 'lead' | 'operations' | 'poc' | 'staff';
 
 const BASE_NAV = [
   { href: '/dashboard', label: 'Dashboard', num: '01' },
