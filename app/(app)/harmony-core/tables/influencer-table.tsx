@@ -124,7 +124,7 @@ export default function InfluencerTable({ assignments, entries, month, personId,
   }
 
   return (
-    <div style={{ overflowX: 'auto', border: '1px solid #c8c4bc', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
+    <div style={{ width: '100%', overflowX: 'auto', border: '1px solid #c8c4bc', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
         <thead>
           <tr>

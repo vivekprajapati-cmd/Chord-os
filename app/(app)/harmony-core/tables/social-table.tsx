@@ -157,7 +157,7 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
         Social KPIs
       </div>
 
-      <div style={{ overflowX: 'auto', border: '1px solid #c8c4bc', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
+      <div style={{ width: '100%', overflowX: 'auto', border: '1px solid #c8c4bc', borderRadius: '12px', boxShadow: '4px 4px 0 var(--ink, #0D0D0B)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '1100px' }}>
           <thead>
             <tr>
