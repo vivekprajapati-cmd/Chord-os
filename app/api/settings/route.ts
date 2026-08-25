@@ -3,11 +3,14 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function GET(req: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const key = searchParams.get('key');
   if (!key) return NextResponse.json({ error: 'key required' }, { status: 400 });
 
-  const supabase = await createClient();
   const { data } = await supabase.from('app_settings').select('value').eq('key', key).maybeSingle();
   return NextResponse.json({ value: (data as any)?.value ?? null });
 }
