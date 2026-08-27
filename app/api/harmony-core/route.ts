@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { notifyHarmonySlack } from '@/lib/slack';
 
 export const runtime = 'nodejs';
 
@@ -66,5 +67,11 @@ export async function POST(req: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const { data: personRow } = await admin.from('people').select('name').eq('id', person_id).maybeSingle();
+  const { data: brandRow } = await admin.from('brands').select('name').eq('id', brand_id).maybeSingle();
+  const monthLabel = new Date(month + 'T00:00:00').toLocaleString('en', { month: 'long', year: 'numeric' });
+  notifyHarmonySlack(`${personRow?.name ?? person_id} updated ${brandRow?.name ?? brand_id} for ${monthLabel}`);
+
   return NextResponse.json({ data });
 }

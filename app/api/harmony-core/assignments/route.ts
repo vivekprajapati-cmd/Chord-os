@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { notifyHarmonySlack } from '@/lib/slack';
 
 export const runtime = 'nodejs';
 
@@ -42,16 +43,23 @@ export async function POST(req: Request) {
 
   const admin = createAdminClient();
 
+  const [{ data: person }, { data: brand }] = await Promise.all([
+    admin.from('people').select('name').eq('id', person_id).maybeSingle(),
+    admin.from('brands').select('name').eq('id', brand_id).maybeSingle(),
+  ]);
+
   if (action === 'unassign') {
     await admin
       .from('harmony_brand_assignments')
       .delete()
       .eq('person_id', person_id)
       .eq('brand_id', brand_id);
+    notifyHarmonySlack(`${person?.name ?? person_id} unassigned from ${brand?.name ?? brand_id}`);
   } else {
     await admin
       .from('harmony_brand_assignments')
       .upsert({ person_id, brand_id, role_type }, { onConflict: 'person_id,brand_id' });
+    notifyHarmonySlack(`${person?.name ?? person_id} assigned to ${brand?.name ?? brand_id}`);
   }
 
   return NextResponse.json({ ok: true });

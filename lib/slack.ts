@@ -18,6 +18,24 @@ export async function notifySlack(message: string) {
   }
 }
 
+export async function notifyHarmonySlack(message: string) {
+  const url = process.env.HARMONY_CORE_WEBHOOK_URL;
+  if (!url) {
+    console.warn('[slack] HARMONY_CORE_WEBHOOK_URL not set — skipping');
+    return;
+  }
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: message }),
+    });
+    if (!res.ok) console.error('[slack] harmony webhook failed:', res.status, await res.text());
+  } catch (e) {
+    console.error('[slack] harmony error:', e);
+  }
+}
+
 // Convenience helpers
 export const slack = {
   newBlock: (person: string, brand: string, hours: number, deadline: string) =>
