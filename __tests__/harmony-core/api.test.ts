@@ -208,6 +208,8 @@ describe('POST /api/harmony-core/assignments', () => {
         upsert: upsertFn,
         delete: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { name: 'Test' }, error: null }),
       }),
     };
 
@@ -235,6 +237,8 @@ describe('POST /api/harmony-core/assignments', () => {
         delete: deleteFn,
         eq: eqFn,
         upsert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { name: 'Test' }, error: null }),
       }),
     };
 
