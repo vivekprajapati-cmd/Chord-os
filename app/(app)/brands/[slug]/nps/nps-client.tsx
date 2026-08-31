@@ -77,10 +77,8 @@ export default function NpsClient({ brand, isAdmin }: { brand: Brand; isAdmin: b
   }
 
   const scoredResponses = responses.filter(r => r.score !== null);
-  const promoters = scoredResponses.filter(r => (r.score ?? 0) >= 9).length;
-  const detractors = scoredResponses.filter(r => (r.score ?? 0) <= 6).length;
-  const npsScore = scoredResponses.length
-    ? Math.round((promoters / scoredResponses.length - detractors / scoredResponses.length) * 100)
+  const avgScore = scoredResponses.length
+    ? Math.round(scoredResponses.reduce((s, r) => s + (r.score ?? 0), 0) / scoredResponses.length * 10) / 10
     : null;
 
   // Per-question averages across all responses
@@ -150,20 +148,10 @@ export default function NpsClient({ brand, isAdmin }: { brand: Brand; isAdmin: b
       {!loading && !error && responses.length > 0 && (
         <div style={{ marginBottom: '28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-          {/* NPS breakdown — only if we have scored responses */}
-          {scoredResponses.length > 0 && (
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              {[
-                { label: 'NPS Score', value: npsScore !== null ? (npsScore > 0 ? `+${npsScore}` : `${npsScore}`) : '—', color: npsScore !== null && npsScore >= 50 ? '#15803d' : npsScore !== null && npsScore >= 0 ? '#a16207' : '#dc2626', bg: npsScore !== null && npsScore >= 50 ? '#dcfce7' : npsScore !== null && npsScore >= 0 ? '#fef9c3' : '#fee2e2' },
-                { label: 'Promoters (9-10)', value: `${promoters}`, color: '#15803d', bg: '#dcfce7' },
-                { label: 'Passives (7-8)', value: `${scoredResponses.length - promoters - detractors}`, color: '#a16207', bg: '#fef9c3' },
-                { label: 'Detractors (0-6)', value: `${detractors}`, color: '#dc2626', bg: '#fee2e2' },
-              ].map(({ label, value, color, bg }) => (
-                <div key={label} style={{ flex: '1 1 130px', background: bg, border: `1px solid ${color}33`, borderRadius: '10px', padding: '12px 16px' }}>
-                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color, marginBottom: '4px' }}>{label}</div>
-                  <div style={{ fontFamily: 'var(--f-display)', fontSize: '26px', fontWeight: 700, color }}>{value}</div>
-                </div>
-              ))}
+          {avgScore !== null && (
+            <div style={{ display: 'inline-flex', flexDirection: 'column', background: avgScore >= 8 ? '#dcfce7' : avgScore >= 6 ? '#fef9c3' : '#fee2e2', border: `1px solid ${avgScore >= 8 ? '#86efac' : avgScore >= 6 ? '#fde047' : '#fca5a5'}`, borderRadius: '10px', padding: '12px 20px', minWidth: '140px' }}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: avgScore >= 8 ? '#15803d' : avgScore >= 6 ? '#a16207' : '#dc2626', marginBottom: '4px' }}>NPS Score</div>
+              <div style={{ fontFamily: 'var(--f-display)', fontSize: '36px', fontWeight: 700, color: avgScore >= 8 ? '#15803d' : avgScore >= 6 ? '#a16207' : '#dc2626' }}>{avgScore}<span style={{ fontSize: '16px', opacity: 0.6 }}>/10</span></div>
             </div>
           )}
 
