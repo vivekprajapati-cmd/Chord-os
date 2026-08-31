@@ -69,10 +69,15 @@ export async function getFormResponses(
       const label = questions[qId] ?? qId;
       answers[label] = text;
 
-      // Detect NPS score: a numeric answer to a question containing "nps", "score", or "rate"
+      // Detect NPS score: label-based if we have labels, else any 0-10 numeric answer
+      const num = Number(text);
+      const isNumeric = text.trim() !== '' && !isNaN(num);
       const lower = label.toLowerCase();
-      if ((lower.includes('nps') || lower.includes('score') || lower.includes('rate')) && !isNaN(Number(text))) {
-        score = Number(text);
+      const hasLabel = label !== qId;
+      if (isNumeric && (hasLabel
+        ? (lower.includes('nps') || lower.includes('score') || lower.includes('rate'))
+        : num >= 0 && num <= 10)) {
+        score = num;
       }
     }
 
