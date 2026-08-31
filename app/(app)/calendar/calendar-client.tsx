@@ -70,9 +70,13 @@ function fmtDate(d: Date) {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
-function blockTopPx(iso: string): number {
+const IST_OFFSET_H = 5.5;
+
+function blockTopPx(iso: string, useIST = false): number {
   const d = new Date(iso);
-  const h = d.getUTCHours() + d.getUTCMinutes() / 60;
+  const h = useIST
+    ? (d.getUTCHours() + IST_OFFSET_H + d.getUTCMinutes() / 60) % 24
+    : d.getUTCHours() + d.getUTCMinutes() / 60;
   return Math.max(0, (h - HOUR_START) * CELL_H);
 }
 
@@ -636,7 +640,7 @@ export default function CalendarClient({
                         {/* Google Calendar events in grid */}
                         {dayGoogleEvents.map((event) => {
                           if (event.isAllDay || !event.start) return null;
-                          const top = blockTopPx(event.start);
+                          const top = blockTopPx(event.start, true);
                           const height = event.end ? blockHeightPx(event.start, event.end) : CELL_H;
                           return (
                             <div
