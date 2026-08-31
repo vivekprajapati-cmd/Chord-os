@@ -51,28 +51,32 @@ export default function HarmonyCoreClient({ me, people }: Props) {
   const [monthlyEntries, setMonthlyEntries] = useState<any[]>([]);
   const [weeklyEntries, setWeeklyEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showAssign, setShowAssign] = useState(false);
 
   const selectedPerson = people.find(p => p.id === selectedPersonId) ?? people[0];
   const roleType = selectedPerson ? getRoleType(selectedPerson) : 'social';
   const canEdit = me.access_tier === 'admin' || me.id === selectedPersonId;
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     if (!selectedPersonId) return;
-    setLoading(true);
-    const [monthly, weekly] = await Promise.all([
-      fetch(`/api/harmony-core?person_id=${selectedPersonId}&month=${month}`, { cache: 'no-store' }).then(r => r.json()),
-      roleType === 'social'
-        ? fetch(`/api/harmony-core/weekly?person_id=${selectedPersonId}&week_start=${weekStart}`, { cache: 'no-store' }).then(r => r.json())
-        : Promise.resolve({ entries: [] }),
-    ]);
-    setAssignments(monthly.assignments ?? []);
-    setMonthlyEntries(monthly.entries ?? []);
-    setWeeklyEntries(weekly.entries ?? []);
-    setLoading(false);
+    if (silent) setRefreshing(true); else setLoading(true);
+    try {
+      const [monthly, weekly] = await Promise.all([
+        fetch(`/api/harmony-core?person_id=${selectedPersonId}&month=${month}`, { cache: 'no-store' }).then(r => r.json()),
+        roleType === 'social'
+          ? fetch(`/api/harmony-core/weekly?person_id=${selectedPersonId}&week_start=${weekStart}`, { cache: 'no-store' }).then(r => r.json())
+          : Promise.resolve({ entries: [] }),
+      ]);
+      setAssignments(monthly.assignments ?? []);
+      setMonthlyEntries(monthly.entries ?? []);
+      setWeeklyEntries(weekly.entries ?? []);
+    } finally {
+      if (silent) setRefreshing(false); else setLoading(false);
+    }
   }, [selectedPersonId, month, weekStart, roleType]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(false); }, [load]);
 
   const lastUpdated = monthlyEntries.length > 0
     ? new Date(Math.max(...monthlyEntries.map((e: any) => new Date(e.updated_at).getTime())))
@@ -197,7 +201,7 @@ export default function HarmonyCoreClient({ me, people }: Props) {
           month={month}
           personId={selectedPersonId}
           canEdit={canEdit}
-          onSaved={load}
+          onSaved={() => load(true)}
         />
       ) : roleType === 'influencer' ? (
         <InfluencerTable
@@ -206,7 +210,7 @@ export default function HarmonyCoreClient({ me, people }: Props) {
           month={month}
           personId={selectedPersonId}
           canEdit={canEdit}
-          onSaved={load}
+          onSaved={() => load(true)}
         />
       ) : (
         <CreativeTable
@@ -215,7 +219,7 @@ export default function HarmonyCoreClient({ me, people }: Props) {
           month={month}
           personId={selectedPersonId}
           canEdit={canEdit}
-          onSaved={load}
+          onSaved={() => load(true)}
         />
       )}
 
@@ -231,7 +235,7 @@ export default function HarmonyCoreClient({ me, people }: Props) {
           people={people}
           defaultPersonId={selectedPersonId}
           onClose={() => setShowAssign(false)}
-          onSaved={load}
+          onSaved={() => load(true)}
         />
       )}
     </div>
