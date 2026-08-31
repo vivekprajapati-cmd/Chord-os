@@ -41,7 +41,10 @@ export async function GET(req: Request) {
       } else {
         // fallback: average all numeric answers for forms with no 1-10 question
         const nums = Object.values(r.answers).map(Number).filter(n => !isNaN(n) && n >= 1 && n <= 10);
-        if (nums.length) byBrand[f.brand_id].push(nums.reduce((a, b) => a + b, 0) / nums.length);
+        if (nums.length) {
+          const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+          byBrand[f.brand_id].push(avg <= 5 ? avg * 2 : avg);
+        }
       }
     }
   }));

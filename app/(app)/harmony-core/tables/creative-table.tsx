@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type Props = {
   assignments: any[];
@@ -36,6 +36,17 @@ export default function CreativeTable({ assignments, entries, month, personId, c
   const [editing, setEditing] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState<string | null>(null);
+  const [npsScores, setNpsScores] = useState<Record<string, number | null>>({});
+
+  useEffect(() => {
+    if (!assignments.length) return;
+    const ids = assignments.map((a: any) => a.brand_id).join(',');
+    fetch(`/api/nps-forms/brand-scores?brand_ids=${ids}`)
+      .then(r => r.json())
+      .then(d => { if (d.scores) setNpsScores(d.scores); })
+      .catch(() => {});
+  }, [assignments]);
+
 
   function getEntry(brandId: string) {
     return entries.find(e => e.brand_id === brandId);
@@ -144,7 +155,7 @@ export default function CreativeTable({ assignments, entries, month, personId, c
                   </>
                 ) : (
                   <>
-                    <td style={td}><Num v={m.nps} /></td>
+                    <td style={td}><Num v={npsScores[brandId] ?? m.nps} /></td>
                     <td style={{ ...td, maxWidth: '160px' }}>
                       {m.new_idea
                         ? <span style={{ fontSize: '12px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.new_idea}</span>

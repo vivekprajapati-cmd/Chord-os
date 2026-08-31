@@ -77,8 +77,18 @@ export default function NpsClient({ brand, isAdmin }: { brand: Brand; isAdmin: b
   }
 
   const scoredResponses = responses.filter(r => r.score !== null);
-  const avgScore = scoredResponses.length
-    ? Math.round(scoredResponses.reduce((s, r) => s + (r.score ?? 0), 0) / scoredResponses.length * 10) / 10
+  // For forms with no 1-10 question, fall back to averaging all numeric answers per response
+  function effectiveScore(r: NpsResponse): number | null {
+    if (r.score !== null) return r.score;
+    const nums = Object.values(r.answers).map(Number).filter(n => !isNaN(n) && n >= 1 && n <= 10);
+    if (!nums.length) return null;
+    const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+    // normalize 1-5 scale to /10
+    return avg <= 5 ? avg * 2 : avg;
+  }
+  const effectiveScores = responses.map(effectiveScore).filter((s): s is number => s !== null);
+  const avgScore = effectiveScores.length
+    ? Math.round(effectiveScores.reduce((a, b) => a + b, 0) / effectiveScores.length * 10) / 10
     : null;
 
   // Per-question averages across all responses
@@ -122,7 +132,7 @@ export default function NpsClient({ brand, isAdmin }: { brand: Brand; isAdmin: b
             NPS — {brand.name}
           </h1>
           <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)' }}>
-            {scoredResponses.length} scored responses · {responses.length} total
+            {effectiveScores.length} scored responses · {responses.length} total
           </p>
         </div>
 
@@ -206,7 +216,7 @@ export default function NpsClient({ brand, isAdmin }: { brand: Brand; isAdmin: b
                 <button onClick={() => setExpanded(isOpen ? null : r.responseId)}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'none', border: 'none', cursor: 'pointer', gap: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <ScoreBadge score={r.score} />
+                    <ScoreBadge score={effectiveScore(r)} />
                     <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>{date}</span>
                     <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.6 }}>{r.quarter}</span>
                   </div>
