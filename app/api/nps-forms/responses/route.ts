@@ -28,10 +28,12 @@ export async function GET(req: Request) {
   // Get the Google refresh token from the first connected user (admin who linked Google)
   const { data: person } = await admin
     .from('people')
-    .select('google_refresh_token')
+    .select('google_refresh_token, email')
+    .eq('access_tier', 'admin')
     .not('google_refresh_token', 'is', null)
     .limit(1)
     .maybeSingle();
+  console.log('[nps-responses] using token from:', person?.email);
 
   if (!person?.google_refresh_token) {
     return NextResponse.json({ error: 'No Google account connected. Connect Google Calendar first.' }, { status: 503 });

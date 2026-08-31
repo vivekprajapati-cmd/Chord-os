@@ -29,6 +29,7 @@ export async function GET(req: Request) {
   const tokens = await tokenRes.json();
 
   if (!tokens.refresh_token) {
+    console.error('[google-callback] no refresh_token. token keys:', Object.keys(tokens), 'error:', tokens.error);
     return NextResponse.redirect(`${appUrl}/calendar?google_error=no_refresh_token`);
   }
 
