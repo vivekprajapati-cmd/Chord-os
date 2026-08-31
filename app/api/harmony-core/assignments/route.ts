@@ -54,12 +54,12 @@ export async function POST(req: Request) {
       .delete()
       .eq('person_id', person_id)
       .eq('brand_id', brand_id);
-    // notifyHarmonySlack(`${person?.name ?? person_id} unassigned from ${brand?.name ?? brand_id}`);
+    notifyHarmonySlack(`${person?.name ?? person_id} unassigned from ${brand?.name ?? brand_id}`);
   } else {
     await admin
       .from('harmony_brand_assignments')
       .upsert({ person_id, brand_id, role_type }, { onConflict: 'person_id,brand_id' });
-    // notifyHarmonySlack(`${person?.name ?? person_id} assigned to ${brand?.name ?? brand_id}`);
+    notifyHarmonySlack(`${person?.name ?? person_id} assigned to ${brand?.name ?? brand_id}`);
   }
 
   return NextResponse.json({ ok: true });
