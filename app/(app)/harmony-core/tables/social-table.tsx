@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TrackerModal from '../tracker-modal';
 
 type Props = {
@@ -101,6 +101,16 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
   const [drafts, setDrafts] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState<string | null>(null);
   const [trackerModal, setTrackerModal] = useState<{ brandId: string; type: 'orm' | 'ops' | 'social' } | null>(null);
+  const [npsScores, setNpsScores] = useState<Record<string, number | null>>({});
+
+  useEffect(() => {
+    if (!assignments.length) return;
+    const ids = assignments.map((a: any) => a.brand_id).join(',');
+    fetch(`/api/nps-forms/brand-scores?brand_ids=${ids}`)
+      .then(r => r.json())
+      .then(d => { if (d.scores) setNpsScores(d.scores); })
+      .catch(() => {});
+  }, [assignments]);
 
   const days = daysInMonth(month);
   const weeks = weeksInMonth(month);
@@ -339,7 +349,7 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
                       <td style={tdR}><Num v={m.backlog} /></td>
                       <td style={tdR}><PctCell value={scopePct} expected={expectedDailyPct} /></td>
                       <td style={tdR}><PctCell value={backlogPct} expected={expectedDailyPct} /></td>
-                      <td style={tdR}><NpsCell value={m.nps} /></td>
+                      <td style={tdR}><NpsCell value={npsScores[brandId] ?? m.nps} /></td>
                       <td style={tdR}>
                         {entry
                           ? <span style={{ padding: '3px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, background: m.invoice_cleared ? '#dcfce7' : '#fee2e2', color: m.invoice_cleared ? '#16a34a' : '#dc2626' }}>{m.invoice_cleared ? 'Y' : 'N'}</span>
