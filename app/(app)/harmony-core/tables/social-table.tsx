@@ -108,39 +108,49 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
     if (!d) return;
     setSaving(brandId);
     const entry = getEntry(brandId);
-    await Promise.all([
-      fetch('/api/harmony-core', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          person_id: personId, brand_id: brandId, month, role_type: 'social',
-          metrics: {
-            scope: Number(d.scope) || 0,
-            tasks_completed: Number(d.tasks_completed) || 0,
-            backlog: Number(d.backlog) || 0,
-            backlog_completed: Number(d.backlog_completed) || 0,
-            nps: Number(d.nps) || 0,
-            invoice_cleared: d.invoice_cleared,
-          },
-          tracker_logs: entry?.tracker_logs ?? { orm: [], ops: [], social: [] },
+    try {
+      const [monthlyRes, weeklyRes] = await Promise.all([
+        fetch('/api/harmony-core', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            person_id: personId, brand_id: brandId, month, role_type: 'social',
+            metrics: {
+              scope: Number(d.scope) || 0,
+              tasks_completed: Number(d.tasks_completed) || 0,
+              backlog: Number(d.backlog) || 0,
+              backlog_completed: Number(d.backlog_completed) || 0,
+              nps: Number(d.nps) || 0,
+              invoice_cleared: d.invoice_cleared,
+            },
+            tracker_logs: entry?.tracker_logs ?? { orm: [], ops: [], social: [] },
+          }),
         }),
-      }),
-      fetch('/api/harmony-core/weekly', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          person_id: personId, brand_id: brandId, week_start: weekStart,
-          followers: Number(d.followers) || null,
-          er: Number(d.er) || null,
-          sov: Number(d.sov) || null,
-          profile_visits: Number(d.profile_visits) || null,
-          avg_vtr: Number(d.avg_vtr) || null,
+        fetch('/api/harmony-core/weekly', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            person_id: personId, brand_id: brandId, week_start: weekStart,
+            followers: Number(d.followers) || null,
+            er: Number(d.er) || null,
+            sov: Number(d.sov) || null,
+            profile_visits: Number(d.profile_visits) || null,
+            avg_vtr: Number(d.avg_vtr) || null,
+          }),
         }),
-      }),
-    ]);
-    setSaving(null);
-    setEditing(null);
-    onSaved();
+      ]);
+      if (!monthlyRes.ok || !weeklyRes.ok) {
+        const err = await (!monthlyRes.ok ? monthlyRes : weeklyRes).json().catch(() => ({}));
+        alert(`Save failed: ${err.error ?? 'unknown error'}`);
+        return;
+      }
+      setEditing(null);
+      onSaved();
+    } catch (e) {
+      alert(`Save failed: ${String(e)}`);
+    } finally {
+      setSaving(null);
+    }
   }
 
   function numInput(brandId: string, field: string, w = '60px') {

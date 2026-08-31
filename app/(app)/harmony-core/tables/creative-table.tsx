@@ -66,21 +66,31 @@ export default function CreativeTable({ assignments, entries, month, personId, c
   async function save(brandId: string) {
     const d = drafts[brandId];
     setSaving(brandId);
-    await fetch('/api/harmony-core', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        person_id: personId,
-        brand_id: brandId,
-        month,
-        role_type: 'creative',
-        metrics: { ...d, nps: Number(d.nps) || 0 },
-        tracker_logs: { orm: [], ops: [], social: [] },
-      }),
-    });
-    setSaving(null);
-    setEditing(null);
-    onSaved();
+    try {
+      const res = await fetch('/api/harmony-core', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          person_id: personId,
+          brand_id: brandId,
+          month,
+          role_type: 'creative',
+          metrics: { ...d, nps: Number(d.nps) || 0 },
+          tracker_logs: { orm: [], ops: [], social: [] },
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(`Save failed: ${err.error ?? 'unknown error'}`);
+        return;
+      }
+      setEditing(null);
+      onSaved();
+    } catch (e) {
+      alert(`Save failed: ${String(e)}`);
+    } finally {
+      setSaving(null);
+    }
   }
 
   return (
