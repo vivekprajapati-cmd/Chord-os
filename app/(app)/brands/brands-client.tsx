@@ -298,14 +298,29 @@ export default function BrandsClient({
       {/* Brand grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {initialBrands.map((b) => (
-          <Link
-            key={b.id}
-            href={`/brands/${b.slug}`}
-            className="bg-[var(--paper)] border border-[var(--line)] rounded-2xl p-6 shadow-[6px_6px_0_var(--ink)] hover:shadow-[8px_8px_0_var(--ink)] transition"
-          >
-            <h2 className="font-display text-3xl uppercase tracking-tight mb-1">{b.name}</h2>
-            <p className="text-sm text-[var(--gray)]">{b.category}</p>
-          </Link>
+          <div key={b.id} style={{ position: 'relative' }}>
+            <Link
+              href={`/brands/${b.slug}`}
+              className="bg-[var(--paper)] border border-[var(--line)] rounded-2xl p-6 shadow-[6px_6px_0_var(--ink)] hover:shadow-[8px_8px_0_var(--ink)] transition"
+              style={{ display: 'block' }}
+            >
+              <h2 className="font-display text-3xl uppercase tracking-tight mb-1">{b.name}</h2>
+              <p className="text-sm text-[var(--gray)]">{b.category}</p>
+            </Link>
+            <Link
+              href={`/brands/${b.slug}/nps`}
+              onClick={e => e.stopPropagation()}
+              style={{
+                position: 'absolute', bottom: '16px', right: '16px',
+                fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em',
+                padding: '4px 12px', borderRadius: '999px', border: '1px solid var(--line)',
+                background: 'var(--paper)', color: 'var(--gray)', textDecoration: 'none',
+                transition: 'all .15s',
+              }}
+            >
+              NPS
+            </Link>
+          </div>
         ))}
       </div>
 
