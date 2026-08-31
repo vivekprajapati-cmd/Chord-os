@@ -76,9 +76,32 @@ export default function NpsClient({ brand, isAdmin }: { brand: Brand; isAdmin: b
     load(selectedQuarter);
   }
 
-  const avg = responses.length
-    ? Math.round(responses.filter(r => r.score !== null).reduce((s, r) => s + (r.score ?? 0), 0) / responses.filter(r => r.score !== null).length * 10) / 10
+  const scoredResponses = responses.filter(r => r.score !== null);
+  const promoters = scoredResponses.filter(r => (r.score ?? 0) >= 9).length;
+  const detractors = scoredResponses.filter(r => (r.score ?? 0) <= 6).length;
+  const npsScore = scoredResponses.length
+    ? Math.round((promoters / scoredResponses.length - detractors / scoredResponses.length) * 100)
     : null;
+
+  // Per-question averages across all responses
+  const questionAvgs: { label: string; avg: number; count: number; isNps: boolean }[] = (() => {
+    const acc: Record<string, { sum: number; count: number }> = {};
+    for (const r of responses) {
+      for (const [label, text] of Object.entries(r.answers)) {
+        const num = Number(text);
+        if (text.trim() === '' || isNaN(num) || num < 0 || num > 10) continue;
+        if (!acc[label]) acc[label] = { sum: 0, count: 0 };
+        acc[label].sum += num;
+        acc[label].count += 1;
+      }
+    }
+    return Object.entries(acc).map(([label, { sum, count }]) => ({
+      label,
+      avg: Math.round((sum / count) * 10) / 10,
+      count,
+      isNps: label.toLowerCase().includes('recommend') || label.toLowerCase().includes('likely') || label.toLowerCase().includes('nps'),
+    }));
+  })();
 
   return (
     <div style={{ maxWidth: '900px' }}>
@@ -94,11 +117,9 @@ export default function NpsClient({ brand, isAdmin }: { brand: Brand; isAdmin: b
           <h1 style={{ fontFamily: 'var(--f-display)', fontSize: '28px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)', marginBottom: '4px' }}>
             NPS — {brand.name}
           </h1>
-          {avg !== null && (
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)' }}>
-              Avg score: <strong>{avg}</strong> across {responses.filter(r => r.score !== null).length} responses
-            </p>
-          )}
+          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)' }}>
+            {scoredResponses.length} scored responses · {responses.length} total
+          </p>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -124,6 +145,55 @@ export default function NpsClient({ brand, isAdmin }: { brand: Brand; isAdmin: b
           )}
         </div>
       </div>
+
+      {/* Aggregate stats */}
+      {!loading && !error && responses.length > 0 && (
+        <div style={{ marginBottom: '28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          {/* NPS breakdown — only if we have scored responses */}
+          {scoredResponses.length > 0 && (
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {[
+                { label: 'NPS Score', value: npsScore !== null ? (npsScore > 0 ? `+${npsScore}` : `${npsScore}`) : '—', color: npsScore !== null && npsScore >= 50 ? '#15803d' : npsScore !== null && npsScore >= 0 ? '#a16207' : '#dc2626', bg: npsScore !== null && npsScore >= 50 ? '#dcfce7' : npsScore !== null && npsScore >= 0 ? '#fef9c3' : '#fee2e2' },
+                { label: 'Promoters (9-10)', value: `${promoters}`, color: '#15803d', bg: '#dcfce7' },
+                { label: 'Passives (7-8)', value: `${scoredResponses.length - promoters - detractors}`, color: '#a16207', bg: '#fef9c3' },
+                { label: 'Detractors (0-6)', value: `${detractors}`, color: '#dc2626', bg: '#fee2e2' },
+              ].map(({ label, value, color, bg }) => (
+                <div key={label} style={{ flex: '1 1 130px', background: bg, border: `1px solid ${color}33`, borderRadius: '10px', padding: '12px 16px' }}>
+                  <div style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color, marginBottom: '4px' }}>{label}</div>
+                  <div style={{ fontFamily: 'var(--f-display)', fontSize: '26px', fontWeight: 700, color }}>{value}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Per-question averages */}
+          {questionAvgs.length > 0 && (
+            <div style={{ border: '1.5px solid var(--ink)', borderRadius: '10px', overflow: 'hidden' }}>
+              <div style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', padding: '8px 16px', borderBottom: '1px solid var(--border, #e5e2da)', background: 'var(--paper)' }}>
+                Avg scores across {responses.length} responses
+              </div>
+              {questionAvgs.map(({ label, avg, count, isNps }) => {
+                const pct = (avg / 10) * 100;
+                const barColor = avg >= 8 ? '#16a34a' : avg >= 6 ? '#ca8a04' : '#dc2626';
+                return (
+                  <div key={label} style={{ padding: '10px 16px', borderBottom: '1px solid var(--border, #e5e2da)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ flex: 1, fontFamily: 'var(--f-body)', fontSize: '12px', color: 'var(--ink)', minWidth: 0 }}>
+                      {isNps && <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', background: 'var(--ink)', color: 'var(--cream)', borderRadius: '4px', padding: '1px 5px', marginRight: '6px', textTransform: 'uppercase' }}>NPS</span>}
+                      {label}
+                    </div>
+                    <div style={{ width: '120px', height: '6px', background: '#e5e2da', borderRadius: '3px', flexShrink: 0 }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: barColor, borderRadius: '3px', transition: 'width 0.3s' }} />
+                    </div>
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700, color: barColor, width: '32px', textAlign: 'right', flexShrink: 0 }}>{avg}</div>
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', flexShrink: 0 }}>/ 10</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Responses */}
       {loading ? (
