@@ -28,6 +28,11 @@ function toWeekParam(date: Date) {
   return m.toISOString().split('T')[0];
 }
 
+function getRoleTypeById(people: Person[], id: string): 'social' | 'influencer' | 'creative' {
+  const p = people.find(x => x.id === id);
+  return p ? getRoleType(p) : 'social';
+}
+
 function getRoleType(person: Person): 'social' | 'influencer' | 'creative' {
   const name = person.name.toLowerCase();
   if (name.includes('arbaaz')) return 'influencer';
@@ -39,6 +44,60 @@ function getRoleBadgeStyle(role: 'social' | 'influencer' | 'creative') {
   if (role === 'influencer') return { background: 'var(--bg-success)', color: 'var(--text-success)' };
   if (role === 'creative') return { background: 'var(--bg-pro)', color: 'var(--text-pro)' };
   return { background: 'var(--bg-accent)', color: 'var(--text-accent)' };
+}
+
+type LineConfig = { key: string; label: string; color: string };
+
+function LineChart({ title, data, lines }: { title: string; data: any[]; lines: LineConfig[] }) {
+  const W = 440, H = 140, padL = 8, padR = 8, padT = 12, padB = 28;
+  const iW = W - padL - padR;
+  const iH = H - padT - padB;
+  const n = data.length;
+  if (n < 1) return null;
+
+  const allVals = data.flatMap(d => lines.map(l => Number(d[l.key]) || 0));
+  const maxVal = Math.max(...allVals, 1);
+
+  function x(i: number) { return padL + (i / (n - 1)) * iW; }
+  function y(v: number) { return padT + iH - (v / maxVal) * iH; }
+  function polyline(key: string) {
+    return data.map((d, i) => `${x(i)},${y(Number(d[key]) || 0)}`).join(' ');
+  }
+
+  return (
+    <div style={{ background: 'var(--surface-1)', border: '1px solid #c8c4bc', borderRadius: '10px', padding: '14px 16px', boxShadow: '3px 3px 0 var(--ink)' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-secondary)', marginBottom: '8px' }}>{title}</div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+        {/* Grid lines */}
+        {[0, 0.5, 1].map(f => (
+          <line key={f} x1={padL} x2={W - padR} y1={padT + iH * (1 - f)} y2={padT + iH * (1 - f)}
+            stroke="#e5e2da" strokeWidth="1" />
+        ))}
+        {/* Lines */}
+        {n > 1 && lines.map(l => (
+          <polyline key={l.key} points={polyline(l.key)} fill="none" stroke={l.color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        ))}
+        {/* Dots at current month */}
+        {lines.map(l => {
+          const last = n - 1;
+          return <circle key={l.key} cx={x(last)} cy={y(Number(data[last][l.key]) || 0)} r="3.5" fill={l.color} />;
+        })}
+        {/* X labels */}
+        {data.map((d, i) => (
+          <text key={i} x={x(i)} y={H - 6} textAnchor="middle" fontSize="8" fontFamily="var(--font-mono)" fill="#999">{d.label}</text>
+        ))}
+      </svg>
+      {/* Legend */}
+      <div style={{ display: 'flex', gap: '14px', marginTop: '4px' }}>
+        {lines.map(l => (
+          <div key={l.key} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-secondary)' }}>
+            <span style={{ display: 'inline-block', width: '16px', height: '2px', background: l.color, borderRadius: '1px' }} />
+            {l.label}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function HarmonyCoreClient({ me, people }: Props) {
@@ -54,6 +113,7 @@ export default function HarmonyCoreClient({ me, people }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [showAssign, setShowAssign] = useState(false);
   const [carriedBrands, setCarriedBrands] = useState<string[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
 
   const selectedPerson = people.find(p => p.id === selectedPersonId) ?? people[0];
   const roleType = selectedPerson ? getRoleType(selectedPerson) : 'social';
@@ -74,6 +134,11 @@ export default function HarmonyCoreClient({ me, people }: Props) {
       setMonthlyEntries(monthly.entries ?? []);
       setWeeklyEntries(weekly.entries ?? []);
       setCarriedBrands(monthly.carried_brands ?? []);
+      // Fetch history in parallel (social only) — don't await, fires and forgets into state
+      if ((personIdOverride ? getRoleTypeById(people, personIdOverride) : roleType) === 'social') {
+        fetch(`/api/harmony-core/history?person_id=${pid}`, { cache: 'no-store' })
+          .then(r => r.json()).then(d => setHistory(d.history ?? [])).catch(() => {});
+      }
     } finally {
       if (silent) setRefreshing(false); else setLoading(false);
     }
@@ -95,45 +160,7 @@ export default function HarmonyCoreClient({ me, people }: Props) {
 
   const monthLabel = new Date(month + 'T00:00:00').toLocaleString('en-US', { month: 'long', year: 'numeric' });
 
-  // Dashboard aggregates (social only — has scope/backlog/tasks)
-  const dashStats = (() => {
-    if (roleType !== 'social') return null;
-    let totalScope = 0, totalDone = 0, totalBacklog = 0, totalBacklogDone = 0, invoiceCount = 0, npsSum = 0, npsCount = 0;
-    const brandRows: { name: string; scope: number; done: number; scopePct: number | null; backlog: number; backlogDone: number; backlogPct: number | null; nps: number | null; invoice: boolean }[] = [];
-    for (const a of assignments) {
-      const entry = monthlyEntries.find((e: any) => e.brand_id === a.brand_id);
-      const m = entry?.metrics ?? {};
-      const scope = Number(m.scope) || 0;
-      const done = Number(m.tasks_completed) || 0;
-      const backlog = Number(m.backlog) || 0;
-      const backlogDone = Number(m.backlog_completed) || 0;
-      const nps = m.nps ? Number(m.nps) : null;
-      totalScope += scope;
-      totalDone += done;
-      totalBacklog += backlog;
-      totalBacklogDone += backlogDone;
-      if (m.invoice_cleared) invoiceCount++;
-      if (nps !== null) { npsSum += nps; npsCount++; }
-      brandRows.push({
-        name: a.brands?.name ?? a.brand_id,
-        scope, done,
-        scopePct: scope ? Math.round((done / scope) * 100) : null,
-        backlog, backlogDone,
-        backlogPct: backlog ? Math.round((backlogDone / backlog) * 100) : null,
-        nps, invoice: !!m.invoice_cleared,
-      });
-    }
-    return {
-      totalScope, totalDone,
-      scopePct: totalScope ? Math.round((totalDone / totalScope) * 100) : null,
-      remaining: totalScope - totalDone,
-      totalBacklog, totalBacklogDone,
-      backlogPct: totalBacklog ? Math.round((totalBacklogDone / totalBacklog) * 100) : null,
-      invoiceCount, total: assignments.length,
-      avgNps: npsCount ? Math.round((npsSum / npsCount) * 10) / 10 : null,
-      brandRows,
-    };
-  })();
+  const hasHistory = roleType === 'social' && history.length > 0 && history.some(h => h.scope > 0 || h.backlog > 0);
 
   // Month navigation
   function changeMonth(dir: 1 | -1) {
@@ -271,11 +298,11 @@ export default function HarmonyCoreClient({ me, people }: Props) {
           : `You are viewing ${selectedPerson?.name.split(' ')[0] ?? ''}${String.fromCharCode(39)}s data. You can only edit your own brands.`}
       </div>
 
-      {/* Dashboard — social only */}
-      {dashStats && assignments.length > 0 && (
-        <div style={{ marginTop: '24px' }}>
+      {/* Dashboard — social trend charts */}
+      {hasHistory && (
+        <div style={{ marginTop: '28px' }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-            {selectedPerson?.name.split(' ')[0]}&rsquo;s Dashboard — {monthLabel}
+            {selectedPerson?.name.split(' ')[0]}&rsquo;s Trends
           </div>
 
           {/* Carry-over notice */}
@@ -288,65 +315,23 @@ export default function HarmonyCoreClient({ me, people }: Props) {
               <div style={{ marginBottom: '14px', padding: '10px 14px', background: '#fefce8', border: '1.5px solid #ca8a04', borderRadius: '8px', fontFamily: 'var(--font-mono)', fontSize: '11px', color: '#92400e', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                 <span style={{ fontSize: '14px', lineHeight: 1.2 }}>↩</span>
                 <span>
-                  <strong>Backlog auto-carried from {prevLabel}:</strong> {names.join(', ')} — remaining scope from last month has been added as backlog for {monthLabel}.
+                  <strong>Backlog auto-carried from {prevLabel}:</strong> {names.join(', ')} — remaining scope added to {monthLabel} backlog.
                 </span>
               </div>
             );
           })()}
 
-          {/* Stat tiles */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px', marginBottom: '20px' }}>
-            {[
-              { label: 'Total Scope', value: dashStats.totalScope, sub: `${dashStats.totalDone} done` },
-              { label: 'Scope Done', value: dashStats.scopePct !== null ? `${dashStats.scopePct}%` : '—', sub: `${dashStats.remaining} remaining`, alert: dashStats.scopePct !== null && dashStats.scopePct < 60 },
-              { label: 'Total Backlog', value: dashStats.totalBacklog, sub: `${dashStats.totalBacklogDone} cleared` },
-              { label: 'Backlog Done', value: dashStats.backlogPct !== null ? `${dashStats.backlogPct}%` : '—', sub: `${dashStats.totalBacklog - dashStats.totalBacklogDone} pending`, alert: dashStats.backlogPct !== null && dashStats.backlogPct < 60 },
-              { label: 'Invoices', value: `${dashStats.invoiceCount}/${dashStats.total}`, sub: `cleared this month` },
-              { label: 'Avg NPS', value: dashStats.avgNps !== null ? dashStats.avgNps : '—', sub: 'across brands' },
-            ].map(tile => (
-              <div key={tile.label} style={{ padding: '14px 16px', background: 'var(--surface-1)', border: '1.5px solid var(--border)', borderRadius: '10px', boxShadow: '3px 3px 0 var(--ink)' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '6px' }}>{tile.label}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '22px', fontWeight: 700, color: (tile as any).alert ? '#dc2626' : 'var(--text-primary)', lineHeight: 1 }}>{tile.value}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>{tile.sub}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Per-brand breakdown */}
-          <div style={{ overflowX: 'auto', border: '1px solid #c8c4bc', borderRadius: '10px', boxShadow: '3px 3px 0 var(--ink)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '700px' }}>
-              <thead>
-                <tr style={{ background: '#f0ede5' }}>
-                  {['Brand', 'Scope', 'Done', 'Scope %', 'Backlog', 'Backlog Done', 'Backlog %', 'NPS', 'Invoice'].map(h => (
-                    <th key={h} style={{ padding: '9px 12px', fontFamily: 'var(--font-mono)', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#555', borderBottom: '1px solid #c8c4bc', textAlign: h === 'Brand' ? 'left' : 'center', whiteSpace: 'nowrap' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {dashStats.brandRows.map((row, i) => {
-                  const rowBg = i % 2 === 0 ? '#fff' : '#f9f8f5';
-                  const scopeColor = row.scopePct === null ? '#999' : row.scopePct >= 80 ? '#16a34a' : row.scopePct >= 50 ? '#d97706' : '#dc2626';
-                  const backlogColor = row.backlogPct === null ? '#999' : row.backlogPct >= 80 ? '#16a34a' : row.backlogPct >= 50 ? '#d97706' : '#dc2626';
-                  return (
-                    <tr key={row.name} style={{ background: rowBg }}>
-                      <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 600, borderBottom: '1px solid #e5e2da', textAlign: 'left', color: 'var(--text-primary)' }}>{row.name}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: '12px', borderBottom: '1px solid #e5e2da', textAlign: 'center', color: 'var(--text-primary)' }}>{row.scope || '—'}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: '12px', borderBottom: '1px solid #e5e2da', textAlign: 'center', color: 'var(--text-primary)' }}>{row.done || '—'}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 700, borderBottom: '1px solid #e5e2da', textAlign: 'center', color: scopeColor }}>{row.scopePct !== null ? `${row.scopePct}%` : '—'}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: '12px', borderBottom: '1px solid #e5e2da', textAlign: 'center', color: row.backlog ? '#d97706' : 'var(--text-muted)' }}>{row.backlog || '—'}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: '12px', borderBottom: '1px solid #e5e2da', textAlign: 'center', color: 'var(--text-primary)' }}>{row.backlogDone || '—'}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 700, borderBottom: '1px solid #e5e2da', textAlign: 'center', color: backlogColor }}>{row.backlogPct !== null ? `${row.backlogPct}%` : '—'}</td>
-                      <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: '12px', borderBottom: '1px solid #e5e2da', textAlign: 'center', color: 'var(--text-primary)' }}>{row.nps !== null ? row.nps : '—'}</td>
-                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #e5e2da', textAlign: 'center' }}>
-                        <span style={{ padding: '2px 9px', borderRadius: '999px', fontSize: '11px', fontWeight: 600, background: row.invoice ? '#dcfce7' : '#fee2e2', color: row.invoice ? '#16a34a' : '#dc2626' }}>
-                          {row.invoice ? 'Y' : 'N'}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            <LineChart title="Scope vs Completion" data={history}
+              lines={[
+                { key: 'scope', label: 'Scope', color: '#6366f1' },
+                { key: 'done', label: 'Completed', color: '#16a34a' },
+              ]} />
+            <LineChart title="Backlog vs Cleared" data={history}
+              lines={[
+                { key: 'backlog', label: 'Backlog', color: '#d97706' },
+                { key: 'backlog_done', label: 'Cleared', color: '#16a34a' },
+              ]} />
           </div>
         </div>
       )}
