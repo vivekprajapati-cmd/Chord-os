@@ -28,10 +28,23 @@ function weeksInMonth(month: string) {
   return Math.ceil(daysInMonth(month) / 7);
 }
 
-function PctCell({ value }: { value: number | null }) {
+// expected: what % should be done by today given calendar progress (0-100)
+function PctCell({ value, expected }: { value: number | null; expected?: number }) {
   if (value === null) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
-  const color = value >= 80 ? '#16a34a' : value >= 50 ? '#d97706' : '#dc2626';
-  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 500, color }}>{value}%</span>;
+  let bg = 'transparent', color = '#16a34a', border = 'none';
+  if (expected !== undefined) {
+    const gap = expected - value; // positive = behind
+    if (gap >= 30) { bg = '#fee2e2'; color = '#991b1b'; border = '1px solid #fca5a5'; }
+    else if (gap >= 15) { bg = '#ffedd5'; color = '#c2410c'; border = '1px solid #fdba74'; }
+    else if (gap >= 5)  { bg = '#fef9c3'; color = '#a16207'; border = '1px solid #fde047'; }
+    else { bg = '#dcfce7'; color = '#15803d'; border = '1px solid #86efac'; }
+  }
+  return (
+    <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 600, color, background: bg, border, borderRadius: '4px', padding: '2px 6px' }}>{value}%</span>
+      {expected !== undefined && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: '#aaa' }}>exp {expected}%</span>}
+    </div>
+  );
 }
 
 function Delta({ curr, prev }: { curr: number | null; prev: number | null }) {
@@ -41,6 +54,34 @@ function Delta({ curr, prev }: { curr: number | null; prev: number | null }) {
   const color = diff > 0 ? '#16a34a' : '#dc2626';
   const arrow = diff > 0 ? '↑' : '↓';
   return <div style={{ fontSize: '11px', color, marginTop: '2px' }}>{arrow} {Math.abs(diff).toLocaleString()}</div>;
+}
+
+function NpsCell({ value }: { value: any }) {
+  const n = Number(value);
+  if (!value && value !== 0) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+  const [bg, color, border] =
+    n >= 8 ? ['#dcfce7', '#15803d', '1px solid #86efac'] :
+    n >= 6 ? ['#fef9c3', '#a16207', '1px solid #fde047'] :
+             ['#fee2e2', '#991b1b', '1px solid #fca5a5'];
+  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', fontWeight: 600, color, background: bg, border, borderRadius: '4px', padding: '2px 8px' }}>{n}</span>;
+}
+
+function WowCell({ curr, prev, suffix = '' }: { curr: any; prev: any; suffix?: string }) {
+  if (curr === null || curr === undefined || curr === '') return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+  const n = Number(curr);
+  const diff = prev !== null && prev !== undefined ? n - Number(prev) : null;
+  const [bg, color] = diff === null ? ['transparent', 'var(--text-primary)'] :
+    diff > 0 ? ['#dcfce7', '#15803d'] :
+    diff < 0 ? ['#fee2e2', '#991b1b'] :
+               ['#f3f4f6', '#6b7280'];
+  return (
+    <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 600, color, background: bg, borderRadius: '4px', padding: '2px 6px' }}>{n.toLocaleString()}{suffix}</span>
+      {diff !== null && diff !== 0 && (
+        <span style={{ fontSize: '10px', color: diff > 0 ? '#16a34a' : '#dc2626' }}>{diff > 0 ? '↑' : '↓'} {Math.abs(diff).toLocaleString()}</span>
+      )}
+    </div>
+  );
 }
 
 function BrandAvatar({ name }: { name: string }) {
@@ -63,6 +104,15 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
 
   const days = daysInMonth(month);
   const weeks = weeksInMonth(month);
+
+  // Expected completion % based on today's date within the selected month
+  const today = new Date();
+  const monthDate = new Date(month + 'T00:00:00');
+  const isCurrentMonth = today.getFullYear() === monthDate.getFullYear() && today.getMonth() === monthDate.getMonth();
+  const expectedDailyPct = isCurrentMonth ? Math.round((today.getDate() / days) * 100) : 100;
+  // For weekly: how many weeks have started so far
+  const weeksPassed = isCurrentMonth ? Math.min(Math.ceil(today.getDate() / 7), weeks) : weeks;
+  const expectedWeeklyPct = Math.round((weeksPassed / weeks) * 100);
 
   function getEntry(brandId: string) {
     return monthlyEntries.find(e => e.brand_id === brandId);
@@ -171,6 +221,7 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '1100px' }}>
           <thead>
             <tr>
+              <th rowSpan={2} style={{ ...th, background: '#dedad2', width: '48px' }}></th>
               <th rowSpan={2} style={{ ...thLeft, background: '#dedad2' }}>Brand</th>
               <th rowSpan={2} style={{ ...th, background: '#dedad2' }}>Scope Monthly</th>
               <th rowSpan={2} style={{ ...th, background: '#dedad2' }}>Backlog to Complete</th>
@@ -182,7 +233,6 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
               <th rowSpan={2} style={{ ...th, background: '#fce4d6', color: '#bf360c' }}>Social tracker %</th>
               <th rowSpan={2} style={{ ...th, background: '#fce4d6', color: '#bf360c' }}>Ops tracker %</th>
               <th colSpan={5} style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>WoW (Week on Week)</th>
-              <th rowSpan={2} style={{ ...th, background: '#dedad2', width: '48px' }}></th>
             </tr>
             <tr>
               <th style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>Followers</th>
@@ -217,6 +267,29 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
 
               return (
                 <tr key={brandId}>
+                  {/* Action column — first */}
+                  <td style={{ ...tdR, width: '48px', padding: '6px 8px' }}>
+                    {canEdit && (
+                      isEditing ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <button onClick={() => save(brandId)} disabled={isSaving}
+                            style={{ padding: '4px 8px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            {isSaving ? '…' : 'Save'}
+                          </button>
+                          <button onClick={() => setEditing(null)}
+                            style={{ padding: '4px 8px', borderRadius: 'var(--radius)', border: '0.5px solid var(--border)', background: 'transparent', fontSize: '11px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <button onClick={() => startEdit(brandId)} title="Edit row"
+                          style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', background: '#fff0ec', cursor: 'pointer', color: '#e05c3a', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                          ✏
+                        </button>
+                      )
+                    )}
+                  </td>
+
                   {/* Brand with avatar */}
                   <td style={{ ...tdLR, minWidth: '160px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -264,77 +337,30 @@ export default function SocialTable({ assignments, monthlyEntries, weeklyEntries
                     <>
                       <td style={tdR}><Num v={m.scope} /></td>
                       <td style={tdR}><Num v={m.backlog} /></td>
-                      <td style={tdR}><PctCell value={scopePct} /></td>
-                      <td style={tdR}><PctCell value={backlogPct} /></td>
-                      <td style={tdR}><Num v={m.nps} /></td>
+                      <td style={tdR}><PctCell value={scopePct} expected={expectedDailyPct} /></td>
+                      <td style={tdR}><PctCell value={backlogPct} expected={expectedDailyPct} /></td>
+                      <td style={tdR}><NpsCell value={m.nps} /></td>
                       <td style={tdR}>
                         {entry
                           ? <span style={{ padding: '3px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, background: m.invoice_cleared ? '#dcfce7' : '#fee2e2', color: m.invoice_cleared ? '#16a34a' : '#dc2626' }}>{m.invoice_cleared ? 'Y' : 'N'}</span>
                           : <Muted />}
                       </td>
                       <td style={{ ...tdR, cursor: canEdit ? 'pointer' : 'default' }} title={canEdit ? 'Click to log daily updates' : ''} onClick={() => canEdit && setTrackerModal({ brandId, type: 'orm' })}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                          <PctCell value={ormPct} />
-                          {canEdit && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.7 }}>✎</span>}
-                        </div>
+                        <PctCell value={ormPct} expected={expectedDailyPct} />
                       </td>
                       <td style={{ ...tdR, cursor: canEdit ? 'pointer' : 'default' }} title={canEdit ? 'Click to log weekly updates' : ''} onClick={() => canEdit && setTrackerModal({ brandId, type: 'social' })}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                          <PctCell value={socialPct} />
-                          {canEdit && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.7 }}>✎</span>}
-                        </div>
+                        <PctCell value={socialPct} expected={expectedWeeklyPct} />
                       </td>
                       <td style={{ ...tdR, cursor: canEdit ? 'pointer' : 'default' }} title={canEdit ? 'Click to log daily updates' : ''} onClick={() => canEdit && setTrackerModal({ brandId, type: 'ops' })}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                          <PctCell value={opsPct} />
-                          {canEdit && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.7 }}>✎</span>}
-                        </div>
+                        <PctCell value={opsPct} expected={expectedDailyPct} />
                       </td>
-                      <td style={tdR}>
-                        <Num v={currWeek?.followers} />
-                        <Delta curr={currWeek?.followers ?? null} prev={prevWeek?.followers ?? null} />
-                      </td>
-                      <td style={tdR}>
-                        <Num v={currWeek?.er} suffix="%" />
-                        <Delta curr={currWeek?.er ?? null} prev={prevWeek?.er ?? null} />
-                      </td>
-                      <td style={tdR}>
-                        <Num v={currWeek?.sov} suffix="%" />
-                        <Delta curr={currWeek?.sov ?? null} prev={prevWeek?.sov ?? null} />
-                      </td>
-                      <td style={tdR}>
-                        <Num v={currWeek?.profile_visits} />
-                        <Delta curr={currWeek?.profile_visits ?? null} prev={prevWeek?.profile_visits ?? null} />
-                      </td>
-                      <td style={tdR}>
-                        <Num v={currWeek?.avg_vtr} suffix="%" />
-                        <Delta curr={currWeek?.avg_vtr ?? null} prev={prevWeek?.avg_vtr ?? null} />
-                      </td>
+                      <td style={tdR}><WowCell curr={currWeek?.followers} prev={prevWeek?.followers} /></td>
+                      <td style={tdR}><WowCell curr={currWeek?.er} prev={prevWeek?.er} suffix="%" /></td>
+                      <td style={tdR}><WowCell curr={currWeek?.sov} prev={prevWeek?.sov} suffix="%" /></td>
+                      <td style={tdR}><WowCell curr={currWeek?.profile_visits} prev={prevWeek?.profile_visits} /></td>
+                      <td style={tdR}><WowCell curr={currWeek?.avg_vtr} prev={prevWeek?.avg_vtr} suffix="%" /></td>
                     </>
                   )}
-
-                  {/* Action column */}
-                  <td style={{ ...tdR, width: '48px', padding: '6px 8px' }}>
-                    {canEdit && (
-                      isEditing ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <button onClick={() => save(brandId)} disabled={isSaving}
-                            style={{ padding: '4px 8px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                            {isSaving ? '…' : 'Save'}
-                          </button>
-                          <button onClick={() => setEditing(null)}
-                            style={{ padding: '4px 8px', borderRadius: 'var(--radius)', border: '0.5px solid var(--border)', background: 'transparent', fontSize: '11px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                            ✕
-                          </button>
-                        </div>
-                      ) : (
-                        <button onClick={() => startEdit(brandId)} title="Edit row"
-                          style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', background: '#fff0ec', cursor: 'pointer', color: '#e05c3a', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
-                          ✏
-                        </button>
-                      )
-                    )}
-                  </td>
                 </tr>
               );
             })}
