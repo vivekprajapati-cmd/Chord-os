@@ -29,9 +29,8 @@ export async function GET(req: Request) {
   const { data: person } = await admin
     .from('people')
     .select('google_refresh_token, email')
-    .eq('access_tier', 'admin')
+    .eq('email', 'vivek.prajapati@1702digital.com')
     .not('google_refresh_token', 'is', null)
-    .limit(1)
     .maybeSingle();
   console.log('[nps-responses] using token from:', person?.email);
 
