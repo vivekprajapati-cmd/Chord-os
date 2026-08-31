@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     .eq('auth_user_id', user.id)
     .maybeSingle();
 
-  if (me?.access_tier !== 'admin') {
+  if (!['admin', 'lead', 'operations', 'staff'].includes(me?.access_tier ?? '')) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 

@@ -108,15 +108,13 @@ export default function HarmonyCoreClient({ me, people }: Props) {
           <h1 style={{ fontSize: '26px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: 1 }}>
             Harmony Core
           </h1>
-          {me.access_tier === 'admin' && (
-            <button onClick={() => setShowAssign(true)}
+          <button onClick={() => setShowAssign(true)}
               style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 13px', borderRadius: '999px', border: '1.5px solid var(--ink, #0D0D0B)', background: 'transparent', color: 'var(--ink, #0D0D0B)', fontFamily: 'var(--font-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.07em', cursor: 'pointer', fontWeight: 700, transition: 'all .15s' }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--ink, #0D0D0B)'; (e.currentTarget as HTMLButtonElement).style.color = '#F0EDE5'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink, #0D0D0B)'; }}
             >
               <span style={{ fontSize: '14px', lineHeight: 1 }}>+</span> Assign Brand
             </button>
-          )}
         </div>
 
         {/* Month nav */}
