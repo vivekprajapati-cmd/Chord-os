@@ -78,10 +78,13 @@ export async function getFormResponses(
 }
 
 export function extractFormId(input: string): string | null {
-  // Handle full URL or bare form ID
-  const match = input.match(/\/forms\/d\/([a-zA-Z0-9_-]+)/);
-  if (match) return match[1];
-  // Bare ID (no slashes)
+  // Handle /forms/d/e/<id>/viewform style URLs (published forms)
+  const publishedMatch = input.match(/\/forms\/d\/e\/([a-zA-Z0-9_-]{20,})/);
+  if (publishedMatch) return publishedMatch[1];
+  // Handle /forms/d/<id> style URLs (edit URLs)
+  const editMatch = input.match(/\/forms\/d\/([a-zA-Z0-9_-]{20,})/);
+  if (editMatch) return editMatch[1];
+  // Bare ID
   if (/^[a-zA-Z0-9_-]{20,}$/.test(input.trim())) return input.trim();
   return null;
 }
