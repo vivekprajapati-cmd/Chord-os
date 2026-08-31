@@ -58,14 +58,15 @@ export default function HarmonyCoreClient({ me, people }: Props) {
   const roleType = selectedPerson ? getRoleType(selectedPerson) : 'social';
   const canEdit = me.access_tier === 'admin' || me.id === selectedPersonId;
 
-  const load = useCallback(async (silent = false) => {
-    if (!selectedPersonId) return;
+  const load = useCallback(async (silent = false, personIdOverride?: string) => {
+    const pid = personIdOverride ?? selectedPersonId;
+    if (!pid) return;
     if (silent) setRefreshing(true); else setLoading(true);
     try {
       const [monthly, weekly] = await Promise.all([
-        fetch(`/api/harmony-core?person_id=${selectedPersonId}&month=${month}`, { cache: 'no-store' }).then(r => r.json()),
+        fetch(`/api/harmony-core?person_id=${pid}&month=${month}`, { cache: 'no-store' }).then(r => r.json()),
         roleType === 'social'
-          ? fetch(`/api/harmony-core/weekly?person_id=${selectedPersonId}&week_start=${weekStart}`, { cache: 'no-store' }).then(r => r.json())
+          ? fetch(`/api/harmony-core/weekly?person_id=${pid}&week_start=${weekStart}`, { cache: 'no-store' }).then(r => r.json())
           : Promise.resolve({ entries: [] }),
       ]);
       setAssignments(monthly.assignments ?? []);
@@ -235,7 +236,10 @@ export default function HarmonyCoreClient({ me, people }: Props) {
           people={people}
           defaultPersonId={selectedPersonId}
           onClose={() => setShowAssign(false)}
-          onSaved={() => load(true)}
+          onSaved={(personId) => {
+            setSelectedPersonId(personId);
+            load(true, personId);
+          }}
         />
       )}
     </div>

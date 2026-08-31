@@ -10,7 +10,7 @@ type Props = {
   people: Person[];
   defaultPersonId: string;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (personId: string) => void;
 };
 
 const ROLE_TYPES = ['social', 'influencer', 'creative'] as const;
@@ -64,7 +64,7 @@ export default function AssignModal({ people, defaultPersonId, onClose, onSaved 
     const d = await fetch(`/api/harmony-core?person_id=${selectedPersonId}&month=${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`).then(r => r.json());
     setAssignments(d.assignments ?? []);
     setSaving(null);
-    onSaved();
+    onSaved(selectedPersonId);
   }
 
   const selectedPerson = people.find(p => p.id === selectedPersonId);
