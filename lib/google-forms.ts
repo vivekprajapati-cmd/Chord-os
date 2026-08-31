@@ -14,7 +14,11 @@ async function getAccessToken(refreshToken: string): Promise<string | null> {
     }),
   });
   const data = await res.json();
-  return data.access_token ?? null;
+  if (!data.access_token) { console.error('[google-forms] token exchange failed:', data); return null; }
+  // Log token scopes for debugging
+  const info = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${data.access_token}`).then(r => r.json());
+  console.log('[google-forms] token scopes:', info.scope);
+  return data.access_token;
 }
 
 export type NpsResponse = {
