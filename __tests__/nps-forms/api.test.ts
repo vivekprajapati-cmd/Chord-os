@@ -118,7 +118,7 @@ describe('POST /api/nps-forms', () => {
     const { POST } = await import('../../app/api/nps-forms/route');
     const res = await POST(new Request('http://localhost/api/nps-forms', {
       method: 'POST',
-      body: JSON.stringify({ brand_id: 'b1', form_url: 'https://docs.google.com/forms/d/1FAIpQLSe_abc123/viewform', quarter: 'Q3 2026' }),
+      body: JSON.stringify({ brand_id: 'b1', form_url: 'https://docs.google.com/forms/d/1Dge6ODkgQfP7dIXL4YcTVyhbXqU0Iyq7cwFPvDtU/edit', quarter: 'Q3 2026' }),
     }));
     expect(res.status).toBe(200);
     expect(insertFn).toHaveBeenCalledWith(expect.objectContaining({ brand_id: 'b1', quarter: 'Q3 2026' }));
@@ -193,7 +193,7 @@ describe('GET /api/nps-forms/responses', () => {
           return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockResolvedValue({ data: [{ id: 'f1', form_id: 'abc', quarter: 'Q3 2026' }], error: null }) };
         }
         // people table — no refresh token
-        return { select: vi.fn().mockReturnThis(), not: vi.fn().mockReturnThis(), limit: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: null }) };
+        return { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), not: vi.fn().mockReturnThis(), limit: vi.fn().mockReturnThis(), maybeSingle: vi.fn().mockResolvedValue({ data: null }) };
       }),
     };
 
@@ -211,7 +211,7 @@ describe('GET /api/nps-forms/responses', () => {
 describe('extractFormId', () => {
   it('extracts form ID from full URL', async () => {
     const { extractFormId } = await import('../../lib/google-forms');
-    expect(extractFormId('https://docs.google.com/forms/d/1FAIpQLSe_abc123XYZ/viewform')).toBe('1FAIpQLSe_abc123XYZ');
+    expect(extractFormId('https://docs.google.com/forms/d/1Dge6ODkgQfP7dIXL4YcTVyhbXqU0Iyq7cwFPvDtU/edit')).toBe('1Dge6ODkgQfP7dIXL4YcTVyhbXqU0Iyq7cwFPvDtU');
   });
 
   it('returns bare ID as-is if valid', async () => {
