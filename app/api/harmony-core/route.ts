@@ -33,7 +33,50 @@ export async function GET(req: Request) {
     .eq('person_id', person_id)
     .eq('month', month);
 
-  return NextResponse.json({ assignments: assignments ?? [], entries: entries ?? [] });
+  // Auto-carry: for social brands with no current-month entry but with remaining scope last month,
+  // seed this month's backlog automatically.
+  const prevMonthDate = new Date(month + 'T00:00:00');
+  prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+  const prevMonth = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}-01`;
+
+  const { data: prevEntries } = await admin
+    .from('harmony_core_monthly')
+    .select('*')
+    .eq('person_id', person_id)
+    .eq('month', prevMonth);
+
+  const existingBrandIds = new Set((entries ?? []).map((e: any) => e.brand_id));
+  const carriedBrands: string[] = [];
+
+  for (const prev of prevEntries ?? []) {
+    if (prev.role_type !== 'social') continue;
+    const m = prev.metrics ?? {};
+    const remaining = Math.max(0, (Number(m.scope) || 0) - (Number(m.tasks_completed) || 0));
+    if (remaining === 0) continue;
+
+    if (!existingBrandIds.has(prev.brand_id)) {
+      await admin.from('harmony_core_monthly').upsert(
+        {
+          person_id,
+          brand_id: prev.brand_id,
+          month,
+          role_type: 'social',
+          metrics: { backlog: remaining },
+          tracker_logs: { orm: [], ops: [], social: [] },
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'person_id,brand_id,month' }
+      );
+      carriedBrands.push(prev.brand_id);
+    }
+  }
+
+  // Re-fetch if we seeded anything
+  const finalEntries = carriedBrands.length
+    ? (await admin.from('harmony_core_monthly').select('*').eq('person_id', person_id).eq('month', month)).data ?? []
+    : entries ?? [];
+
+  return NextResponse.json({ assignments: assignments ?? [], entries: finalEntries, carried_brands: carriedBrands });
 }
 
 export async function POST(req: Request) {
