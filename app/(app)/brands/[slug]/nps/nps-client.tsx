@@ -82,23 +82,29 @@ export default function NpsClient({ brand, isAdmin }: { brand: Brand; isAdmin: b
     : null;
 
   // Per-question averages across all responses
-  const questionAvgs: { label: string; avg: number; count: number; isNps: boolean }[] = (() => {
-    const acc: Record<string, { sum: number; count: number }> = {};
+  const questionAvgs: { label: string; avg: number; max: number; count: number; isNps: boolean }[] = (() => {
+    const acc: Record<string, { sum: number; count: number; max: number }> = {};
     for (const r of responses) {
       for (const [label, text] of Object.entries(r.answers)) {
         const num = Number(text);
-        if (text.trim() === '' || isNaN(num) || num < 0 || num > 10) continue;
-        if (!acc[label]) acc[label] = { sum: 0, count: 0 };
+        if (text.trim() === '' || isNaN(num) || num < 1 || num > 10) continue;
+        if (!acc[label]) acc[label] = { sum: 0, count: 0, max: 0 };
         acc[label].sum += num;
         acc[label].count += 1;
+        if (num > acc[label].max) acc[label].max = num;
       }
     }
-    return Object.entries(acc).map(([label, { sum, count }]) => ({
-      label,
-      avg: Math.round((sum / count) * 10) / 10,
-      count,
-      isNps: label.toLowerCase().includes('recommend') || label.toLowerCase().includes('likely') || label.toLowerCase().includes('nps'),
-    }));
+    return Object.entries(acc).map(([label, { sum, count, max }]) => {
+      // If highest observed value > 5, it's a 10-point scale; otherwise 5-point
+      const scale = max > 5 ? 10 : 5;
+      return {
+        label,
+        avg: Math.round((sum / count) * 10) / 10,
+        max: scale,
+        count,
+        isNps: label.toLowerCase().includes('recommend') || label.toLowerCase().includes('likely') || label.toLowerCase().includes('nps'),
+      };
+    });
   })();
 
   return (
@@ -161,9 +167,9 @@ export default function NpsClient({ brand, isAdmin }: { brand: Brand; isAdmin: b
               <div style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', padding: '8px 16px', borderBottom: '1px solid var(--border, #e5e2da)', background: 'var(--paper)' }}>
                 Avg scores across {responses.length} responses
               </div>
-              {questionAvgs.map(({ label, avg, count, isNps }) => {
-                const pct = (avg / 10) * 100;
-                const barColor = avg >= 8 ? '#16a34a' : avg >= 6 ? '#ca8a04' : '#dc2626';
+              {questionAvgs.map(({ label, avg, max, count, isNps }) => {
+                const pct = (avg / max) * 100;
+                const barColor = pct >= 80 ? '#16a34a' : pct >= 60 ? '#ca8a04' : '#dc2626';
                 return (
                   <div key={label} style={{ padding: '10px 16px', borderBottom: '1px solid var(--border, #e5e2da)', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <div style={{ flex: 1, fontFamily: 'var(--f-body)', fontSize: '12px', color: 'var(--ink)', minWidth: 0 }}>
@@ -174,7 +180,7 @@ export default function NpsClient({ brand, isAdmin }: { brand: Brand; isAdmin: b
                       <div style={{ width: `${pct}%`, height: '100%', background: barColor, borderRadius: '3px', transition: 'width 0.3s' }} />
                     </div>
                     <div style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', fontWeight: 700, color: barColor, width: '32px', textAlign: 'right', flexShrink: 0 }}>{avg}</div>
-                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', flexShrink: 0 }}>/ 10</div>
+                    <div style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', flexShrink: 0 }}>/ {max}</div>
                   </div>
                 );
               })}

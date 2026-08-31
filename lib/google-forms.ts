@@ -69,15 +69,17 @@ export async function getFormResponses(
       const label = questions[qId] ?? qId;
       answers[label] = text;
 
-      // Detect NPS score: the "recommend / likely to recommend" question
+      // Detect NPS score: prefer label-based; without labels, pick the answer > 5
+      // (NPS question is 1-10; other rating questions are 1-5)
       const num = Number(text);
       const isNumeric = text.trim() !== '' && !isNaN(num) && num >= 0 && num <= 10;
       const lower = label.toLowerCase();
       const hasLabel = label !== qId;
       const isNpsQuestion = lower.includes('recommend') || lower.includes('likely') ||
         lower.includes('nps') || lower.includes('promoter');
-      if (isNumeric && (hasLabel ? isNpsQuestion : score === null)) {
-        score = num;
+      if (isNumeric) {
+        if (hasLabel && isNpsQuestion) score = num;
+        else if (!hasLabel && num > 5) score = num; // only 1-10 questions can exceed 5
       }
     }
 
