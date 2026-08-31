@@ -32,7 +32,6 @@ export async function GET(req: Request) {
     .eq('email', 'vivek.prajapati@1702digital.com')
     .not('google_refresh_token', 'is', null)
     .maybeSingle();
-  console.log('[nps-responses] using token from:', person?.email);
 
   if (!person?.google_refresh_token) {
     return NextResponse.json({ error: 'No Google account connected. Connect Google Calendar first.' }, { status: 503 });

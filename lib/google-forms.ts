@@ -15,9 +15,6 @@ async function getAccessToken(refreshToken: string): Promise<string | null> {
   });
   const data = await res.json();
   if (!data.access_token) { console.error('[google-forms] token exchange failed:', data); return null; }
-  // Log token scopes for debugging
-  const info = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${data.access_token}`).then(r => r.json());
-  console.log('[google-forms] token scopes:', info.scope);
   return data.access_token;
 }
 
@@ -35,31 +32,17 @@ export async function getFormResponses(
   const accessToken = await getAccessToken(refreshToken);
   if (!accessToken) return [];
 
-  const [formRes, responsesRes] = await Promise.all([
-    fetch(`https://forms.googleapis.com/v1/forms/${formId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }),
-    fetch(`https://forms.googleapis.com/v1/forms/${formId}/responses`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }),
-  ]);
+  const responsesRes = await fetch(`https://forms.googleapis.com/v1/forms/${formId}/responses`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
 
-  if (!formRes.ok || !responsesRes.ok) {
-    const errBody = !formRes.ok ? await formRes.text() : await responsesRes.text();
-    console.error('[google-forms] API error', { formId, formStatus: formRes.status, responsesStatus: responsesRes.status, body: errBody });
+  if (!responsesRes.ok) {
+    const errBody = await responsesRes.text();
+    console.error('[google-forms] API error', { formId, status: responsesRes.status, body: errBody });
     return [];
   }
 
-  const form = await formRes.json();
   const { responses = [] } = await responsesRes.json();
-
-  // Build question index: id -> title
-  const questions: Record<string, string> = {};
-  for (const item of form.items ?? []) {
-    if (item.questionItem?.question?.questionId) {
-      questions[item.questionItem.question.questionId] = item.title ?? '';
-    }
-  }
 
   return responses.map((r: any) => {
     const answers: Record<string, string> = {};
@@ -67,13 +50,12 @@ export async function getFormResponses(
 
     for (const [qId, ans] of Object.entries(r.answers ?? {})) {
       const text = (ans as any).textAnswers?.answers?.[0]?.value ?? '';
-      const label = questions[qId] ?? qId;
-      answers[label] = text;
+      answers[qId] = text;
 
-      // Detect NPS score: a numeric answer to a question containing "nps", "score", or "rate"
-      const lower = label.toLowerCase();
-      if ((lower.includes('nps') || lower.includes('score') || lower.includes('rate')) && !isNaN(Number(text))) {
-        score = Number(text);
+      // Detect NPS score: numeric value in 0-10 range
+      const num = Number(text);
+      if (!isNaN(num) && num >= 0 && num <= 10 && text.trim() !== '') {
+        score = num;
       }
     }
 
