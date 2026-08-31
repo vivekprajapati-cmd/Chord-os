@@ -427,6 +427,15 @@ export default function CalendarClient({
                 <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34A853', display: 'inline-block' }} />
                   GCal
+                  <button
+                    onClick={async () => {
+                      await fetch('/api/auth/google/disconnect', { method: 'POST' });
+                      window.location.reload();
+                    }}
+                    style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'transparent', color: 'var(--gray)', border: '1px solid var(--gray)', borderRadius: '999px', padding: '3px 8px', cursor: 'pointer' }}
+                  >
+                    Disconnect
+                  </button>
                 </span>
               ) : (
                 <a
