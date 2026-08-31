@@ -61,9 +61,9 @@ export default function HarmonyCoreClient({ me, people }: Props) {
     if (!selectedPersonId) return;
     setLoading(true);
     const [monthly, weekly] = await Promise.all([
-      fetch(`/api/harmony-core?person_id=${selectedPersonId}&month=${month}`).then(r => r.json()),
+      fetch(`/api/harmony-core?person_id=${selectedPersonId}&month=${month}`, { cache: 'no-store' }).then(r => r.json()),
       roleType === 'social'
-        ? fetch(`/api/harmony-core/weekly?person_id=${selectedPersonId}&week_start=${weekStart}`).then(r => r.json())
+        ? fetch(`/api/harmony-core/weekly?person_id=${selectedPersonId}&week_start=${weekStart}`, { cache: 'no-store' }).then(r => r.json())
         : Promise.resolve({ entries: [] }),
     ]);
     setAssignments(monthly.assignments ?? []);

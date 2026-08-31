@@ -40,7 +40,11 @@ export async function getFormResponses(
     }),
   ]);
 
-  if (!formRes.ok || !responsesRes.ok) return [];
+  if (!formRes.ok || !responsesRes.ok) {
+    const errBody = !formRes.ok ? await formRes.text() : await responsesRes.text();
+    console.error('[google-forms] API error', { formId, formStatus: formRes.status, responsesStatus: responsesRes.status, body: errBody });
+    return [];
+  }
 
   const form = await formRes.json();
   const { responses = [] } = await responsesRes.json();
