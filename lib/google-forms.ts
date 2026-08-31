@@ -41,20 +41,22 @@ export async function getFormResponses(
     }),
   ]);
 
-  if (!formRes.ok || !responsesRes.ok) {
-    const errBody = !formRes.ok ? await formRes.text() : await responsesRes.text();
-    console.error('[google-forms] API error', { formId, formStatus: formRes.status, responsesStatus: responsesRes.status, body: errBody });
+  if (!responsesRes.ok) {
+    const errBody = await responsesRes.text();
+    console.error('[google-forms] responses API error', { formId, status: responsesRes.status, body: errBody });
     return [];
   }
 
-  const form = await formRes.json();
   const { responses = [] } = await responsesRes.json();
 
-  // Build question index: id -> title
+  // Build question index: id -> title (best-effort — requires forms.body.readonly scope)
   const questions: Record<string, string> = {};
-  for (const item of form.items ?? []) {
-    if (item.questionItem?.question?.questionId) {
-      questions[item.questionItem.question.questionId] = item.title ?? '';
+  if (formRes.ok) {
+    const form = await formRes.json();
+    for (const item of form.items ?? []) {
+      if (item.questionItem?.question?.questionId) {
+        questions[item.questionItem.question.questionId] = item.title ?? '';
+      }
     }
   }
 
