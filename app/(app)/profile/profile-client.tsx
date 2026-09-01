@@ -71,7 +71,6 @@ function ComingSoonBadge() {
 }
 
 export default function ProfileClient({ person: initial, managerName }: { person: Person; managerName: string | null }) {
-  const router = useRouter();
   const [person, setPerson] = useState(initial);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(initial);
