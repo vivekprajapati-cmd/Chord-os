@@ -33,6 +33,7 @@ export default function DashboardClient() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [canDelete, setCanDelete] = useState(false);
   const [flexibleDue, setFlexibleDue] = useState<{ id: string; deliverable: string; deadline: string; priority: string; brands: { name: string } | null }[]>([]);
+  const [pendingLeaves, setPendingLeaves] = useState<{ id: string; type: string; start_date: string; end_date: string; duration_days: number; reason: string | null; people: { name: string; role: string | null } | null }[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -105,6 +106,18 @@ export default function DashboardClient() {
       setInProgressCount(ip?.length ?? 0);
       setReviewCount(rv?.length ?? 0);
       setFlexibleDue((ft ?? []) as any[]);
+
+      // pending leaves assigned to this person as approver
+      try {
+        const { data: pl } = await supabase
+          .from('leaves')
+          .select('id, type, start_date, end_date, duration_days, reason, people(name, role)')
+          .eq('approver_id', p.id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: true });
+        if (pl) setPendingLeaves(pl as any[]);
+      } catch {}
+
       setLoading(false);
     }
 
@@ -283,6 +296,15 @@ export default function DashboardClient() {
         </section>
       )}
 
+      {pendingLeaves.length > 0 && (
+        <LeaveApprovalSection
+          leaves={pendingLeaves}
+          onAction={(id, status) => {
+            setPendingLeaves(prev => prev.filter(l => l.id !== id));
+          }}
+        />
+      )}
+
       {reviewCount > 0 && (
         <section>
           <p className="text-xs font-mono uppercase tracking-[0.12em] text-[var(--red)] mb-3">
@@ -309,6 +331,73 @@ export default function DashboardClient() {
         />
       )}
     </div>
+  );
+}
+
+type PendingLeave = { id: string; type: string; start_date: string; end_date: string; duration_days: number; reason: string | null; people: { name: string; role: string | null } | null };
+
+function LeaveApprovalSection({ leaves, onAction }: { leaves: PendingLeave[]; onAction: (id: string, status: string) => void }) {
+  const [actioning, setActioning] = useState<string | null>(null);
+
+  async function action(id: string, status: 'approved' | 'rejected') {
+    setActioning(id + status);
+    await fetch(`/api/leaves/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    setActioning(null);
+    onAction(id, status);
+  }
+
+  return (
+    <section>
+      <p className="text-xs font-mono uppercase tracking-[0.12em] mb-3" style={{ color: '#E5533D' }}>
+        Leave approvals pending ({leaves.length})
+      </p>
+      <div className="space-y-2">
+        {leaves.map(l => {
+          const from = new Date(l.start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+          const to = new Date(l.end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+          const isActioning = actioning?.startsWith(l.id);
+          return (
+            <div key={l.id} style={{ background: 'var(--paper)', border: '1.5px solid #E5533D', borderRadius: '14px', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, color: '#E5533D' }}>
+                    {l.type} leave
+                  </span>
+                  <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>· {l.duration_days}d</span>
+                </div>
+                <p style={{ fontFamily: 'var(--f-body)', fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>
+                  {l.people?.name ?? 'Unknown'}
+                  {l.people?.role && <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', fontWeight: 400, marginLeft: '6px' }}>{l.people.role}</span>}
+                </p>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', marginTop: '2px' }}>
+                  {from} – {to}{l.reason ? ` · ${l.reason}` : ''}
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                <button
+                  onClick={() => action(l.id, 'rejected')}
+                  disabled={!!isActioning}
+                  style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'none', border: '1px solid var(--line)', borderRadius: '999px', padding: '7px 16px', color: 'var(--gray)', cursor: isActioning ? 'not-allowed' : 'pointer', opacity: isActioning ? 0.5 : 1 }}
+                >
+                  Reject
+                </button>
+                <button
+                  onClick={() => action(l.id, 'approved')}
+                  disabled={!!isActioning}
+                  style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'var(--ink)', color: 'var(--cream)', border: 'none', borderRadius: '999px', padding: '7px 16px', cursor: isActioning ? 'not-allowed' : 'pointer', opacity: isActioning ? 0.5 : 1 }}
+                >
+                  {actioning === l.id + 'approved' ? 'Approving…' : 'Approve'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
