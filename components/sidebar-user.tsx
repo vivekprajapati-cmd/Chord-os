@@ -18,7 +18,7 @@ export default function SidebarUser({ person, tier }: { person: Person; tier: 'a
   return (
     <>
       <div className="px-4 py-4" style={{ borderTop: '1px solid var(--line)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+        <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', textDecoration: 'none' }}>
           <div style={{
             width: '34px', height: '34px', borderRadius: '999px',
             background: 'var(--ink)', color: 'var(--cream)',
@@ -39,7 +39,7 @@ export default function SidebarUser({ person, tier }: { person: Person; tier: 'a
               {tier === 'admin' ? 'Lead' : 'POC'}
             </span>
           )}
-        </div>
+        </Link>
         <div style={{ display: 'flex', gap: '10px' }}>
           <Link
             href="/profile"
