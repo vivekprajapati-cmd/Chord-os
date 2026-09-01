@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 const DEPARTMENTS = ['Creative', 'Video', 'Account', 'SEO', 'Content', 'Sales', 'Marketing', 'Ops', 'Leadership'];
 const SENIORITIES = ['Exec', 'Lead', 'Senior', 'Mid', 'Junior', 'Trainee', 'Intern'];
@@ -114,7 +113,7 @@ export default function ProfileClient({ person: initial, managerName }: { person
   };
 
   return (
-    <div style={{ maxWidth: '860px', margin: '0 auto', padding: '0 0 60px' }}>
+    <div style={{ width: '100%', padding: '0 0 60px' }}>
 
       {/* Page Header */}
       <div style={{ marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -230,10 +229,10 @@ export default function ProfileClient({ person: initial, managerName }: { person
 
 function LeaveTab() {
   const types = [
-    { label: 'Earned Leave', used: 0, total: 18, color: '#4f83cc', bg: '#e8f0fe' },
-    { label: 'Casual Leave', used: 0, total: 8, color: '#2e7d32', bg: '#e8f5e9' },
-    { label: 'Sick Leave', used: 0, total: 6, color: '#c62828', bg: '#fce4ec' },
-    { label: 'Unpaid Leave', used: 0, total: 5, color: '#6a1fa2', bg: '#f3e5f5' },
+    { label: 'Earned Leave',  used: 0, total: 18, colorVar: 'var(--cobalt)', bgVar: 'color-mix(in srgb, var(--cobalt) 10%, var(--cream))' },
+    { label: 'Casual Leave',  used: 0, total: 8,  colorVar: 'var(--ink)',    bgVar: 'color-mix(in srgb, var(--ink) 6%, var(--cream))' },
+    { label: 'Sick Leave',    used: 0, total: 6,  colorVar: 'var(--coral)',  bgVar: 'color-mix(in srgb, var(--coral) 10%, var(--cream))' },
+    { label: 'Unpaid Leave',  used: 0, total: 5,  colorVar: 'var(--red)',    bgVar: 'color-mix(in srgb, var(--red) 8%, var(--cream))' },
   ];
 
   return (
@@ -249,13 +248,13 @@ function LeaveTab() {
         </div>
         <div style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
           {types.map(t => (
-            <div key={t.label} style={{ background: t.bg, borderRadius: '12px', padding: '16px', border: `1px solid ${t.color}22` }}>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: t.color, marginBottom: '10px' }}>{t.label}</p>
+            <div key={t.label} style={{ background: t.bgVar, borderRadius: '12px', padding: '16px', border: '1px solid var(--line)' }}>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: t.colorVar, marginBottom: '10px' }}>{t.label}</p>
               <p style={{ fontFamily: 'var(--f-display)', fontSize: '24px', color: 'var(--ink)', fontWeight: 400 }}>
                 {t.used} <span style={{ fontSize: '13px', color: 'var(--gray)', fontFamily: 'var(--f-mono)' }}>/ {t.total} days</span>
               </p>
-              <div style={{ marginTop: '12px', height: '4px', borderRadius: '4px', background: `${t.color}22` }}>
-                <div style={{ height: '4px', borderRadius: '4px', background: t.color, width: `${Math.round((t.used / t.total) * 100)}%` }} />
+              <div style={{ marginTop: '12px', height: '4px', borderRadius: '4px', background: 'var(--line)' }}>
+                <div style={{ height: '4px', borderRadius: '4px', background: t.colorVar, width: `${Math.round((t.used / t.total) * 100)}%` }} />
               </div>
             </div>
           ))}
