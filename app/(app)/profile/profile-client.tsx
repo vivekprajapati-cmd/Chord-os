@@ -276,7 +276,7 @@ function LeaveTab({ personId, balance, history, approvers }: { personId: string;
     setLocalHistory(prev => [leave, ...prev]);
     setSubmitted(true);
     setApplying(false);
-    setForm({ type: 'earned', start_date: '', end_date: '', reason: '' });
+    setForm({ type: 'earned', start_date: '', end_date: '', reason: '', approver_id: approvers[0]?.id ?? '' });
     setTimeout(() => setSubmitted(false), 4000);
   }
 
@@ -334,64 +334,85 @@ function LeaveTab({ personId, balance, history, approvers }: { personId: string;
             })}
           </div>
 
-          {/* Apply panel */}
-          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {!applying ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '10px', height: '100%' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1.5px solid var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
-                </div>
-                <div>
-                  <p style={{ fontFamily: 'var(--f-display)', fontSize: '15px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)', marginBottom: '6px' }}>Apply for Leave</p>
-                  <p style={{ fontFamily: 'var(--f-body)', fontSize: '12px', color: 'var(--gray)', lineHeight: 1.5 }}>Submit a request and get it approved by your manager.</p>
-                </div>
-                <button
-                  onClick={() => setApplying(true)}
-                  style={{ marginTop: '4px', width: '100%', background: 'var(--ink)', color: 'var(--cream)', border: 'none', borderRadius: '999px', padding: '10px 16px', fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
-                >
-                  + Apply for Leave
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink)', fontWeight: 600 }}>New Request</p>
-                <div>
-                  <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '3px' }}>Type</label>
-                  <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} style={inputStyle}>
-                    <option value="earned">Earned Leave</option>
-                    <option value="casual">Casual Leave</option>
-                    <option value="sick">Sick Leave</option>
-                    <option value="unpaid">Unpaid Leave</option>
-                  </select>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                  <div>
-                    <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '3px' }}>From</label>
-                    <input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '3px' }}>To</label>
-                    <input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} style={inputStyle} />
-                  </div>
-                </div>
-                <div>
-                  <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '3px' }}>Reason (optional)</label>
-                  <textarea value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))} rows={2} style={{ ...inputStyle, resize: 'none' }} />
-                </div>
-                {submitError && <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: '#991B1B' }}>{submitError}</p>}
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <button onClick={() => { setApplying(false); setSubmitError(''); }} style={{ flex: 1, background: 'none', border: '1px solid var(--line)', borderRadius: '999px', padding: '8px', fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', cursor: 'pointer' }}>
-                    Cancel
-                  </button>
-                  <button onClick={submit} disabled={submitting} style={{ flex: 1, background: 'var(--ink)', color: 'var(--cream)', border: 'none', borderRadius: '999px', padding: '8px', fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.6 : 1 }}>
-                    {submitting ? 'Submitting…' : 'Submit'}
-                  </button>
-                </div>
-              </div>
-            )}
+          {/* Apply button column */}
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '10px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1.5px solid var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            </div>
+            <div>
+              <p style={{ fontFamily: 'var(--f-display)', fontSize: '15px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)', marginBottom: '6px' }}>Apply for Leave</p>
+              <p style={{ fontFamily: 'var(--f-body)', fontSize: '12px', color: 'var(--gray)', lineHeight: 1.5 }}>Submit a request and get it approved by your manager.</p>
+            </div>
+            <button
+              onClick={() => setApplying(true)}
+              style={{ marginTop: '4px', width: '100%', background: 'var(--ink)', color: 'var(--cream)', border: 'none', borderRadius: '999px', padding: '10px 16px', fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
+            >
+              + Apply for Leave
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Apply for Leave form card — opens when button is clicked */}
+      {applying && (
+        <div style={{ border: '1.5px solid var(--ink)', borderRadius: '14px', boxShadow: '4px 4px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink)', fontWeight: 600 }}>New Leave Request</span>
+            </div>
+            <button onClick={() => { setApplying(false); setSubmitError(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray)', fontFamily: 'var(--f-mono)', fontSize: '18px', lineHeight: 1, padding: '0 4px' }}>×</button>
+          </div>
+          <div style={{ padding: '20px 18px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr) 1fr', gap: '16px', alignItems: 'end' }}>
+            {/* Leave type */}
+            <div>
+              <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '4px' }}>Leave Type</label>
+              <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} style={inputStyle}>
+                <option value="earned">Earned Leave</option>
+                <option value="casual">Casual Leave</option>
+                <option value="sick">Sick Leave</option>
+                <option value="unpaid">Unpaid Leave</option>
+              </select>
+            </div>
+            {/* From */}
+            <div>
+              <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '4px' }}>From</label>
+              <input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} style={inputStyle} />
+            </div>
+            {/* To */}
+            <div>
+              <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '4px' }}>To</label>
+              <input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} style={inputStyle} />
+            </div>
+            {/* Approver */}
+            <div>
+              <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '4px' }}>Approval From</label>
+              <select value={form.approver_id} onChange={e => setForm(f => ({ ...f, approver_id: e.target.value }))} style={inputStyle}>
+                {approvers.length === 0 && <option value="">No approvers found</option>}
+                {approvers.map(a => (
+                  <option key={a.id} value={a.id}>{a.name}{a.role ? ` · ${a.role}` : ''}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {/* Reason + actions */}
+          <div style={{ padding: '0 18px 18px', display: 'grid', gridTemplateColumns: '1fr auto', gap: '16px', alignItems: 'end' }}>
+            <div>
+              <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '4px' }}>Reason (optional)</label>
+              <textarea value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))} rows={2} placeholder="e.g. Personal work, medical appointment..." style={{ ...inputStyle, resize: 'none' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '2px' }}>
+              {submitError && <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: '#991B1B', maxWidth: '180px' }}>{submitError}</p>}
+              <button onClick={() => { setApplying(false); setSubmitError(''); }} style={{ background: 'none', border: '1px solid var(--line)', borderRadius: '999px', padding: '9px 20px', fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                Cancel
+              </button>
+              <button onClick={submit} disabled={submitting} style={{ background: 'var(--ink)', color: 'var(--cream)', border: 'none', borderRadius: '999px', padding: '9px 20px', fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.6 : 1, whiteSpace: 'nowrap' }}>
+                {submitting ? 'Submitting…' : 'Submit Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Leave History */}
       <div style={{ border: '1.5px solid var(--ink)', borderRadius: '14px', boxShadow: '4px 4px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden' }}>
