@@ -181,16 +181,18 @@ export default function ProfileClient({ person: initial, managerName }: { person
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
-            {/* Email readonly */}
+          {/* Row 1: Email · Name · Role · Department */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px 24px', marginBottom: '20px' }}>
             <div>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '4px' }}>Email</p>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)', padding: '8px 0' }}>{person.email}</p>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '6px' }}>Email</p>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.email}</p>
             </div>
-
             <Field label="Full Name" value={draft.name} editing={editing} onChange={v => setField('name', v)} />
             <Field label="Role / Title" value={draft.role} editing={editing} onChange={v => setField('role', v)} />
             <Field label="Department" value={draft.department} editing={editing} options={DEPARTMENTS} onChange={v => setField('department', v)} />
+          </div>
+          {/* Row 2: Seniority · Location */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px 24px' }}>
             <Field label="Seniority" value={draft.seniority} editing={editing} options={SENIORITIES} onChange={v => setField('seniority', v)} />
             <Field label="Location" value={draft.location} editing={editing} onChange={v => setField('location', v)} />
           </div>
