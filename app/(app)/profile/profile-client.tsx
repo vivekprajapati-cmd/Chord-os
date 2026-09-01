@@ -45,7 +45,7 @@ function Field({ label, value, editing, type = 'text', options, onChange }: {
     fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--ink)', fontWeight: 600,
     background: editing ? 'var(--paper, #fafaf8)' : 'transparent',
     border: editing ? '1px solid var(--ink)' : '1px solid transparent',
-    borderRadius: '6px', padding: '4px 8px', width: '100%', outline: 'none',
+    borderRadius: '6px', padding: editing ? '4px 8px' : '4px 0', width: '100%', outline: 'none',
     transition: 'border-color 0.15s',
   };
   return (
@@ -185,7 +185,7 @@ export default function ProfileClient({ person: initial, managerName }: { person
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px 20px', marginBottom: '12px' }}>
             <div>
               <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '2px' }}>Email</p>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--ink)', fontWeight: 600, padding: '4px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.email}</p>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--ink)', fontWeight: 600, padding: '4px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.email}</p>
             </div>
             <Field label="Full Name" value={draft.name} editing={editing} onChange={v => setField('name', v)} />
             <Field label="Role / Title" value={draft.role} editing={editing} onChange={v => setField('role', v)} />
