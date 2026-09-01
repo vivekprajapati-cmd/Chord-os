@@ -19,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .maybeSingle();
 
   const pathname = (await headers()).get('x-pathname') ?? '';
-  const isFullWidth = pathname.startsWith('/harmony-core') || pathname.startsWith('/profile');
+  const isFullWidth = pathname.startsWith('/harmony-core') || pathname.startsWith('/profile') || pathname.startsWith('/hr');
 
   const accessTier = (person as any)?.access_tier ?? 'staff';
   const tier = (accessTier === 'admin' || accessTier === 'lead' ? 'admin' : accessTier === 'viewer' ? 'poc' : 'staff') as 'admin' | 'poc' | 'staff';
@@ -47,7 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </Link>
         </div>
 
-        <SidebarNav tier={tier} />
+        <SidebarNav tier={tier} showHR={accessTier === 'admin' || accessTier === 'hr'} />
 
         <SidebarUser
           person={{
