@@ -185,7 +185,7 @@ export default function ProfileClient({ person: initial, managerName }: { person
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px 20px', marginBottom: '12px' }}>
             <div>
               <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '2px' }}>Email</p>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.email}</p>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--ink)', fontWeight: 600, padding: '4px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.email}</p>
             </div>
             <Field label="Full Name" value={draft.name} editing={editing} onChange={v => setField('name', v)} />
             <Field label="Role / Title" value={draft.role} editing={editing} onChange={v => setField('role', v)} />

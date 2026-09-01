@@ -9,4 +9,5 @@ node_modules/
 next-env.d.ts
 HARMONY_DOCS.md
 docs/accounts.md
+_temp/
 
