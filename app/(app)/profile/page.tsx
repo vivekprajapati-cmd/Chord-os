@@ -25,10 +25,38 @@ export default async function ProfilePage() {
     managerName = mgr ? `${mgr.name}${mgr.role ? ` · ${mgr.role}` : ''}` : null;
   }
 
+  const personId = person?.id ?? '';
+  const year = new Date().getFullYear();
+
+  let leaveBalance = { earned_total: 18, casual_total: 8, sick_total: 6, unpaid_total: 5 };
+  let leaveHistory: { id: string; type: string; start_date: string; end_date: string; duration_days: number; reason: string | null; status: string; created_at: string }[] = [];
+
+  if (personId) {
+    try {
+      const { data: bal } = await admin
+        .from('leave_balances')
+        .select('earned_total, casual_total, sick_total, unpaid_total')
+        .eq('person_id', personId)
+        .eq('year', year)
+        .maybeSingle();
+      if (bal) leaveBalance = bal;
+    } catch {}
+
+    try {
+      const { data: hist } = await admin
+        .from('leaves')
+        .select('id, type, start_date, end_date, duration_days, reason, status, created_at')
+        .eq('person_id', personId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (hist) leaveHistory = hist;
+    } catch {}
+  }
+
   return (
     <ProfileClient
       person={{
-        id: person?.id ?? '',
+        id: personId,
         name: person?.name ?? '',
         email: user.email ?? '',
         role: person?.role ?? '',
@@ -38,6 +66,8 @@ export default async function ProfilePage() {
         access_tier: (person as any)?.access_tier ?? 'staff',
       }}
       managerName={managerName}
+      leaveBalance={leaveBalance}
+      leaveHistory={leaveHistory}
     />
   );
 }

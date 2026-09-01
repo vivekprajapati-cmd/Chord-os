@@ -70,7 +70,15 @@ function ComingSoonBadge() {
   );
 }
 
-export default function ProfileClient({ person: initial, managerName }: { person: Person; managerName: string | null }) {
+type LeaveBalance = { earned_total: number; casual_total: number; sick_total: number; unpaid_total: number };
+type LeaveRecord = { id: string; type: string; start_date: string; end_date: string; duration_days: number; reason: string | null; status: string; created_at: string };
+
+export default function ProfileClient({ person: initial, managerName, leaveBalance, leaveHistory }: {
+  person: Person;
+  managerName: string | null;
+  leaveBalance: LeaveBalance;
+  leaveHistory: LeaveRecord[];
+}) {
   const [person, setPerson] = useState(initial);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(initial);
@@ -222,23 +230,74 @@ export default function ProfileClient({ person: initial, managerName }: { person
       </div>
 
       {/* Tab content */}
-      {tab === 'leave' && <LeaveTab />}
+      {tab === 'leave' && <LeaveTab personId={person.id} balance={leaveBalance} history={leaveHistory} />}
       {tab === 'feedback' && <FeedbackTab />}
     </div>
   );
 }
 
-function LeaveTab() {
-  // Using exact hex so the tints are vivid — CSS vars alone can't express opacity tints without color-mix
+function LeaveTab({ personId, balance, history }: { personId: string; balance: LeaveBalance; history: LeaveRecord[] }) {
+  const [applying, setApplying] = useState(false);
+  const [form, setForm] = useState({ type: 'earned', start_date: '', end_date: '', reason: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [localHistory, setLocalHistory] = useState(history);
+
+  // compute used days per type from approved leaves
+  const used = { earned: 0, casual: 0, sick: 0, unpaid: 0 };
+  localHistory.filter(l => l.status === 'approved').forEach(l => {
+    if (l.type in used) (used as any)[l.type] += l.duration_days;
+  });
+
   const types = [
-    { label: 'Earned Leave', used: 0, total: 18, color: '#2C7CE5', bg: '#EBF3FF', icon: '📅' },
-    { label: 'Casual Leave', used: 0, total: 8,  color: '#16a34a', bg: '#ECFDF5', icon: '📍' },
-    { label: 'Sick Leave',   used: 0, total: 6,  color: '#E55D4A', bg: '#FFF0EE', icon: '❤️' },
-    { label: 'Unpaid Leave', used: 0, total: 5,  color: '#7C3AED', bg: '#F3EFFE', icon: '⭕' },
+    { key: 'earned', label: 'Earned Leave',  total: balance.earned_total,  used: used.earned,  color: '#2C7CE5', bg: '#EBF3FF' },
+    { key: 'casual', label: 'Casual Leave',  total: balance.casual_total,  used: used.casual,  color: '#16a34a', bg: '#ECFDF5' },
+    { key: 'sick',   label: 'Sick Leave',    total: balance.sick_total,    used: used.sick,    color: '#E55D4A', bg: '#FFF0EE' },
+    { key: 'unpaid', label: 'Unpaid Leave',  total: balance.unpaid_total,  used: used.unpaid,  color: '#7C3AED', bg: '#F3EFFE' },
   ];
+
+  async function submit() {
+    if (!form.start_date || !form.end_date) { setSubmitError('Start and end date are required.'); return; }
+    if (form.end_date < form.start_date) { setSubmitError('End date must be after start date.'); return; }
+    setSubmitting(true);
+    setSubmitError('');
+    const res = await fetch('/api/leaves', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    });
+    setSubmitting(false);
+    if (!res.ok) { const d = await res.json().catch(() => ({})); setSubmitError(d.error ?? 'Failed to submit.'); return; }
+    const { leave } = await res.json();
+    setLocalHistory(prev => [leave, ...prev]);
+    setSubmitted(true);
+    setApplying(false);
+    setForm({ type: 'earned', start_date: '', end_date: '', reason: '' });
+    setTimeout(() => setSubmitted(false), 4000);
+  }
+
+  const inputStyle: React.CSSProperties = {
+    fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--ink)',
+    background: 'var(--paper, #fafaf8)', border: '1px solid var(--ink)',
+    borderRadius: '6px', padding: '6px 10px', width: '100%', outline: 'none',
+  };
+
+  const STATUS_COLOR: Record<string, string> = {
+    pending: '#92600A', approved: '#065F46', rejected: '#991B1B',
+  };
+  const STATUS_BG: Record<string, string> = {
+    pending: '#FFF3CD', approved: '#D1FAE5', rejected: '#FEE2E2',
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {submitted && (
+        <div style={{ background: '#D1FAE5', border: '1px solid #065F46', borderRadius: '8px', padding: '10px 16px', fontFamily: 'var(--f-mono)', fontSize: '11px', color: '#065F46', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Leave request submitted. Your manager will review it shortly.
+        </div>
+      )}
+
       {/* Leave Balance card */}
       <div style={{ border: '1.5px solid var(--ink)', borderRadius: '14px', boxShadow: '4px 4px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden' }}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -249,56 +308,116 @@ function LeaveTab() {
           <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Balance as of today</span>
         </div>
 
-        {/* Two-column: cards left, apply panel right */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: '0' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 240px', gap: '0' }}>
+          {/* Balance cards */}
           <div style={{ padding: '14px 18px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', borderRight: '1px solid var(--line)' }}>
-            {types.map(t => (
-              <div key={t.label} style={{ background: t.bg, borderRadius: '10px', padding: '12px 14px', border: `1px solid ${t.color}30` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <div style={{ width: '26px', height: '26px', borderRadius: '7px', background: `${t.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.color}35` }}>
-                    <div style={{ width: '9px', height: '9px', borderRadius: '50%', background: t.color }} />
+            {types.map(t => {
+              const remaining = t.total - t.used;
+              const pct = t.total > 0 ? (t.used / t.total) * 100 : 0;
+              return (
+                <div key={t.key} style={{ background: t.bg, borderRadius: '10px', padding: '12px 14px', border: `1px solid ${t.color}30` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <div style={{ width: '9px', height: '9px', borderRadius: '50%', background: t.color, flexShrink: 0 }} />
+                    <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.07em', color: t.color, fontWeight: 700 }}>{t.label}</p>
                   </div>
-                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.07em', color: t.color, fontWeight: 700 }}>{t.label}</p>
+                  <p style={{ fontFamily: 'var(--f-display)', fontSize: '28px', color: 'var(--ink)', fontWeight: 700, lineHeight: 1 }}>
+                    {remaining} <span style={{ fontSize: '12px', color: 'var(--gray)', fontFamily: 'var(--f-mono)', fontWeight: 500 }}>/ {t.total} days</span>
+                  </p>
+                  <div style={{ marginTop: '10px', height: '4px', borderRadius: '4px', background: `${t.color}22` }}>
+                    <div style={{ height: '4px', borderRadius: '4px', background: t.color, width: `${Math.min(pct, 100)}%`, transition: 'width 0.4s' }} />
+                  </div>
                 </div>
-                <p style={{ fontFamily: 'var(--f-display)', fontSize: '28px', color: 'var(--ink)', fontWeight: 700, lineHeight: 1 }}>
-                  {t.used} <span style={{ fontSize: '12px', color: 'var(--gray)', fontFamily: 'var(--f-mono)', fontWeight: 500 }}>/ {t.total} days</span>
-                </p>
-                <div style={{ marginTop: '10px', height: '4px', borderRadius: '4px', background: `${t.color}22` }}>
-                  <div style={{ height: '4px', borderRadius: '4px', background: t.color, width: '3%' }} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Apply for Leave panel */}
-          <div style={{ padding: '16px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '10px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1.5px solid var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></svg>
-            </div>
-            <div>
-              <p style={{ fontFamily: 'var(--f-display)', fontSize: '15px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)', marginBottom: '6px' }}>Apply for Leave</p>
-              <p style={{ fontFamily: 'var(--f-body)', fontSize: '12px', color: 'var(--gray)', lineHeight: 1.5 }}>Need time off? Submit a leave request and get it approved by your manager.</p>
-            </div>
-            <button
-              disabled
-              style={{ marginTop: '4px', width: '100%', background: 'var(--ink)', color: 'var(--cream)', border: 'none', borderRadius: '999px', padding: '10px 16px', fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'not-allowed', opacity: 0.5 }}
-            >
-              + Apply for Leave
-            </button>
-            <ComingSoonBadge />
+          {/* Apply panel */}
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {!applying ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '10px', height: '100%' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1.5px solid var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                </div>
+                <div>
+                  <p style={{ fontFamily: 'var(--f-display)', fontSize: '15px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)', marginBottom: '6px' }}>Apply for Leave</p>
+                  <p style={{ fontFamily: 'var(--f-body)', fontSize: '12px', color: 'var(--gray)', lineHeight: 1.5 }}>Submit a request and get it approved by your manager.</p>
+                </div>
+                <button
+                  onClick={() => setApplying(true)}
+                  style={{ marginTop: '4px', width: '100%', background: 'var(--ink)', color: 'var(--cream)', border: 'none', borderRadius: '999px', padding: '10px 16px', fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
+                >
+                  + Apply for Leave
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink)', fontWeight: 600 }}>New Request</p>
+                <div>
+                  <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '3px' }}>Type</label>
+                  <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} style={inputStyle}>
+                    <option value="earned">Earned Leave</option>
+                    <option value="casual">Casual Leave</option>
+                    <option value="sick">Sick Leave</option>
+                    <option value="unpaid">Unpaid Leave</option>
+                  </select>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                  <div>
+                    <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '3px' }}>From</label>
+                    <input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '3px' }}>To</label>
+                    <input type="date" value={form.end_date} onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))} style={inputStyle} />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '3px' }}>Reason (optional)</label>
+                  <textarea value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))} rows={2} style={{ ...inputStyle, resize: 'none' }} />
+                </div>
+                {submitError && <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: '#991B1B' }}>{submitError}</p>}
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button onClick={() => { setApplying(false); setSubmitError(''); }} style={{ flex: 1, background: 'none', border: '1px solid var(--line)', borderRadius: '999px', padding: '8px', fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', cursor: 'pointer' }}>
+                    Cancel
+                  </button>
+                  <button onClick={submit} disabled={submitting} style={{ flex: 1, background: 'var(--ink)', color: 'var(--cream)', border: 'none', borderRadius: '999px', padding: '8px', fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.6 : 1 }}>
+                    {submitting ? 'Submitting…' : 'Submit'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Leave History placeholder */}
+      {/* Leave History */}
       <div style={{ border: '1.5px solid var(--ink)', borderRadius: '14px', boxShadow: '4px 4px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden' }}>
         <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
           <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink)', fontWeight: 600 }}>Leave History</span>
         </div>
-        <div style={{ padding: '32px 20px', textAlign: 'center' }}>
-          <p style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--gray)' }}>Your leave history will appear here once the feature launches.</p>
-        </div>
+        {localHistory.length === 0 ? (
+          <div style={{ padding: '32px 20px', textAlign: 'center' }}>
+            <p style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--gray)' }}>No leave requests yet.</p>
+          </div>
+        ) : (
+          <div>
+            {localHistory.map((l, i) => (
+              <div key={l.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', alignItems: 'center', gap: '16px', padding: '12px 18px', borderBottom: i < localHistory.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                <div>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink)' }}>{l.type} leave</p>
+                  {l.reason && <p style={{ fontFamily: 'var(--f-body)', fontSize: '12px', color: 'var(--gray)', marginTop: '2px' }}>{l.reason}</p>}
+                </div>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>
+                  {new Date(l.start_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – {new Date(l.end_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · {l.duration_days}d
+                </p>
+                <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', borderRadius: '999px', padding: '3px 8px', background: STATUS_BG[l.status] ?? '#F3F4F6', color: STATUS_COLOR[l.status] ?? '#374151' }}>
+                  {l.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
