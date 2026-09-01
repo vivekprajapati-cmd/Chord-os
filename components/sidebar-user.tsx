@@ -1,8 +1,6 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import EditProfileModal from './edit-profile-modal';
 
 type Person = {
   id: string;
@@ -15,9 +13,7 @@ type Person = {
 };
 
 export default function SidebarUser({ person, tier }: { person: Person; tier: 'admin' | 'poc' | 'staff' }) {
-  const [showEdit, setShowEdit] = useState(false);
-  const [currentPerson, setCurrentPerson] = useState(person);
-  const firstName = currentPerson.name?.split(' ')[0] ?? '';
+  const firstName = person.name?.split(' ')[0] ?? '';
 
   return (
     <>
@@ -30,12 +26,12 @@ export default function SidebarUser({ person, tier }: { person: Person; tier: 'a
             fontFamily: 'var(--f-mono)', fontSize: '11px', fontWeight: 600, flexShrink: 0,
             letterSpacing: '0.04em',
           }}>
-            {currentPerson.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+            {person.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
           </div>
           <div style={{ minWidth: 0 }}>
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--ink)', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{firstName}</p>
             <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {currentPerson.role || currentPerson.department || ''}
+              {person.role || person.department || ''}
             </p>
           </div>
           {tier !== 'staff' && (
@@ -45,12 +41,12 @@ export default function SidebarUser({ person, tier }: { person: Person; tier: 'a
           )}
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => setShowEdit(true)}
-            style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          <Link
+            href="/profile"
+            style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', textDecoration: 'none' }}
           >
-            Edit profile
-          </button>
+            My Profile
+          </Link>
           <span style={{ color: 'var(--line)', fontSize: '10px' }}>·</span>
           <Link
             href="/api/auth/logout"
@@ -62,13 +58,6 @@ export default function SidebarUser({ person, tier }: { person: Person; tier: 'a
         </div>
       </div>
 
-      {showEdit && (
-        <EditProfileModal
-          person={currentPerson}
-          onClose={() => setShowEdit(false)}
-          onSaved={updated => setCurrentPerson(updated)}
-        />
-      )}
     </>
   );
 }
