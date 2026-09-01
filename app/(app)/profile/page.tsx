@@ -30,6 +30,7 @@ export default async function ProfilePage() {
 
   let leaveBalance = { earned_total: 18, casual_total: 8, sick_total: 6, unpaid_total: 5 };
   let leaveHistory: { id: string; type: string; start_date: string; end_date: string; duration_days: number; reason: string | null; status: string; created_at: string }[] = [];
+  let approvers: { id: string; name: string; role: string | null }[] = [];
 
   if (personId) {
     try {
@@ -51,6 +52,17 @@ export default async function ProfilePage() {
         .limit(20);
       if (hist) leaveHistory = hist;
     } catch {}
+
+    // fetch people who can approve — managers and leads, excluding self
+    try {
+      const { data: approverList } = await admin
+        .from('people')
+        .select('id, name, role')
+        .in('access_tier', ['admin', 'lead'])
+        .neq('id', personId)
+        .order('name');
+      if (approverList) approvers = approverList;
+    } catch {}
   }
 
   return (
@@ -68,6 +80,7 @@ export default async function ProfilePage() {
       managerName={managerName}
       leaveBalance={leaveBalance}
       leaveHistory={leaveHistory}
+      approvers={approvers}
     />
   );
 }

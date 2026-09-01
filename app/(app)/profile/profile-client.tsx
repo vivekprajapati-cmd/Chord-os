@@ -72,12 +72,14 @@ function ComingSoonBadge() {
 
 type LeaveBalance = { earned_total: number; casual_total: number; sick_total: number; unpaid_total: number };
 type LeaveRecord = { id: string; type: string; start_date: string; end_date: string; duration_days: number; reason: string | null; status: string; created_at: string };
+type Approver = { id: string; name: string; role: string | null };
 
-export default function ProfileClient({ person: initial, managerName, leaveBalance, leaveHistory }: {
+export default function ProfileClient({ person: initial, managerName, leaveBalance, leaveHistory, approvers }: {
   person: Person;
   managerName: string | null;
   leaveBalance: LeaveBalance;
   leaveHistory: LeaveRecord[];
+  approvers: Approver[];
 }) {
   const [person, setPerson] = useState(initial);
   const [editing, setEditing] = useState(false);
@@ -230,15 +232,15 @@ export default function ProfileClient({ person: initial, managerName, leaveBalan
       </div>
 
       {/* Tab content */}
-      {tab === 'leave' && <LeaveTab personId={person.id} balance={leaveBalance} history={leaveHistory} />}
+      {tab === 'leave' && <LeaveTab personId={person.id} balance={leaveBalance} history={leaveHistory} approvers={approvers} />}
       {tab === 'feedback' && <FeedbackTab />}
     </div>
   );
 }
 
-function LeaveTab({ personId, balance, history }: { personId: string; balance: LeaveBalance; history: LeaveRecord[] }) {
+function LeaveTab({ personId, balance, history, approvers }: { personId: string; balance: LeaveBalance; history: LeaveRecord[]; approvers: Approver[] }) {
   const [applying, setApplying] = useState(false);
-  const [form, setForm] = useState({ type: 'earned', start_date: '', end_date: '', reason: '' });
+  const [form, setForm] = useState({ type: 'earned', start_date: '', end_date: '', reason: '', approver_id: approvers[0]?.id ?? '' });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -260,6 +262,7 @@ function LeaveTab({ personId, balance, history }: { personId: string; balance: L
   async function submit() {
     if (!form.start_date || !form.end_date) { setSubmitError('Start and end date are required.'); return; }
     if (form.end_date < form.start_date) { setSubmitError('End date must be after start date.'); return; }
+    if (!form.approver_id) { setSubmitError('Please select an approver.'); return; }
     setSubmitting(true);
     setSubmitError('');
     const res = await fetch('/api/leaves', {
