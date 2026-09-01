@@ -45,12 +45,12 @@ function Field({ label, value, editing, type = 'text', options, onChange }: {
     fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--ink)', fontWeight: 600,
     background: editing ? 'var(--paper, #fafaf8)' : 'transparent',
     border: editing ? '1px solid var(--ink)' : '1px solid transparent',
-    borderRadius: '8px', padding: '8px 10px', width: '100%', outline: 'none',
+    borderRadius: '6px', padding: '4px 8px', width: '100%', outline: 'none',
     transition: 'border-color 0.15s',
   };
   return (
     <div>
-      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '4px' }}>{label}</p>
+      <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '2px' }}>{label}</p>
       {options ? (
         <select value={value} onChange={e => onChange(e.target.value)} disabled={!editing} style={{ ...base, cursor: editing ? 'pointer' : 'default', appearance: editing ? 'auto' : 'none' }}>
           {options.map(o => <option key={o}>{o}</option>)}
@@ -184,7 +184,7 @@ export default function ProfileClient({ person: initial, managerName }: { person
           {/* Row 1: Email · Name · Role · Department */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px 20px', marginBottom: '12px' }}>
             <div>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '3px' }}>Email</p>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '2px' }}>Email</p>
               <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.email}</p>
             </div>
             <Field label="Full Name" value={draft.name} editing={editing} onChange={v => setField('name', v)} />
