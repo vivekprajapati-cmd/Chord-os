@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import HRTabs from '../hr-tabs';
 
 type Person = { id: string; name: string; role: string | null; department: string | null };
 type LatestFeedback = Record<string, { period: string; rating: number | null; published_at: string }>;
@@ -62,6 +63,7 @@ export default function HRFeedbackClient({ people, latestFeedback, stats }: { pe
 
   return (
     <div style={{ paddingTop: '8px', paddingBottom: '60px' }}>
+      <HRTabs />
       {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '20px' }}>
         {statCard('Total Employees', localStats.total, undefined, `Across ${[...new Set(people.map(p => p.department).filter(Boolean))].length} departments`)}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import HRTabs from '../hr-tabs';
 
 type Leave = {
   id: string; type: string; start_date: string; end_date: string; duration_days: number;
@@ -70,6 +71,7 @@ export default function HRLeavesClient({ leaves, allPeople, balanceMap, usedMap,
 
   return (
     <div style={{ paddingTop: '8px', paddingBottom: '60px' }}>
+      <HRTabs />
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '20px' }}>
         {[
