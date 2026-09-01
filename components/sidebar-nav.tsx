@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, CheckSquare, CalendarDays, Briefcase, Settings2, Mic2, Users, BarChart2, Brain, UserCog } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, CalendarDays, Briefcase, Settings2, Mic2, Users, BarChart2, Brain, UserCog, MessageSquare } from 'lucide-react';
 
 type Tier = 'admin' | 'lead' | 'operations' | 'poc' | 'staff';
 
@@ -54,7 +54,8 @@ export default function SidebarNav({ tier, showHR }: { tier: Tier; showHR?: bool
       {tier === 'admin' && navLink('/team', 'Team', '07', Users)}
       {(tier === 'admin' || tier === 'poc') && navLink('/analytics', 'Analytics', '08', BarChart2)}
       {(tier === 'admin' || tier === 'lead' || tier === 'operations') && navLink('/harmony-core', 'Harmony Core', '09', Brain)}
-      {showHR && navLink('/hr', 'HR', '10', UserCog)}
+      {(tier === 'admin' || tier === 'lead') && navLink('/feedback', 'Feedback', '10', MessageSquare)}
+      {showHR && navLink('/hr', 'HR', '11', UserCog)}
     </nav>
   );
 }
