@@ -19,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .maybeSingle();
 
   const pathname = (await headers()).get('x-pathname') ?? '';
-  const isFullWidth = pathname.startsWith('/harmony-core');
+  const isFullWidth = pathname.startsWith('/harmony-core') || pathname.startsWith('/profile');
 
   const accessTier = (person as any)?.access_tier ?? 'staff';
   const tier = accessTier as 'admin' | 'lead' | 'operations' | 'staff' | 'viewer' | 'poc';
