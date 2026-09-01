@@ -110,17 +110,6 @@ export default function HRClient({
         </svg>
       ),
     },
-    {
-      num: '03', title: 'PAYROLL', href: null,
-      desc: 'Salary calculator — base, deductions, leave-adjusted net pay. CSV export. No payslips.',
-      badge: null,
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="1.5" strokeLinecap="round">
-          <circle cx="12" cy="12" r="10" />
-          <text x="12" y="17" textAnchor="middle" fontSize="11" fontFamily="serif" fill="#bbb">₹</text>
-        </svg>
-      ),
-    },
   ];
 
   return (
@@ -147,7 +136,7 @@ export default function HRClient({
       </div>
 
       {/* Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '40px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '40px' }}>
         {cards.map((card) => {
           const isDisabled = !card.href;
           const inner = (
