@@ -42,7 +42,7 @@ function Field({ label, value, editing, type = 'text', options, onChange }: {
   onChange: (v: string) => void;
 }) {
   const base: React.CSSProperties = {
-    fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--ink)',
+    fontFamily: 'var(--f-mono)', fontSize: '13px', color: 'var(--ink)', fontWeight: 600,
     background: editing ? 'var(--paper, #fafaf8)' : 'transparent',
     border: editing ? '1px solid var(--ink)' : '1px solid transparent',
     borderRadius: '8px', padding: '8px 10px', width: '100%', outline: 'none',
@@ -115,11 +115,11 @@ export default function ProfileClient({ person: initial, managerName }: { person
     <div style={{ width: '100%', padding: '0 0 60px' }}>
 
       {/* Page Header */}
-      <div style={{ marginBottom: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '6px' }}>Account</p>
-          <h1 style={{ fontFamily: 'var(--f-display)', fontSize: '32px', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '-0.02em', color: 'var(--ink)' }}>My Profile</h1>
-          <p style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--gray)', marginTop: '4px' }}>View and manage your personal information, leave balance and feedback.</p>
+          <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '4px' }}>Account</p>
+          <h1 style={{ fontFamily: 'var(--f-display)', fontSize: '30px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '-0.02em', color: 'var(--ink)', lineHeight: 1 }}>My Profile</h1>
+          <p style={{ fontFamily: 'var(--f-body)', fontSize: '12px', color: 'var(--gray)', marginTop: '3px' }}>View and manage your personal information, leave balance and feedback.</p>
         </div>
         <div style={{
           width: '80px', height: '80px', borderRadius: '50%', border: '1.5px dashed var(--line)',
@@ -132,19 +132,19 @@ export default function ProfileClient({ person: initial, managerName }: { person
       </div>
 
       {/* Profile Card */}
-      <div style={{ border: '1.5px solid var(--ink)', borderRadius: '16px', boxShadow: '6px 6px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden', marginBottom: '24px' }}>
-        <div style={{ padding: '24px 28px', display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div style={{ border: '1.5px solid var(--ink)', borderRadius: '14px', boxShadow: '4px 4px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden', marginBottom: '14px' }}>
+        <div style={{ padding: '16px 20px', display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <Avatar name={person.name} size={56} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px', flexWrap: 'wrap' }}>
-              <h2 style={{ fontFamily: 'var(--f-display)', fontSize: '22px', fontWeight: 400, textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)' }}>{person.name}</h2>
-              <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', border: '1px solid var(--ink)', borderRadius: '999px', padding: '2px 10px', color: 'var(--ink)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', flexWrap: 'wrap' }}>
+              <h2 style={{ fontFamily: 'var(--f-display)', fontSize: '20px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)' }}>{person.name}</h2>
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', border: '1.5px solid var(--ink)', borderRadius: '999px', padding: '3px 12px', color: 'var(--ink)', fontWeight: 600 }}>
                 {tierLabel(person.access_tier)}
               </span>
             </div>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', marginBottom: '2px' }}>{person.role || '—'}</p>
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '8px' }}>
-              <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)', marginBottom: '2px', fontWeight: 500 }}>{person.role || '—'}</p>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }}>
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 20h5v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2h5" /><circle cx="12" cy="7" r="4" /></svg>
                 {person.department || '—'}
               </span>
@@ -162,9 +162,9 @@ export default function ProfileClient({ person: initial, managerName }: { person
         </div>
 
         {/* Editable Fields */}
-        <div style={{ borderTop: '1px solid var(--line)', padding: '24px 28px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)' }}>Personal Details</p>
+        <div style={{ borderTop: '1px solid var(--line)', padding: '14px 20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', fontWeight: 600 }}>Personal Details</p>
             {!editing ? (
               <button onClick={() => setEditing(true)} style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', background: 'none', border: '1px solid var(--line)', borderRadius: '999px', padding: '5px 14px', color: 'var(--ink)', cursor: 'pointer' }}>
                 Edit
@@ -182,9 +182,9 @@ export default function ProfileClient({ person: initial, managerName }: { person
           </div>
 
           {/* Row 1: Email · Name · Role · Department */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px 24px', marginBottom: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px 20px', marginBottom: '12px' }}>
             <div>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '6px' }}>Email</p>
+              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', marginBottom: '3px' }}>Email</p>
               <p style={{ fontFamily: 'var(--f-mono)', fontSize: '12px', color: 'var(--gray)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{person.email}</p>
             </div>
             <Field label="Full Name" value={draft.name} editing={editing} onChange={v => setField('name', v)} />
@@ -192,7 +192,7 @@ export default function ProfileClient({ person: initial, managerName }: { person
             <Field label="Department" value={draft.department} editing={editing} options={DEPARTMENTS} onChange={v => setField('department', v)} />
           </div>
           {/* Row 2: Seniority · Location */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px 24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px 20px' }}>
             <Field label="Seniority" value={draft.seniority} editing={editing} options={SENIORITIES} onChange={v => setField('seniority', v)} />
             <Field label="Location" value={draft.location} editing={editing} onChange={v => setField('location', v)} />
           </div>
@@ -202,17 +202,17 @@ export default function ProfileClient({ person: initial, managerName }: { person
       </div>
 
       {/* Tabs */}
-      <div style={{ borderBottom: '1.5px solid var(--line)', display: 'flex', gap: '0', marginBottom: '24px' }}>
+      <div style={{ borderBottom: '1.5px solid var(--line)', display: 'flex', gap: '0', marginBottom: '12px' }}>
         {(['leave', 'feedback'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
             style={{
               fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em',
-              padding: '12px 20px', background: 'none', border: 'none', cursor: 'pointer',
-              borderBottom: tab === t ? '2px solid var(--ink)' : '2px solid transparent',
+              padding: '8px 16px', background: 'none', border: 'none', cursor: 'pointer',
+              borderBottom: tab === t ? '2px solid var(--coral)' : '2px solid transparent',
               color: tab === t ? 'var(--ink)' : 'var(--gray)',
-              marginBottom: '-1.5px', fontWeight: tab === t ? 600 : 400,
+              marginBottom: '-1.5px', fontWeight: tab === t ? 700 : 500,
               transition: 'color 0.15s',
             }}
           >
@@ -229,18 +229,19 @@ export default function ProfileClient({ person: initial, managerName }: { person
 }
 
 function LeaveTab() {
+  // Using exact hex so the tints are vivid — CSS vars alone can't express opacity tints without color-mix
   const types = [
-    { label: 'Earned Leave', used: 0, total: 18, colorVar: 'var(--cobalt)', bgVar: 'color-mix(in srgb, var(--cobalt) 8%, var(--cream))' },
-    { label: 'Casual Leave', used: 0, total: 8,  colorVar: 'var(--ink)',    bgVar: 'color-mix(in srgb, var(--ink) 5%, var(--cream))' },
-    { label: 'Sick Leave',   used: 0, total: 6,  colorVar: 'var(--coral)',  bgVar: 'color-mix(in srgb, var(--coral) 10%, var(--cream))' },
-    { label: 'Unpaid Leave', used: 0, total: 5,  colorVar: 'var(--red)',    bgVar: 'color-mix(in srgb, var(--red) 8%, var(--cream))' },
+    { label: 'Earned Leave', used: 0, total: 18, color: '#2C7CE5', bg: '#EBF3FF', icon: '📅' },
+    { label: 'Casual Leave', used: 0, total: 8,  color: '#16a34a', bg: '#ECFDF5', icon: '📍' },
+    { label: 'Sick Leave',   used: 0, total: 6,  color: '#E55D4A', bg: '#FFF0EE', icon: '❤️' },
+    { label: 'Unpaid Leave', used: 0, total: 5,  color: '#7C3AED', bg: '#F3EFFE', icon: '⭕' },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {/* Leave Balance card */}
-      <div style={{ border: '1.5px solid var(--ink)', borderRadius: '16px', boxShadow: '6px 6px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden' }}>
-        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ border: '1.5px solid var(--ink)', borderRadius: '14px', boxShadow: '4px 4px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden' }}>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
             <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink)', fontWeight: 600 }}>Leave Balance</span>
@@ -250,22 +251,27 @@ function LeaveTab() {
 
         {/* Two-column: cards left, apply panel right */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: '0' }}>
-          <div style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', borderRight: '1px solid var(--line)' }}>
+          <div style={{ padding: '14px 18px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', borderRight: '1px solid var(--line)' }}>
             {types.map(t => (
-              <div key={t.label} style={{ background: t.bgVar, borderRadius: '12px', padding: '16px 18px', border: '1px solid var(--line)' }}>
-                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.07em', color: t.colorVar, marginBottom: '10px' }}>{t.label}</p>
-                <p style={{ fontFamily: 'var(--f-display)', fontSize: '26px', color: 'var(--ink)', fontWeight: 400, lineHeight: 1 }}>
-                  {t.used} <span style={{ fontSize: '12px', color: 'var(--gray)', fontFamily: 'var(--f-mono)' }}>/ {t.total} days</span>
+              <div key={t.label} style={{ background: t.bg, borderRadius: '10px', padding: '12px 14px', border: `1px solid ${t.color}30` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <div style={{ width: '26px', height: '26px', borderRadius: '7px', background: `${t.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.color}35` }}>
+                    <div style={{ width: '9px', height: '9px', borderRadius: '50%', background: t.color }} />
+                  </div>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.07em', color: t.color, fontWeight: 700 }}>{t.label}</p>
+                </div>
+                <p style={{ fontFamily: 'var(--f-display)', fontSize: '28px', color: 'var(--ink)', fontWeight: 700, lineHeight: 1 }}>
+                  {t.used} <span style={{ fontSize: '12px', color: 'var(--gray)', fontFamily: 'var(--f-mono)', fontWeight: 500 }}>/ {t.total} days</span>
                 </p>
-                <div style={{ marginTop: '12px', height: '3px', borderRadius: '4px', background: 'var(--line)' }}>
-                  <div style={{ height: '3px', borderRadius: '4px', background: t.colorVar, width: t.used > 0 ? `${Math.round((t.used / t.total) * 100)}%` : '0%' }} />
+                <div style={{ marginTop: '10px', height: '4px', borderRadius: '4px', background: `${t.color}22` }}>
+                  <div style={{ height: '4px', borderRadius: '4px', background: t.color, width: '3%' }} />
                 </div>
               </div>
             ))}
           </div>
 
           {/* Apply for Leave panel */}
-          <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '12px' }}>
+          <div style={{ padding: '16px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '10px' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1.5px solid var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></svg>
             </div>
@@ -285,12 +291,12 @@ function LeaveTab() {
       </div>
 
       {/* Leave History placeholder */}
-      <div style={{ border: '1.5px solid var(--ink)', borderRadius: '16px', boxShadow: '6px 6px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden' }}>
-        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ border: '1.5px solid var(--ink)', borderRadius: '14px', boxShadow: '4px 4px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden' }}>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
           <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink)', fontWeight: 600 }}>Leave History</span>
         </div>
-        <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+        <div style={{ padding: '32px 20px', textAlign: 'center' }}>
           <p style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--gray)' }}>Your leave history will appear here once the feature launches.</p>
         </div>
       </div>
@@ -300,8 +306,8 @@ function LeaveTab() {
 
 function FeedbackTab() {
   return (
-    <div style={{ border: '1.5px dashed var(--line)', borderRadius: '16px', padding: '48px 24px', textAlign: 'center' }}>
-      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+    <div style={{ border: '1.5px dashed var(--line)', borderRadius: '14px', padding: '32px 20px', textAlign: 'center' }}>
+      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" strokeWidth="1.5"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3-3-3z" /></svg>
       </div>
       <p style={{ fontFamily: 'var(--f-display)', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)', marginBottom: '8px' }}>Peer Feedback</p>
