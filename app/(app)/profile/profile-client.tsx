@@ -64,8 +64,8 @@ function Field({ label, value, editing, type = 'text', options, onChange }: {
 
 function ComingSoonBadge() {
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fff8e1', border: '1px solid #ffe082', borderRadius: '999px', padding: '4px 12px' }}>
-      <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#b45309' }}>Coming Soon</span>
+    <div style={{ display: 'inline-flex', alignItems: 'center', background: 'color-mix(in srgb, var(--coral) 12%, var(--cream))', border: '1px solid var(--coral)', borderRadius: '999px', padding: '4px 14px' }}>
+      <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--coral)' }}>Coming Soon</span>
     </div>
   );
 }
@@ -228,45 +228,69 @@ export default function ProfileClient({ person: initial, managerName }: { person
 
 function LeaveTab() {
   const types = [
-    { label: 'Earned Leave',  used: 0, total: 18, colorVar: 'var(--cobalt)', bgVar: 'color-mix(in srgb, var(--cobalt) 10%, var(--cream))' },
-    { label: 'Casual Leave',  used: 0, total: 8,  colorVar: 'var(--ink)',    bgVar: 'color-mix(in srgb, var(--ink) 6%, var(--cream))' },
-    { label: 'Sick Leave',    used: 0, total: 6,  colorVar: 'var(--coral)',  bgVar: 'color-mix(in srgb, var(--coral) 10%, var(--cream))' },
-    { label: 'Unpaid Leave',  used: 0, total: 5,  colorVar: 'var(--red)',    bgVar: 'color-mix(in srgb, var(--red) 8%, var(--cream))' },
+    { label: 'Earned Leave', used: 0, total: 18, colorVar: 'var(--cobalt)', bgVar: 'color-mix(in srgb, var(--cobalt) 8%, var(--cream))' },
+    { label: 'Casual Leave', used: 0, total: 8,  colorVar: 'var(--ink)',    bgVar: 'color-mix(in srgb, var(--ink) 5%, var(--cream))' },
+    { label: 'Sick Leave',   used: 0, total: 6,  colorVar: 'var(--coral)',  bgVar: 'color-mix(in srgb, var(--coral) 10%, var(--cream))' },
+    { label: 'Unpaid Leave', used: 0, total: 5,  colorVar: 'var(--red)',    bgVar: 'color-mix(in srgb, var(--red) 8%, var(--cream))' },
   ];
 
   return (
-    <div>
-      {/* Balance cards */}
-      <div style={{ border: '1.5px solid var(--ink)', borderRadius: '16px', boxShadow: '6px 6px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden', marginBottom: '20px' }}>
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Leave Balance card */}
+      <div style={{ border: '1.5px solid var(--ink)', borderRadius: '16px', boxShadow: '6px 6px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden' }}>
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
             <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink)', fontWeight: 600 }}>Leave Balance</span>
           </div>
-          <ComingSoonBadge />
+          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Balance as of today</span>
         </div>
-        <div style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
-          {types.map(t => (
-            <div key={t.label} style={{ background: t.bgVar, borderRadius: '12px', padding: '16px', border: '1px solid var(--line)' }}>
-              <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: t.colorVar, marginBottom: '10px' }}>{t.label}</p>
-              <p style={{ fontFamily: 'var(--f-display)', fontSize: '24px', color: 'var(--ink)', fontWeight: 400 }}>
-                {t.used} <span style={{ fontSize: '13px', color: 'var(--gray)', fontFamily: 'var(--f-mono)' }}>/ {t.total} days</span>
-              </p>
-              <div style={{ marginTop: '12px', height: '4px', borderRadius: '4px', background: 'var(--line)' }}>
-                <div style={{ height: '4px', borderRadius: '4px', background: t.colorVar, width: `${Math.round((t.used / t.total) * 100)}%` }} />
+
+        {/* Two-column: cards left, apply panel right */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: '0' }}>
+          <div style={{ padding: '20px 24px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', borderRight: '1px solid var(--line)' }}>
+            {types.map(t => (
+              <div key={t.label} style={{ background: t.bgVar, borderRadius: '12px', padding: '16px 18px', border: '1px solid var(--line)' }}>
+                <p style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.07em', color: t.colorVar, marginBottom: '10px' }}>{t.label}</p>
+                <p style={{ fontFamily: 'var(--f-display)', fontSize: '26px', color: 'var(--ink)', fontWeight: 400, lineHeight: 1 }}>
+                  {t.used} <span style={{ fontSize: '12px', color: 'var(--gray)', fontFamily: 'var(--f-mono)' }}>/ {t.total} days</span>
+                </p>
+                <div style={{ marginTop: '12px', height: '3px', borderRadius: '4px', background: 'var(--line)' }}>
+                  <div style={{ height: '3px', borderRadius: '4px', background: t.colorVar, width: t.used > 0 ? `${Math.round((t.used / t.total) * 100)}%` : '0%' }} />
+                </div>
               </div>
+            ))}
+          </div>
+
+          {/* Apply for Leave panel */}
+          <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: '12px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1.5px solid var(--coral)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19" /><polyline points="19 12 12 19 5 12" /></svg>
             </div>
-          ))}
+            <div>
+              <p style={{ fontFamily: 'var(--f-display)', fontSize: '15px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)', marginBottom: '6px' }}>Apply for Leave</p>
+              <p style={{ fontFamily: 'var(--f-body)', fontSize: '12px', color: 'var(--gray)', lineHeight: 1.5 }}>Need time off? Submit a leave request and get it approved by your manager.</p>
+            </div>
+            <button
+              disabled
+              style={{ marginTop: '4px', width: '100%', background: 'var(--ink)', color: 'var(--cream)', border: 'none', borderRadius: '999px', padding: '10px 16px', fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'not-allowed', opacity: 0.5 }}
+            >
+              + Apply for Leave
+            </button>
+            <ComingSoonBadge />
+          </div>
         </div>
       </div>
 
-      {/* Coming soon notice */}
-      <div style={{ border: '1.5px dashed var(--line)', borderRadius: '16px', padding: '48px 24px', textAlign: 'center' }}>
-        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" strokeWidth="1.5"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      {/* Leave History placeholder */}
+      <div style={{ border: '1.5px solid var(--ink)', borderRadius: '16px', boxShadow: '6px 6px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden' }}>
+        <div style={{ padding: '18px 24px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+          <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink)', fontWeight: 600 }}>Leave History</span>
         </div>
-        <p style={{ fontFamily: 'var(--f-display)', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)', marginBottom: '8px' }}>Leave Management</p>
-        <p style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--gray)', maxWidth: '340px', margin: '0 auto' }}>Apply for leaves, track approvals, and view your leave history. Feature coming soon.</p>
+        <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--gray)' }}>Your leave history will appear here once the feature launches.</p>
+        </div>
       </div>
     </div>
   );
