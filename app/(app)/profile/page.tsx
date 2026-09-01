@@ -31,6 +31,7 @@ export default async function ProfilePage() {
   let leaveBalance = { earned_total: 18, casual_total: 8, sick_total: 6, unpaid_total: 5 };
   let leaveHistory: { id: string; type: string; start_date: string; end_date: string; duration_days: number; reason: string | null; status: string; created_at: string }[] = [];
   let approvers: { id: string; name: string; role: string | null }[] = [];
+  let feedbackHistory: { id: string; period: string; content: string; rating: number | null; published_at: string }[] = [];
 
   if (personId) {
     try {
@@ -63,6 +64,16 @@ export default async function ProfilePage() {
         .order('name');
       if (approverList) approvers = approverList;
     } catch {}
+
+    try {
+      const { data: fbList } = await admin
+        .from('feedback')
+        .select('id, period, content, rating, published_at')
+        .eq('person_id', personId)
+        .eq('status', 'published')
+        .order('published_at', { ascending: false });
+      if (fbList) feedbackHistory = fbList;
+    } catch {}
   }
 
   return (
@@ -81,6 +92,7 @@ export default async function ProfilePage() {
       leaveBalance={leaveBalance}
       leaveHistory={leaveHistory}
       approvers={approvers}
+      feedbackHistory={feedbackHistory}
     />
   );
 }

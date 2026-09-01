@@ -73,13 +73,15 @@ function ComingSoonBadge() {
 type LeaveBalance = { earned_total: number; casual_total: number; sick_total: number; unpaid_total: number };
 type LeaveRecord = { id: string; type: string; start_date: string; end_date: string; duration_days: number; reason: string | null; status: string; created_at: string };
 type Approver = { id: string; name: string; role: string | null };
+type FeedbackRecord = { id: string; period: string; content: string; rating: number | null; published_at: string };
 
-export default function ProfileClient({ person: initial, managerName, leaveBalance, leaveHistory, approvers }: {
+export default function ProfileClient({ person: initial, managerName, leaveBalance, leaveHistory, approvers, feedbackHistory }: {
   person: Person;
   managerName: string | null;
   leaveBalance: LeaveBalance;
   leaveHistory: LeaveRecord[];
   approvers: Approver[];
+  feedbackHistory: FeedbackRecord[];
 }) {
   const [person, setPerson] = useState(initial);
   const [editing, setEditing] = useState(false);
@@ -233,7 +235,7 @@ export default function ProfileClient({ person: initial, managerName, leaveBalan
 
       {/* Tab content */}
       {tab === 'leave' && <LeaveTab personId={person.id} balance={leaveBalance} history={leaveHistory} approvers={approvers} />}
-      {tab === 'feedback' && <FeedbackTab />}
+      {tab === 'feedback' && <FeedbackTab entries={feedbackHistory} />}
     </div>
   );
 }
@@ -447,14 +449,53 @@ function LeaveTab({ personId, balance, history, approvers }: { personId: string;
   );
 }
 
-function FeedbackTab() {
-  return (
-    <div style={{ border: '1.5px dashed var(--line)', borderRadius: '14px', padding: '32px 20px', textAlign: 'center' }}>
-      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" strokeWidth="1.5"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3-3-3z" /></svg>
+function scoreColor(r: number) {
+  if (r >= 4) return '#16a34a';
+  if (r >= 3) return '#2C7CE5';
+  return '#E55D4A';
+}
+
+function scoreLabel(r: number) {
+  if (r === 5) return 'Exceptional';
+  if (r === 4) return 'Above Average';
+  if (r === 3) return 'Meets Expectations';
+  if (r === 2) return 'Needs Improvement';
+  return 'Poor';
+}
+
+function FeedbackTab({ entries }: { entries: { id: string; period: string; content: string; rating: number | null; published_at: string }[] }) {
+  if (entries.length === 0) {
+    return (
+      <div style={{ border: '1.5px dashed var(--line)', borderRadius: '14px', padding: '40px 20px', textAlign: 'center' }}>
+        <p style={{ fontFamily: 'var(--f-display)', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)', marginBottom: '8px' }}>No Feedback Yet</p>
+        <p style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--gray)' }}>Your performance feedback from HR will appear here once published.</p>
       </div>
-      <p style={{ fontFamily: 'var(--f-display)', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.01em', color: 'var(--ink)', marginBottom: '8px' }}>Peer Feedback</p>
-      <p style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--gray)', maxWidth: '340px', margin: '0 auto' }}>Internal feedback from your team will appear here. Feature coming soon.</p>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      {entries.map(fb => (
+        <div key={fb.id} style={{ border: '1.5px solid var(--ink)', borderRadius: '14px', boxShadow: '4px 4px 0 var(--ink)', background: 'var(--cream)', overflow: 'hidden' }}>
+          <div style={{ padding: '12px 18px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, color: 'var(--ink)' }}>{fb.period}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {fb.rating && (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: 'var(--f-mono)', fontSize: '11px', fontWeight: 700, color: scoreColor(fb.rating) }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: scoreColor(fb.rating), display: 'inline-block' }} />
+                  {fb.rating} / 5 · {scoreLabel(fb.rating)}
+                </span>
+              )}
+              <span style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', color: 'var(--gray)' }}>
+                {new Date(fb.published_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
+            </div>
+          </div>
+          <div style={{ padding: '16px 18px' }}>
+            <p style={{ fontFamily: 'var(--f-body)', fontSize: '13px', color: 'var(--ink)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{fb.content}</p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
