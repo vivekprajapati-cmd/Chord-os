@@ -285,11 +285,3 @@ function FeedbackTab() {
     </div>
   );
 }
-
-function ComingSoonBadge() {
-  return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', background: '#fff8e1', border: '1px solid #ffe082', borderRadius: '999px', padding: '3px 12px' }}>
-      <span style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#b45309' }}>Coming Soon</span>
-    </div>
-  );
-}
