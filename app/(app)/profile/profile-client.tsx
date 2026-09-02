@@ -325,7 +325,7 @@ function LeaveTab({ personId, balance, history, approvers }: { personId: string;
                     <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.07em', color: t.color, fontWeight: 700 }}>{t.label}</p>
                   </div>
                   <p style={{ fontFamily: 'var(--f-display)', fontSize: '28px', color: 'var(--ink)', fontWeight: 700, lineHeight: 1 }}>
-                    {remaining} <span style={{ fontSize: '12px', color: 'var(--gray)', fontFamily: 'var(--f-mono)', fontWeight: 500 }}>/ {t.total} days</span>
+                    {remaining} <span style={{ fontSize: '12px', color: 'var(--gray)', fontFamily: 'var(--f-mono)', fontWeight: 500 }}>/ {t.total} {t.total === 1 ? 'day' : 'days'}</span>
                   </p>
                   <div style={{ marginTop: '10px', height: '4px', borderRadius: '4px', background: `${t.color}22` }}>
                     <div style={{ height: '4px', borderRadius: '4px', background: t.color, width: `${Math.min(pct, 100)}%`, transition: 'width 0.4s' }} />
