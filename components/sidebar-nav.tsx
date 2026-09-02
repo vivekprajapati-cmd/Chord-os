@@ -15,7 +15,7 @@ const NAV = [
   { href: '/operations', label: 'Operations', num: '05', Icon: Settings2 },
 ];
 
-export default function SidebarNav({ tier, showHR }: { tier: Tier; showHR?: boolean }) {
+export default function SidebarNav({ tier, showHR, showHarmony }: { tier: Tier; showHR?: boolean; showHarmony?: boolean }) {
   const pathname = usePathname();
 
   function isActive(href: string) {
@@ -53,7 +53,7 @@ export default function SidebarNav({ tier, showHR }: { tier: Tier; showHR?: bool
       {tier === 'admin' && navLink('/chat', 'Allocator', '06', Mic2)}
       {tier === 'admin' && navLink('/team', 'Team', '07', Users)}
       {(tier === 'admin' || tier === 'poc') && navLink('/analytics', 'Analytics', '08', BarChart2)}
-      {(tier === 'admin' || tier === 'operations') && navLink('/harmony-core', 'Harmony Core', '09', Brain)}
+      {showHarmony && navLink('/harmony-core', 'Harmony Core', '09', Brain)}
       {showHR && navLink('/hr', 'HR', '10', UserCog)}
     </nav>
   );

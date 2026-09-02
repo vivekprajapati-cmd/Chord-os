@@ -30,11 +30,14 @@ export async function POST(req: Request) {
 
   const { data: me } = await supabase
     .from('people')
-    .select('access_tier')
+    .select('access_tier, harmony_core_enabled')
     .eq('auth_user_id', user.id)
     .maybeSingle();
 
-  if (!['admin', 'lead', 'operations', 'staff'].includes(me?.access_tier ?? '')) {
+  const isAdmin = me?.access_tier === 'admin';
+  const isHarmonyUser = (me as any)?.harmony_core_enabled === true;
+
+  if (!isAdmin && !isHarmonyUser) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
@@ -42,6 +45,14 @@ export async function POST(req: Request) {
   if (!person_id || !brand_id) return NextResponse.json({ error: 'missing fields' }, { status: 400 });
 
   const admin = createAdminClient();
+
+  // Non-admin harmony users can only assign to harmony_core_enabled people
+  if (!isAdmin) {
+    const { data: target } = await admin.from('people').select('harmony_core_enabled').eq('id', person_id).maybeSingle();
+    if (!target?.harmony_core_enabled) {
+      return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+    }
+  }
 
   const [{ data: person }, { data: brand }] = await Promise.all([
     admin.from('people').select('name').eq('id', person_id).maybeSingle(),

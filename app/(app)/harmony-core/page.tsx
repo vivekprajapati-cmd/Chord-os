@@ -11,12 +11,14 @@ export default async function HarmonyCorePageWrapper() {
 
   const { data: me } = await supabase
     .from('people')
-    .select('id, name, access_tier, role')
+    .select('id, name, access_tier, role, harmony_core_enabled')
     .eq('email', user.email!)
     .maybeSingle();
 
   const tier = (me as any)?.access_tier;
-  if (!['admin', 'lead', 'operations', 'staff'].includes(tier)) redirect('/dashboard');
+  const harmonyEnabled = !!(me as any)?.harmony_core_enabled;
+  const canAccess = ['admin', 'lead', 'operations'].includes(tier) || harmonyEnabled;
+  if (!canAccess) redirect('/dashboard');
 
   const admin = createAdminClient();
 

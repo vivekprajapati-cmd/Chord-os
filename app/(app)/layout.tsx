@@ -14,7 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: person } = await supabase
     .from('people')
-    .select('id, name, role, department, seniority, location, is_team_lead, access_tier, view_all')
+    .select('id, name, role, department, seniority, location, is_team_lead, access_tier, view_all, harmony_core_enabled')
     .eq('email', session.user.email!)
     .maybeSingle();
 
@@ -53,7 +53,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </Link>
         </div>
 
-        <SidebarNav tier={tier} showHR={accessTier === 'admin' || accessTier === 'hr'} />
+        <SidebarNav
+          tier={tier}
+          showHR={accessTier === 'admin' || accessTier === 'hr'}
+          showHarmony={accessTier === 'admin' || accessTier === 'lead' || accessTier === 'operations' || !!(person as any)?.harmony_core_enabled}
+        />
 
         <SidebarUser
           person={{
