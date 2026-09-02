@@ -22,7 +22,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const isFullWidth = pathname.startsWith('/harmony-core') || pathname.startsWith('/profile') || pathname.startsWith('/hr');
 
   const accessTier = (person as any)?.access_tier ?? 'staff';
-  const tier = (accessTier === 'admin' || accessTier === 'lead' ? 'admin' : accessTier === 'viewer' ? 'poc' : 'staff') as 'admin' | 'poc' | 'staff';
+  const tier = (
+    accessTier === 'admin' || accessTier === 'lead' ? 'admin' :
+    accessTier === 'operations' ? 'operations' :
+    accessTier === 'hr' ? 'hr' :
+    accessTier === 'viewer' ? 'poc' :
+    'staff'
+  ) as 'admin' | 'operations' | 'hr' | 'poc' | 'staff';
   const firstName = person?.name?.split(' ')[0] ?? session.user.email?.split('@')[0] ?? '';
 
   return (
