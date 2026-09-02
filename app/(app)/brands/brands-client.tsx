@@ -26,20 +26,20 @@ export default function BrandsClient({
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loginsOpen, setLoginsOpen] = useState(false);
+  const [npsOpen, setNpsOpen] = useState(false);
   const [expandedBrands, setExpandedBrands] = useState<Set<string>>(new Set());
   const panelRef = useRef<HTMLDivElement>(null);
+  const npsPanelRef = useRef<HTMLDivElement>(null);
 
-  // Close panel on outside click
+  // Close panels on outside click
   useEffect(() => {
-    if (!loginsOpen) return;
     function handleClick(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setLoginsOpen(false);
-      }
+      if (loginsOpen && panelRef.current && !panelRef.current.contains(e.target as Node)) setLoginsOpen(false);
+      if (npsOpen && npsPanelRef.current && !npsPanelRef.current.contains(e.target as Node)) setNpsOpen(false);
     }
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
-  }, [loginsOpen]);
+  }, [loginsOpen, npsOpen]);
 
   function openAddClientFor(brandId?: string) {
     setPreselectedBrandId(brandId);
@@ -91,8 +91,63 @@ export default function BrandsClient({
       <div className="flex items-end justify-between mb-6">
         <h1 className="font-display text-5xl uppercase tracking-tight">Brands</h1>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', position: 'relative' }} ref={panelRef}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', position: 'relative' }}>
+          {/* NPS button + dropdown */}
+          <div style={{ position: 'relative' }} ref={npsPanelRef}>
+            <button
+              onClick={() => setNpsOpen(o => !o)}
+              style={{
+                fontFamily: 'var(--f-mono)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em',
+                background: npsOpen ? 'var(--ink)' : 'transparent',
+                color: npsOpen ? 'var(--cream)' : 'var(--ink)',
+                border: '1px solid var(--ink)', borderRadius: '999px',
+                padding: '10px 20px', cursor: 'pointer',
+              }}
+            >
+              NPS
+            </button>
+            {npsOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 40,
+                width: '280px', background: 'var(--cream)',
+                border: '1.5px solid var(--ink)', borderRadius: '16px',
+                boxShadow: '6px 6px 0 var(--ink)', overflow: 'hidden',
+              }}>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)' }}>
+                  <p style={{ fontFamily: 'var(--f-mono)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
+                    NPS — Select Brand
+                  </p>
+                </div>
+                <div style={{ maxHeight: '360px', overflowY: 'auto' }}>
+                  {initialBrands.map((b, i) => (
+                    <Link
+                      key={b.id}
+                      href={`/brands/${b.slug}/nps`}
+                      onClick={() => setNpsOpen(false)}
+                      style={{
+                        display: 'block', padding: '11px 16px',
+                        borderBottom: i < initialBrands.length - 1 ? '1px solid var(--line)' : 'none',
+                        textDecoration: 'none', color: 'var(--ink)',
+                        fontFamily: 'var(--f-mono)', fontSize: '12px', fontWeight: 600,
+                        textTransform: 'uppercase', letterSpacing: '0.05em',
+                      }}
+                      className="hover:bg-[var(--ink)]/5"
+                    >
+                      {b.name}
+                      {b.category && (
+                        <span style={{ display: 'block', fontSize: '10px', fontWeight: 400, color: 'var(--gray)', textTransform: 'none', letterSpacing: 0, marginTop: '2px' }}>
+                          {b.category}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Client Logins button + dropdown */}
+          <div style={{ position: 'relative' }} ref={panelRef}>
           {isAdminOrOps && (
             <div style={{ position: 'relative' }}>
               <button
@@ -278,6 +333,7 @@ export default function BrandsClient({
               + Client Login
             </button>
           )}
+          </div>{/* end client logins wrapper */}
 
           {isLead && (
             <button
@@ -298,29 +354,15 @@ export default function BrandsClient({
       {/* Brand grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {initialBrands.map((b) => (
-          <div key={b.id} style={{ position: 'relative' }}>
-            <Link
-              href={`/brands/${b.slug}`}
-              className="bg-[var(--paper)] border border-[var(--line)] rounded-2xl p-6 shadow-[6px_6px_0_var(--ink)] hover:shadow-[8px_8px_0_var(--ink)] transition"
-              style={{ display: 'block' }}
-            >
-              <h2 className="font-display text-3xl uppercase tracking-tight mb-1">{b.name}</h2>
-              <p className="text-sm text-[var(--gray)]">{b.category}</p>
-            </Link>
-            <Link
-              href={`/brands/${b.slug}/nps`}
-              onClick={e => e.stopPropagation()}
-              style={{
-                position: 'absolute', bottom: '16px', right: '16px',
-                fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em',
-                padding: '4px 12px', borderRadius: '999px', border: '1px solid var(--line)',
-                background: 'var(--paper)', color: 'var(--gray)', textDecoration: 'none',
-                transition: 'all .15s',
-              }}
-            >
-              NPS
-            </Link>
-          </div>
+          <Link
+            key={b.id}
+            href={`/brands/${b.slug}`}
+            className="bg-[var(--paper)] border border-[var(--line)] rounded-2xl p-6 shadow-[6px_6px_0_var(--ink)] hover:shadow-[8px_8px_0_var(--ink)] transition"
+            style={{ display: 'block' }}
+          >
+            <h2 className="font-display text-3xl uppercase tracking-tight mb-1">{b.name}</h2>
+            <p className="text-sm text-[var(--gray)]">{b.category}</p>
+          </Link>
         ))}
       </div>
 
