@@ -109,11 +109,11 @@ export default function CreativeTable({ assignments, entries, month, personId, c
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
         <thead>
           <tr>
+            <th style={{ ...th, background: '#dedad2', width: '48px' }}></th>
             <th style={{ ...thLeft, background: '#dedad2' }}>Brand</th>
             <th style={{ ...th, background: '#dedad2' }}>NPS</th>
             <th style={{ ...th, background: '#c8e6c9', color: '#2e7d32' }}>New Idea This Week</th>
             {LINK_FIELDS.map(f => <th key={f.key} style={{ ...th, background: '#e3f2fd', color: '#1565c0' }}>{f.label}</th>)}
-            <th style={{ ...th, background: '#dedad2', width: '48px' }}></th>
           </tr>
         </thead>
         <tbody>
@@ -127,6 +127,27 @@ export default function CreativeTable({ assignments, entries, month, personId, c
 
             return (
               <tr key={brandId}>
+                <td style={{ ...td, width: '48px', padding: '6px 8px' }}>
+                  {canEdit && (
+                    isEditing ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <button onClick={() => save(brandId)} disabled={saving === brandId}
+                          style={{ padding: '4px 8px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontSize: '11px', cursor: 'pointer' }}>
+                          {saving === brandId ? '…' : 'Save'}
+                        </button>
+                        <button onClick={() => setEditing(null)}
+                          style={{ padding: '4px 8px', borderRadius: 'var(--radius)', border: '0.5px solid var(--border)', background: 'transparent', fontSize: '11px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => startEdit(brandId)}
+                        style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', background: '#fff0ec', cursor: 'pointer', color: '#e05c3a', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+                        ✏
+                      </button>
+                    )
+                  )}
+                </td>
                 <td style={{ ...tdLeft, minWidth: '160px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <BrandAvatar name={brandName} />
@@ -171,27 +192,6 @@ export default function CreativeTable({ assignments, entries, month, personId, c
                   </>
                 )}
 
-                <td style={{ ...td, width: '48px', padding: '6px 8px' }}>
-                  {canEdit && (
-                    isEditing ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <button onClick={() => save(brandId)} disabled={saving === brandId}
-                          style={{ padding: '4px 8px', borderRadius: 'var(--radius)', border: 'none', background: 'var(--ink, #0D0D0B)', color: '#F0EDE5', fontSize: '11px', cursor: 'pointer' }}>
-                          {saving === brandId ? '…' : 'Save'}
-                        </button>
-                        <button onClick={() => setEditing(null)}
-                          style={{ padding: '4px 8px', borderRadius: 'var(--radius)', border: '0.5px solid var(--border)', background: 'transparent', fontSize: '11px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                          ✕
-                        </button>
-                      </div>
-                    ) : (
-                      <button onClick={() => startEdit(brandId)}
-                        style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', background: '#fff0ec', cursor: 'pointer', color: '#e05c3a', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
-                        ✏
-                      </button>
-                    )
-                  )}
-                </td>
               </tr>
             );
           })}

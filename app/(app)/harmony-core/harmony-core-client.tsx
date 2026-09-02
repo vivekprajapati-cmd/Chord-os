@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import SocialTable from './tables/social-table';
 import InfluencerTable from './tables/influencer-table';
 import CreativeTable from './tables/creative-table';
@@ -49,7 +50,7 @@ function getRoleBadgeStyle(role: 'social' | 'influencer' | 'creative') {
 type LineConfig = { key: string; label: string; color: string };
 
 function LineChart({ title, data, lines }: { title: string; data: any[]; lines: LineConfig[] }) {
-  const W = 440, H = 140, padL = 8, padR = 8, padT = 12, padB = 28;
+  const W = 440, H = 150, padL = 8, padR = 8, padT = 22, padB = 28;
   const iW = W - padL - padR;
   const iH = H - padT - padB;
   const n = data.length;
@@ -77,11 +78,23 @@ function LineChart({ title, data, lines }: { title: string; data: any[]; lines: 
         {n > 1 && lines.map(l => (
           <polyline key={l.key} points={polyline(l.key)} fill="none" stroke={l.color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
         ))}
-        {/* Dots at current month */}
-        {lines.map(l => {
-          const last = n - 1;
-          return <circle key={l.key} cx={x(last)} cy={y(Number(data[last][l.key]) || 0)} r="3.5" fill={l.color} />;
-        })}
+        {/* Dots + value labels at every data point */}
+        {lines.map(l =>
+          data.map((d, i) => {
+            const val = Number(d[l.key]) || 0;
+            const cx = x(i);
+            const cy = y(val);
+            const isLast = i === n - 1;
+            const labelY = cy - 7;
+            const anchor = isLast ? 'end' : i === 0 ? 'start' : 'middle';
+            return (
+              <g key={`${l.key}-${i}`}>
+                <circle cx={cx} cy={cy} r={isLast ? 3.5 : 2.5} fill={l.color} />
+                <text x={cx} y={labelY} textAnchor={anchor} fontSize="9" fontFamily="var(--font-mono)" fontWeight="700" fill={l.color}>{val}</text>
+              </g>
+            );
+          })
+        )}
         {/* X labels */}
         {data.map((d, i) => (
           <text key={i} x={x(i)} y={H - 6} textAnchor="middle" fontSize="8" fontFamily="var(--font-mono)" fill="#999">{d.label}</text>
@@ -102,8 +115,13 @@ function LineChart({ title, data, lines }: { title: string; data: any[]; lines: 
 
 export default function HarmonyCoreClient({ me, people }: Props) {
   const now = new Date();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const isTracked = people.some(p => p.id === me.id);
-  const [selectedPersonId, setSelectedPersonId] = useState(isTracked ? me.id : (people[0]?.id ?? me.id));
+  const defaultPersonId = isTracked ? me.id : (people[0]?.id ?? me.id);
+  const urlPersonId = searchParams.get('person');
+  const initialPersonId = (urlPersonId && people.some(p => p.id === urlPersonId)) ? urlPersonId : defaultPersonId;
+  const [selectedPersonId, setSelectedPersonId] = useState(initialPersonId);
   const [month, setMonth] = useState(toMonthParam(now));
   const [weekStart, setWeekStart] = useState(toWeekParam(now));
   const [assignments, setAssignments] = useState<any[]>([]);
@@ -117,7 +135,12 @@ export default function HarmonyCoreClient({ me, people }: Props) {
 
   const selectedPerson = people.find(p => p.id === selectedPersonId) ?? people[0];
   const roleType = selectedPerson ? getRoleType(selectedPerson) : 'social';
-  const canEdit = me.access_tier === 'admin' || me.id === selectedPersonId;
+  const canEdit = me.access_tier === 'admin' || me.access_tier === 'operations' || me.id === selectedPersonId;
+
+  function selectPerson(id: string) {
+    setSelectedPersonId(id);
+    router.replace(`/harmony-core?person=${id}`, { scroll: false });
+  }
 
   const load = useCallback(async (silent = false, personIdOverride?: string) => {
     const pid = personIdOverride ?? selectedPersonId;
@@ -208,7 +231,7 @@ export default function HarmonyCoreClient({ me, people }: Props) {
           return (
             <button
               key={p.id}
-              onClick={() => setSelectedPersonId(p.id)}
+              onClick={() => selectPerson(p.id)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
                 padding: '8px 16px 8px 14px', borderRadius: '10px',

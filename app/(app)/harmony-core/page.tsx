@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
@@ -26,9 +27,11 @@ export default async function HarmonyCorePageWrapper() {
     .order('name');
 
   return (
-    <HarmonyCoreClient
-      me={me as any}
-      people={(people ?? []) as any[]}
-    />
+    <Suspense>
+      <HarmonyCoreClient
+        me={me as any}
+        people={(people ?? []) as any[]}
+      />
+    </Suspense>
   );
 }

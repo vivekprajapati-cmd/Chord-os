@@ -17,6 +17,12 @@ export async function GET(req: Request) {
 
   if (!person_id) return NextResponse.json({ error: 'missing person_id' }, { status: 400 });
 
+  const { data: me } = await supabase.from('people').select('id, access_tier').eq('email', user.email!).maybeSingle();
+  const isPrivileged = (me as any)?.access_tier === 'admin' || (me as any)?.access_tier === 'operations';
+  if (!isPrivileged && (me as any)?.id !== person_id) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
+
   const admin = createAdminClient();
 
   // Fetch ALL social entries for this person, any month
