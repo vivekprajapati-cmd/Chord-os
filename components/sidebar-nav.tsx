@@ -3,9 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, CheckSquare, CalendarDays, Briefcase, Settings2, Mic2, Users, BarChart2, Brain, HeartHandshake } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, CalendarDays, Briefcase, Settings2, Mic2, Users, BarChart2, Brain, UserCog } from 'lucide-react';
 
-type Tier = 'admin' | 'lead' | 'operations' | 'staff' | 'viewer' | 'poc';
+type Tier = 'admin' | 'operations' | 'hr' | 'poc' | 'staff';
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', num: '01', Icon: LayoutDashboard },
@@ -15,7 +15,7 @@ const NAV = [
   { href: '/operations', label: 'Operations', num: '05', Icon: Settings2 },
 ];
 
-export default function SidebarNav({ tier }: { tier: Tier }) {
+export default function SidebarNav({ tier, showHR }: { tier: Tier; showHR?: boolean }) {
   const pathname = usePathname();
 
   function isActive(href: string) {
@@ -53,8 +53,8 @@ export default function SidebarNav({ tier }: { tier: Tier }) {
       {tier === 'admin' && navLink('/chat', 'Allocator', '06', Mic2)}
       {tier === 'admin' && navLink('/team', 'Team', '07', Users)}
       {(tier === 'admin' || tier === 'poc') && navLink('/analytics', 'Analytics', '08', BarChart2)}
-      {(tier === 'admin' || tier === 'lead' || tier === 'operations') && navLink('/harmony-core', 'Harmony Core', '09', Brain)}
-      {/* HR tab hidden — under development */}
+      {(tier === 'admin' || tier === 'operations') && navLink('/harmony-core', 'Harmony Core', '09', Brain)}
+      {showHR && navLink('/hr', 'HR', '10', UserCog)}
     </nav>
   );
 }

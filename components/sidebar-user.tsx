@@ -12,7 +12,7 @@ type Person = {
   location: string;
 };
 
-export default function SidebarUser({ person, tier }: { person: Person; tier: 'admin' | 'lead' | 'operations' | 'staff' | 'viewer' | 'poc' }) {
+export default function SidebarUser({ person, tier }: { person: Person; tier: 'admin' | 'operations' | 'hr' | 'poc' | 'staff' }) {
   const firstName = person.name?.split(' ')[0] ?? '';
 
   return (

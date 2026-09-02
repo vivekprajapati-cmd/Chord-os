@@ -25,10 +25,61 @@ export default async function ProfilePage() {
     managerName = mgr ? `${mgr.name}${mgr.role ? ` · ${mgr.role}` : ''}` : null;
   }
 
+  const personId = person?.id ?? '';
+  const year = new Date().getFullYear();
+
+  let leaveBalance = { planned_total: 12, urgent_total: 8, birthday_total: 1 };
+  let leaveHistory: { id: string; type: string; start_date: string; end_date: string; duration_days: number; reason: string | null; status: string; created_at: string }[] = [];
+  let approvers: { id: string; name: string; role: string | null }[] = [];
+  let feedbackHistory: { id: string; period: string; content: string; rating: number | null; published_at: string }[] = [];
+
+  if (personId) {
+    try {
+      const { data: bal } = await admin
+        .from('leave_balances')
+        .select('planned_total, urgent_total, birthday_total')
+        .eq('person_id', personId)
+        .eq('year', year)
+        .maybeSingle();
+      if (bal) leaveBalance = bal;
+    } catch {}
+
+    try {
+      const { data: hist } = await admin
+        .from('leaves')
+        .select('id, type, start_date, end_date, duration_days, reason, status, created_at')
+        .eq('person_id', personId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (hist) leaveHistory = hist;
+    } catch {}
+
+    // fetch people who can approve — managers and leads, excluding self
+    try {
+      const { data: approverList } = await admin
+        .from('people')
+        .select('id, name, role')
+        .in('access_tier', ['admin', 'lead'])
+        .neq('id', personId)
+        .order('name');
+      if (approverList) approvers = approverList;
+    } catch {}
+
+    try {
+      const { data: fbList } = await admin
+        .from('feedback')
+        .select('id, period, content, rating, published_at')
+        .eq('person_id', personId)
+        .eq('status', 'published')
+        .order('published_at', { ascending: false });
+      if (fbList) feedbackHistory = fbList;
+    } catch {}
+  }
+
   return (
     <ProfileClient
       person={{
-        id: person?.id ?? '',
+        id: personId,
         name: person?.name ?? '',
         email: user.email ?? '',
         role: person?.role ?? '',
@@ -38,6 +89,10 @@ export default async function ProfilePage() {
         access_tier: (person as any)?.access_tier ?? 'staff',
       }}
       managerName={managerName}
+      leaveBalance={leaveBalance}
+      leaveHistory={leaveHistory}
+      approvers={approvers}
+      feedbackHistory={feedbackHistory}
     />
   );
 }
