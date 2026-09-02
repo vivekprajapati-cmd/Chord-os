@@ -147,9 +147,8 @@ export default function BrandsClient({
           </div>
 
           {/* Client Logins button + dropdown */}
-          <div style={{ position: 'relative' }} ref={panelRef}>
           {isAdminOrOps && (
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative' }} ref={panelRef}>
               <button
                 onClick={() => setLoginsOpen(o => !o)}
                 style={{
@@ -333,7 +332,6 @@ export default function BrandsClient({
               + Client Login
             </button>
           )}
-          </div>{/* end client logins wrapper */}
 
           {isLead && (
             <button
