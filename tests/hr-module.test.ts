@@ -50,56 +50,59 @@ describe('Leave approval', () => {
 });
 
 // ── Leave balance calculation ─────────────────────────────────────────────────
-type LeaveType = 'earned' | 'casual' | 'sick' | 'unpaid';
+type LeaveType = 'planned' | 'urgent' | 'birthday';
 
-const DEFAULTS = { earned: 18, casual: 8, sick: 6, unpaid: 5 };
+const DEFAULTS = { planned: 12, urgent: 8, birthday: 1 };
+const PROBATION_DEFAULTS = { planned: 0, urgent: 1, birthday: 1 };
 
 function calcRemaining(
   totals: typeof DEFAULTS,
   approved: { type: LeaveType; duration_days: number }[]
 ) {
-  const used: Record<string, number> = { earned: 0, casual: 0, sick: 0, unpaid: 0 };
+  const used: Record<string, number> = { planned: 0, urgent: 0, birthday: 0 };
   for (const l of approved) used[l.type] += l.duration_days;
   return {
-    earned:  totals.earned  - used.earned,
-    casual:  totals.casual  - used.casual,
-    sick:    totals.sick    - used.sick,
-    unpaid:  totals.unpaid  - used.unpaid,
+    planned:  totals.planned  - used.planned,
+    urgent:   totals.urgent   - used.urgent,
+    birthday: totals.birthday - used.birthday,
   };
 }
 
 describe('Leave balance', () => {
   it('full balance when no leaves taken', () => {
     const bal = calcRemaining(DEFAULTS, []);
-    expect(bal).toEqual({ earned: 18, casual: 8, sick: 6, unpaid: 5 });
+    expect(bal).toEqual({ planned: 12, urgent: 8, birthday: 1 });
   });
 
-  it('deducts approved earned leave', () => {
-    const bal = calcRemaining(DEFAULTS, [{ type: 'earned', duration_days: 3 }]);
-    expect(bal.earned).toBe(15);
-    expect(bal.casual).toBe(8); // unchanged
+  it('deducts approved planned leave', () => {
+    const bal = calcRemaining(DEFAULTS, [{ type: 'planned', duration_days: 3 }]);
+    expect(bal.planned).toBe(9);
+    expect(bal.urgent).toBe(8); // unchanged
   });
 
   it('deducts multiple leaves of different types', () => {
     const bal = calcRemaining(DEFAULTS, [
-      { type: 'earned', duration_days: 5 },
-      { type: 'sick',   duration_days: 2 },
-      { type: 'casual', duration_days: 1 },
+      { type: 'planned', duration_days: 5 },
+      { type: 'urgent',  duration_days: 2 },
     ]);
-    expect(bal.earned).toBe(13);
-    expect(bal.sick).toBe(4);
-    expect(bal.casual).toBe(7);
-    expect(bal.unpaid).toBe(5);
+    expect(bal.planned).toBe(7);
+    expect(bal.urgent).toBe(6);
+    expect(bal.birthday).toBe(1);
   });
 
   it('can go to zero', () => {
-    const bal = calcRemaining(DEFAULTS, [{ type: 'casual', duration_days: 8 }]);
-    expect(bal.casual).toBe(0);
+    const bal = calcRemaining(DEFAULTS, [{ type: 'urgent', duration_days: 8 }]);
+    expect(bal.urgent).toBe(0);
   });
 
   it('can go negative (overage — no hard block in logic)', () => {
-    const bal = calcRemaining(DEFAULTS, [{ type: 'sick', duration_days: 10 }]);
-    expect(bal.sick).toBe(-4);
+    const bal = calcRemaining(DEFAULTS, [{ type: 'birthday', duration_days: 2 }]);
+    expect(bal.birthday).toBe(-1);
+  });
+
+  it('probation: planned=0, urgent=1, birthday=1', () => {
+    const bal = calcRemaining(PROBATION_DEFAULTS, []);
+    expect(bal).toEqual({ planned: 0, urgent: 1, birthday: 1 });
   });
 });
 

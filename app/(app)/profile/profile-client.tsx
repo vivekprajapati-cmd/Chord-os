@@ -70,7 +70,7 @@ function ComingSoonBadge() {
   );
 }
 
-type LeaveBalance = { earned_total: number; casual_total: number; sick_total: number; unpaid_total: number };
+type LeaveBalance = { planned_total: number; urgent_total: number; birthday_total: number };
 type LeaveRecord = { id: string; type: string; start_date: string; end_date: string; duration_days: number; reason: string | null; status: string; created_at: string };
 type Approver = { id: string; name: string; role: string | null };
 type FeedbackRecord = { id: string; period: string; content: string; rating: number | null; published_at: string };
@@ -242,23 +242,22 @@ export default function ProfileClient({ person: initial, managerName, leaveBalan
 
 function LeaveTab({ personId, balance, history, approvers }: { personId: string; balance: LeaveBalance; history: LeaveRecord[]; approvers: Approver[] }) {
   const [applying, setApplying] = useState(false);
-  const [form, setForm] = useState({ type: 'earned', start_date: '', end_date: '', reason: '', approver_id: approvers[0]?.id ?? '' });
+  const [form, setForm] = useState({ type: 'planned', start_date: '', end_date: '', reason: '', approver_id: approvers[0]?.id ?? '' });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [localHistory, setLocalHistory] = useState(history);
 
   // compute used days per type from approved leaves
-  const used = { earned: 0, casual: 0, sick: 0, unpaid: 0 };
+  const used = { planned: 0, urgent: 0, birthday: 0 };
   localHistory.filter(l => l.status === 'approved').forEach(l => {
     if (l.type in used) (used as any)[l.type] += l.duration_days;
   });
 
   const types = [
-    { key: 'earned', label: 'Earned Leave',  total: balance.earned_total,  used: used.earned,  color: '#2C7CE5', bg: '#EBF3FF' },
-    { key: 'casual', label: 'Casual Leave',  total: balance.casual_total,  used: used.casual,  color: '#16a34a', bg: '#ECFDF5' },
-    { key: 'sick',   label: 'Sick Leave',    total: balance.sick_total,    used: used.sick,    color: '#E55D4A', bg: '#FFF0EE' },
-    { key: 'unpaid', label: 'Unpaid Leave',  total: balance.unpaid_total,  used: used.unpaid,  color: '#7C3AED', bg: '#F3EFFE' },
+    { key: 'planned',  label: 'Planned Leave',  total: balance.planned_total,  used: used.planned,  color: '#2C7CE5', bg: '#EBF3FF' },
+    { key: 'urgent',   label: 'Urgent Leave',   total: balance.urgent_total,   used: used.urgent,   color: '#E55D4A', bg: '#FFF0EE' },
+    { key: 'birthday', label: 'Birthday Leave', total: balance.birthday_total, used: used.birthday, color: '#7C3AED', bg: '#F3EFFE' },
   ];
 
   async function submit() {
@@ -278,7 +277,7 @@ function LeaveTab({ personId, balance, history, approvers }: { personId: string;
     setLocalHistory(prev => [leave, ...prev]);
     setSubmitted(true);
     setApplying(false);
-    setForm({ type: 'earned', start_date: '', end_date: '', reason: '', approver_id: approvers[0]?.id ?? '' });
+    setForm({ type: 'planned', start_date: '', end_date: '', reason: '', approver_id: approvers[0]?.id ?? '' });
     setTimeout(() => setSubmitted(false), 4000);
   }
 
@@ -370,10 +369,9 @@ function LeaveTab({ personId, balance, history, approvers }: { personId: string;
             <div>
               <label style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', display: 'block', marginBottom: '4px' }}>Leave Type</label>
               <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))} style={inputStyle}>
-                <option value="earned">Earned Leave</option>
-                <option value="casual">Casual Leave</option>
-                <option value="sick">Sick Leave</option>
-                <option value="unpaid">Unpaid Leave</option>
+                <option value="planned">Planned Leave</option>
+                <option value="urgent">Urgent Leave</option>
+                <option value="birthday">Birthday Leave</option>
               </select>
             </div>
             {/* From */}

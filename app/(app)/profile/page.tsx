@@ -28,7 +28,7 @@ export default async function ProfilePage() {
   const personId = person?.id ?? '';
   const year = new Date().getFullYear();
 
-  let leaveBalance = { earned_total: 18, casual_total: 8, sick_total: 6, unpaid_total: 5 };
+  let leaveBalance = { planned_total: 12, urgent_total: 8, birthday_total: 1 };
   let leaveHistory: { id: string; type: string; start_date: string; end_date: string; duration_days: number; reason: string | null; status: string; created_at: string }[] = [];
   let approvers: { id: string; name: string; role: string | null }[] = [];
   let feedbackHistory: { id: string; period: string; content: string; rating: number | null; published_at: string }[] = [];
@@ -37,7 +37,7 @@ export default async function ProfilePage() {
     try {
       const { data: bal } = await admin
         .from('leave_balances')
-        .select('earned_total, casual_total, sick_total, unpaid_total')
+        .select('planned_total, urgent_total, birthday_total')
         .eq('person_id', personId)
         .eq('year', year)
         .maybeSingle();

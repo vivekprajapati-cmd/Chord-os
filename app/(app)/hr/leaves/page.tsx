@@ -28,7 +28,7 @@ export default async function HRLeavesPage() {
       .order('created_at', { ascending: false })
       .limit(100),
     admin.from('people').select('id, name').order('name'),
-    admin.from('leave_balances').select('person_id, earned_total, casual_total, sick_total, unpaid_total').eq('year', year),
+    admin.from('leave_balances').select('person_id, planned_total, urgent_total, birthday_total').eq('year', year),
   ]);
 
   const leaveList = (leaves ?? []) as any[];
@@ -37,7 +37,7 @@ export default async function HRLeavesPage() {
   const usedMap: Record<string, Record<string, number>> = {};
   for (const l of leaveList) {
     if (l.status !== 'approved') continue;
-    if (!usedMap[l.person_id]) usedMap[l.person_id] = { earned: 0, casual: 0, sick: 0, unpaid: 0 };
+    if (!usedMap[l.person_id]) usedMap[l.person_id] = { planned: 0, urgent: 0, birthday: 0 };
     usedMap[l.person_id][l.type] = (usedMap[l.person_id][l.type] ?? 0) + (l.duration_days ?? 1);
   }
 
@@ -46,7 +46,7 @@ export default async function HRLeavesPage() {
   const approvedThisMonth = leaveList.filter(l => l.status === 'approved' && l.created_at >= monthStart).length;
   const rejected = leaveList.filter(l => l.status === 'rejected' && l.created_at >= monthStart).length;
 
-  const balanceMap: Record<string, { earned_total: number; casual_total: number; sick_total: number; unpaid_total: number }> = {};
+  const balanceMap: Record<string, { planned_total: number; urgent_total: number; birthday_total: number }> = {};
   for (const b of balances ?? []) balanceMap[b.person_id] = b;
 
   return (

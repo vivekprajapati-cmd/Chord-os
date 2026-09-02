@@ -10,14 +10,13 @@ type Leave = {
   approver: { name: string } | null;
 };
 type Person = { id: string; name: string };
-type BalanceMap = Record<string, { earned_total: number; casual_total: number; sick_total: number; unpaid_total: number }>;
+type BalanceMap = Record<string, { planned_total: number; urgent_total: number; birthday_total: number }>;
 type UsedMap = Record<string, Record<string, number>>;
 
 const TYPE_STYLE: Record<string, { bg: string; color: string; border: string }> = {
-  earned:  { bg: '#ECFDF5', color: '#16a34a', border: '#16a34a30' },
-  casual:  { bg: '#F3EFFE', color: '#7C3AED', border: '#7C3AED30' },
-  sick:    { bg: '#FFF0EE', color: '#E55D4A', border: '#E55D4A30' },
-  unpaid:  { bg: '#F3F4F6', color: '#4B5563', border: '#4B556330' },
+  planned:  { bg: '#ECFDF5', color: '#16a34a', border: '#16a34a30' },
+  urgent:   { bg: '#FFF0EE', color: '#E55D4A', border: '#E55D4A30' },
+  birthday: { bg: '#F3EFFE', color: '#7C3AED', border: '#7C3AED30' },
 };
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; border: string }> = {
@@ -95,10 +94,9 @@ export default function HRLeavesClient({ leaves, allPeople, balanceMap, usedMap,
         </select>
         <select value={filterType} onChange={e => setFilterType(e.target.value)} style={{ ...selectStyle, width: '160px' }}>
           <option value="">All Leave Types</option>
-          <option value="earned">Earned</option>
-          <option value="casual">Casual</option>
-          <option value="sick">Sick</option>
-          <option value="unpaid">Unpaid</option>
+          <option value="planned">Planned</option>
+          <option value="urgent">Urgent</option>
+          <option value="birthday">Birthday</option>
         </select>
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ ...selectStyle, width: '140px' }}>
           <option value="">All Statuses</option>
@@ -132,7 +130,7 @@ export default function HRLeavesClient({ leaves, allPeople, balanceMap, usedMap,
               {filtered.length === 0 ? (
                 <tr><td colSpan={8} style={{ padding: '40px', textAlign: 'center', fontFamily: 'var(--f-mono)', fontSize: '11px', color: 'var(--gray)' }}>No leave requests match the filters</td></tr>
               ) : filtered.map((l, i) => {
-                const ts = TYPE_STYLE[l.type] ?? TYPE_STYLE.unpaid;
+                const ts = TYPE_STYLE[l.type] ?? TYPE_STYLE.planned;
                 const ss = STATUS_STYLE[l.status] ?? STATUS_STYLE.pending;
                 const isLast = i === filtered.length - 1;
                 const border = isLast ? 'none' : '1px solid var(--line)';
@@ -174,14 +172,14 @@ export default function HRLeavesClient({ leaves, allPeople, balanceMap, usedMap,
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                {['Employee', 'Earned (Used / Total)', 'Casual (Used / Total)', 'Sick (Used / Total)', 'Unpaid (Used / Total)'].map(h => (
+                {['Employee', 'Planned (Used / Total)', 'Urgent (Used / Total)', 'Birthday (Used / Total)'].map(h => (
                   <th key={h} style={{ fontFamily: 'var(--f-mono)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray)', padding: '10px 14px', textAlign: 'left', borderBottom: '1px solid var(--line)', background: 'var(--paper)', fontWeight: 600 }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {allPeople.map((p, i) => {
-                const bal = balanceMap[p.id] ?? { earned_total: 18, casual_total: 8, sick_total: 6, unpaid_total: 5 };
+                const bal = balanceMap[p.id] ?? { planned_total: 12, urgent_total: 8, birthday_total: 1 };
                 const used = usedMap[p.id] ?? {};
                 const isLast = i === allPeople.length - 1;
                 const tdStyle: React.CSSProperties = { padding: '12px 14px', borderBottom: isLast ? 'none' : '1px solid var(--line)', fontFamily: 'var(--f-mono)', fontSize: '12px' };
@@ -200,10 +198,9 @@ export default function HRLeavesClient({ leaves, allPeople, balanceMap, usedMap,
                         <span style={{ fontWeight: 600, fontSize: '13px' }}>{p.name}</span>
                       </div>
                     </td>
-                    {cell('earned', bal.earned_total)}
-                    {cell('casual', bal.casual_total)}
-                    {cell('sick', bal.sick_total)}
-                    {cell('unpaid', bal.unpaid_total)}
+                    {cell('planned', bal.planned_total)}
+                    {cell('urgent', bal.urgent_total)}
+                    {cell('birthday', bal.birthday_total)}
                   </tr>
                 );
               })}
