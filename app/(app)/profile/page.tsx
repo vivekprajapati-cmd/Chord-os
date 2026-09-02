@@ -59,7 +59,7 @@ export default async function ProfilePage() {
       const { data: approverList } = await admin
         .from('people')
         .select('id, name, role')
-        .in('access_tier', ['admin', 'lead'])
+        .in('access_tier', ['admin', 'lead', 'hr'])
         .neq('id', personId)
         .order('name');
       if (approverList) approvers = approverList;
