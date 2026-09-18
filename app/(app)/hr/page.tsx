@@ -1,22 +1,16 @@
 import { createAdminClient } from '@/lib/supabase/admin';
-import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getAuthedPerson } from '@/lib/supabase/get-authed-person';
 import HRClient from './hr-client';
 
 export default async function HRPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
-
-  const admin = createAdminClient();
-  const { data: self } = await admin
-    .from('people')
-    .select('access_tier')
-    .eq('email', user.email!)
-    .maybeSingle();
+  const { person: self, unauth } = await getAuthedPerson('access_tier');
+  if (unauth) redirect('/login');
 
   const tier = (self as any)?.access_tier ?? 'staff';
   if (tier !== 'admin' && tier !== 'hr') redirect('/dashboard');
+
+  const admin = createAdminClient();
 
   // pending leaves count — graceful if table doesn't exist yet
   let pendingLeaves = 0;

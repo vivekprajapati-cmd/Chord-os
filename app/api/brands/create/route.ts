@@ -1,18 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { logActivity } from '@/lib/activity';
+import { getAuthedPerson } from '@/lib/supabase/get-authed-person';
 
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-
-  const { data: person } = await supabase
-    .from('people')
-    .select('access_tier')
-    .eq('email', user.email!)
-    .maybeSingle();
+  const { person, unauth, user } = await getAuthedPerson('access_tier');
+  if (unauth) return unauth;
 
   const personTier = (person as any)?.access_tier ?? 'staff';
   if (personTier !== 'admin' && personTier !== 'lead') {

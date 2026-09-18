@@ -1,22 +1,16 @@
-import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
+import { getAuthedPerson } from '@/lib/supabase/get-authed-person';
 import HRLeavesClient from './hr-leaves-client';
 
 export default async function HRLeavesPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
-
-  const admin = createAdminClient();
-  const { data: self } = await admin
-    .from('people')
-    .select('id, access_tier')
-    .eq('email', user.email!)
-    .maybeSingle();
+  const { person: self, unauth } = await getAuthedPerson('id, access_tier');
+  if (unauth) redirect('/login');
 
   const tier = (self as any)?.access_tier ?? 'staff';
   if (tier !== 'admin' && tier !== 'hr') redirect('/dashboard');
+
+  const admin = createAdminClient();
 
   const year = new Date().getFullYear();
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
