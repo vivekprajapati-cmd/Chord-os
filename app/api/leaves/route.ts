@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   const { data: leave, error } = await admin
     .from('leaves')
-    .insert({ person_id: person.id, type, start_date, end_date, reason: reason || null, status: 'pending', approver_id })
+    .insert({ person_id: (person as any).id, type, start_date, end_date, reason: reason || null, status: 'pending', approver_id })
     .select()
     .single();
 
