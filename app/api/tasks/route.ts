@@ -161,7 +161,7 @@ async function checkConflict(
 
 // ─── POST ─────────────────────────────────────────────────────────────────────
 export async function POST(req: Request) {
-  const { person: _person, unauth } = await getAuthedPerson('id, name, access_tier, is_team_lead');
+  const { person: _person, unauth, user } = await getAuthedPerson('id, name, access_tier, is_team_lead');
   if (unauth) return unauth;
   if (!_person) return NextResponse.json({ error: 'Person not found.' }, { status: 403 });
   const person = _person as any;
