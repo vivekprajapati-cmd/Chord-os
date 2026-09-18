@@ -165,6 +165,7 @@ export async function POST(req: Request) {
   if (unauth) return unauth;
   if (!_person) return NextResponse.json({ error: 'Person not found.' }, { status: 403 });
   const person = _person as any;
+  const supabase = await createClient();
 
   const tier = (person as any).access_tier ?? 'staff';
   const isStaff = tier === 'staff' || tier === 'viewer' || tier === 'operations';
