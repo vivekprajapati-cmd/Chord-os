@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import { getAuthedPerson } from '@/lib/supabase/get-authed-person';
 import { notifySlack } from '@/lib/slack';
 import { logActivity } from '@/lib/activity';
