@@ -1,0 +1,569 @@
+<title>ChordOS Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+  :root {
+    --ink: #0D0D0B;
+    --cream: #F0EDE5;
+    --lime: #AAFF47;
+    --paper: #FAFAF7;
+    --mid: #E2DED6;
+    --dim: #888880;
+    --blue: #3B5BDB;
+    --orange: #E67E22;
+    --purple: #7C3AED;
+    --teal: #0D9488;
+    --red: #DC2626;
+
+    --bg: var(--cream);
+    --surface: var(--paper);
+    --border: var(--ink);
+    --text: var(--ink);
+    --sub: #555550;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0D0D0B;
+      --surface: #1A1A17;
+      --border: #3A3A35;
+      --text: #F0EDE5;
+      --sub: #888880;
+      --mid: #2A2A25;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0D0D0B;
+    --surface: #1A1A17;
+    --border: #3A3A35;
+    --text: #F0EDE5;
+    --sub: #888880;
+    --mid: #2A2A25;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    padding: 32px 24px 48px;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  header h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  header .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: var(--lime);
+    color: var(--ink);
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+
+  .canvas {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* SVG arrows layer sits behind boxes */
+  .arrows-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: visible;
+  }
+
+  /* Layer rows */
+  .layer {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 0;
+  }
+
+  .layer-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--sub);
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
+
+  .layer-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .spacer { height: 56px; }
+  .spacer-sm { height: 40px; }
+
+  /* Node box */
+  .node {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    min-width: 160px;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .node.accent {
+    background: var(--lime);
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .node.accent .node-label,
+  .node.accent .node-sub,
+  .node.accent .node-tag { color: var(--ink) !important; opacity: 1 !important; }
+
+  .node.wide { min-width: 220px; }
+  .node.narrow { min-width: 130px; }
+
+  .node-icon {
+    font-size: 16px;
+    margin-bottom: 6px;
+    display: block;
+    line-height: 1;
+  }
+
+  .node-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .node-sub {
+    font-size: 10px;
+    color: var(--sub);
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+
+  .node-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .node-tag {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: var(--mid);
+    color: var(--sub);
+  }
+  .node-tag.blue { background: #DBEAFE; color: #1D4ED8; }
+  .node-tag.green { background: #DCFCE7; color: #166534; }
+  .node-tag.orange { background: #FEF3C7; color: #92400E; }
+  .node-tag.purple { background: #EDE9FE; color: #5B21B6; }
+  .node-tag.red { background: #FEE2E2; color: #991B1B; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .node-tag.blue { background: #1E3A5F; color: #93C5FD; }
+    :root:not([data-theme="light"]) .node-tag.green { background: #14532D; color: #86EFAC; }
+    :root:not([data-theme="light"]) .node-tag.orange { background: #451A03; color: #FCD34D; }
+    :root:not([data-theme="light"]) .node-tag.purple { background: #2E1065; color: #C4B5FD; }
+    :root:not([data-theme="light"]) .node-tag.red { background: #450A0A; color: #FCA5A5; }
+  }
+  :root[data-theme="dark"] .node-tag.blue { background: #1E3A5F; color: #93C5FD; }
+  :root[data-theme="dark"] .node-tag.green { background: #14532D; color: #86EFAC; }
+  :root[data-theme="dark"] .node-tag.orange { background: #451A03; color: #FCD34D; }
+  :root[data-theme="dark"] .node-tag.purple { background: #2E1065; color: #C4B5FD; }
+  :root[data-theme="dark"] .node-tag.red { background: #450A0A; color: #FCA5A5; }
+
+  /* Vertical group box */
+  .group {
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    padding: 14px 14px 14px;
+    position: relative;
+    background: transparent;
+    opacity: 0.85;
+  }
+
+  .group-label {
+    position: absolute;
+    top: -10px;
+    left: 12px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    background: var(--bg);
+    padding: 0 6px;
+    color: var(--sub);
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    opacity: 0.7;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 10px;
+    color: var(--sub);
+  }
+
+  .legend-line {
+    width: 28px;
+    height: 2px;
+    border-radius: 1px;
+  }
+  .legend-line.solid { background: var(--ink); }
+  .legend-line.dashed { background: repeating-linear-gradient(90deg, var(--sub) 0, var(--sub) 4px, transparent 4px, transparent 8px); }
+  .legend-line.lime { background: #22c55e; }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .legend-line.solid { background: #F0EDE5; }
+  }
+  :root[data-theme="dark"] .legend-line.solid { background: #F0EDE5; }
+</style>
+
+<header>
+  <h1>ChordOS</h1>
+  <span class="badge">System Architecture</span>
+</header>
+
+<div class="canvas" id="canvas">
+
+  <!-- LAYER 0: Users -->
+  <div class="layer">
+    <div class="layer-label">Users</div>
+    <div class="layer-row">
+      <div class="node narrow" id="n-staff">
+        <span class="node-icon">👤</span>
+        <div class="node-label">Staff / Leads / Admin</div>
+        <div class="node-sub">Internal Chord team</div>
+        <div class="node-tags">
+          <span class="node-tag">Slack login</span>
+          <span class="node-tag">Google OAuth</span>
+        </div>
+      </div>
+      <div class="node narrow" id="n-viewer">
+        <span class="node-icon">👁</span>
+        <div class="node-label">Viewers</div>
+        <div class="node-sub">Pierre, Nimesh — read-only</div>
+        <div class="node-tags">
+          <span class="node-tag">Scoped RLS</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- LAYER 1: Frontend -->
+  <div class="layer">
+    <div class="layer-label">Frontend — Vercel Edge</div>
+    <div class="layer-row">
+      <div class="node accent wide" id="n-vercel-prod">
+        <span class="node-icon">▲</span>
+        <div class="node-label">Vercel Production</div>
+        <div class="node-sub">main branch → chord-os.vercel.app</div>
+        <div class="node-tags">
+          <span class="node-tag">Next.js 15 App Router</span>
+          <span class="node-tag">TypeScript</span>
+          <span class="node-tag">Tailwind CSS</span>
+        </div>
+      </div>
+      <div class="node wide" id="n-vercel-staging">
+        <span class="node-icon">▲</span>
+        <div class="node-label">Vercel Staging</div>
+        <div class="node-sub">develop branch → preview URL</div>
+        <div class="node-tags">
+          <span class="node-tag orange">RLS off</span>
+          <span class="node-tag">Slack notifs off</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- LAYER 2: API Routes -->
+  <div class="layer">
+    <div class="layer-label">API Routes — Next.js (same deployment)</div>
+    <div class="layer-row">
+      <div class="node narrow" id="n-api-tasks">
+        <span class="node-icon">✓</span>
+        <div class="node-label">Tasks + Blocks</div>
+        <div class="node-sub">/api/tasks<br>/api/blocks</div>
+        <div class="node-tags"><span class="node-tag blue">CRUD</span></div>
+      </div>
+      <div class="node narrow" id="n-api-harmony">
+        <span class="node-icon">◈</span>
+        <div class="node-label">Harmony Core</div>
+        <div class="node-sub">/api/harmony-core<br>weekly · history · assignments</div>
+        <div class="node-tags"><span class="node-tag purple">Auth gated</span></div>
+      </div>
+      <div class="node narrow" id="n-api-slack">
+        <span class="node-icon">⚡</span>
+        <div class="node-label">Slack Notify</div>
+        <div class="node-sub">/api/slack/notify</div>
+        <div class="node-tags"><span class="node-tag">Webhooks</span></div>
+      </div>
+      <div class="node narrow" id="n-api-calendar">
+        <span class="node-icon">📅</span>
+        <div class="node-label">Google Calendar</div>
+        <div class="node-sub">/api/calendar/google-events<br>/api/auth/google</div>
+        <div class="node-tags"><span class="node-tag green">OAuth2</span></div>
+      </div>
+      <div class="node narrow" id="n-api-chat">
+        <span class="node-icon">💬</span>
+        <div class="node-label">AI Chat</div>
+        <div class="node-sub">/api/chat</div>
+        <div class="node-tags"><span class="node-tag orange">OpenAI</span></div>
+      </div>
+      <div class="node narrow" id="n-api-cron">
+        <span class="node-icon">⏱</span>
+        <div class="node-label">Cron</div>
+        <div class="node-sub">/api/cron/delay-check</div>
+        <div class="node-tags"><span class="node-tag red">CRON_SECRET</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- LAYER 3: Data -->
+  <div class="layer">
+    <div class="layer-label">Database — Supabase</div>
+    <div class="layer-row">
+      <div class="node wide" id="n-db-prod">
+        <span class="node-icon">🗄</span>
+        <div class="node-label">Supabase Prod (Postgres)</div>
+        <div class="node-sub">people · tasks · blocks · brands<br>briefings · leaves · harmony_core_data</div>
+        <div class="node-tags">
+          <span class="node-tag green">RLS on</span>
+          <span class="node-tag blue">Auth</span>
+          <span class="node-tag">Storage</span>
+        </div>
+      </div>
+      <div class="node wide" id="n-db-staging">
+        <span class="node-icon">🗄</span>
+        <div class="node-label">Supabase Staging (Postgres)</div>
+        <div class="node-sub">Separate project — same schema</div>
+        <div class="node-tags">
+          <span class="node-tag orange">RLS off</span>
+          <span class="node-tag">Dev only</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <!-- LAYER 4: External -->
+  <div class="layer">
+    <div class="layer-label">External Services</div>
+    <div class="layer-row">
+      <div class="node narrow" id="n-ext-slack">
+        <span class="node-icon">💼</span>
+        <div class="node-label">Slack</div>
+        <div class="node-sub">OAuth login + task notifications via webhook</div>
+        <div class="node-tags"><span class="node-tag purple">OAuth 2.0</span><span class="node-tag">Webhooks</span></div>
+      </div>
+      <div class="node narrow" id="n-ext-gcal">
+        <span class="node-icon">📆</span>
+        <div class="node-label">Google Calendar API</div>
+        <div class="node-sub">Per-user token stored on people row</div>
+        <div class="node-tags"><span class="node-tag green">OAuth2</span></div>
+      </div>
+      <div class="node narrow" id="n-ext-gforms">
+        <span class="node-icon">📋</span>
+        <div class="node-label">Google Forms API</div>
+        <div class="node-sub">NPS collection — shared OAuth client</div>
+        <div class="node-tags"><span class="node-tag green">OAuth2</span></div>
+      </div>
+      <div class="node narrow" id="n-ext-openai">
+        <span class="node-icon">◉</span>
+        <div class="node-label">OpenAI API</div>
+        <div class="node-sub">Briefing summaries + Allocator chat</div>
+        <div class="node-tags"><span class="node-tag orange">GPT-4o</span></div>
+      </div>
+      <div class="node narrow" id="n-ext-cron">
+        <span class="node-icon">⏰</span>
+        <div class="node-label">cronjob.org</div>
+        <div class="node-sub">Hits /api/cron/delay-check on schedule</div>
+        <div class="node-tags"><span class="node-tag red">Bearer token</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SVG arrows -->
+  <svg class="arrows-svg" id="arrows" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3 z" fill="currentColor"/>
+      </marker>
+      <marker id="arrow-dim" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3 z" fill="#888880"/>
+      </marker>
+      <marker id="arrow-lime" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3 z" fill="#22c55e"/>
+      </marker>
+    </defs>
+  </svg>
+</div>
+
+<!-- Legend -->
+<div class="legend" style="max-width:1100px;margin:0 auto;">
+  <div class="legend-item"><div class="legend-line solid"></div>Request / data flow</div>
+  <div class="legend-item"><div class="legend-line" style="background:#22c55e"></div>Auth flow</div>
+  <div class="legend-item"><div class="legend-line dashed"></div>External trigger</div>
+</div>
+
+<script>
+// Draw arrows between nodes after layout
+function getCenter(el) {
+  const r = el.getBoundingClientRect();
+  const cr = document.getElementById('canvas').getBoundingClientRect();
+  return {
+    x: r.left - cr.left + r.width / 2,
+    y: r.top - cr.top + r.height / 2,
+    top: r.top - cr.top,
+    bottom: r.top - cr.top + r.height,
+    left: r.left - cr.left,
+    right: r.left - cr.left + r.width,
+  };
+}
+
+function drawArrow(svg, x1, y1, x2, y2, color = 'currentColor', markerId = 'arrow', dashed = false) {
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', x1);
+  line.setAttribute('y1', y1);
+  line.setAttribute('x2', x2);
+  line.setAttribute('y2', y2);
+  line.setAttribute('stroke', color);
+  line.setAttribute('stroke-width', '1.5');
+  line.setAttribute('marker-end', `url(#${markerId})`);
+  if (dashed) line.setAttribute('stroke-dasharray', '5,4');
+  svg.appendChild(line);
+}
+
+function drawPath(svg, points, color = 'currentColor', markerId = 'arrow', dashed = false) {
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  path.setAttribute('points', points.map(p => `${p[0]},${p[1]}`).join(' '));
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', color);
+  path.setAttribute('stroke-width', '1.5');
+  path.setAttribute('marker-end', `url(#${markerId})`);
+  if (dashed) path.setAttribute('stroke-dasharray', '5,4');
+  svg.appendChild(path);
+}
+
+function render() {
+  const svg = document.getElementById('arrows');
+  // Clear previous
+  while (svg.lastChild && svg.lastChild.tagName !== 'defs') svg.removeChild(svg.lastChild);
+
+  const dark = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() === '#F0EDE5'
+    || window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const strokeColor = dark ? '#888880' : '#0D0D0B';
+  const authColor = '#22c55e';
+  const dimColor = '#888880';
+
+  const ids = ['n-staff','n-viewer','n-vercel-prod','n-vercel-staging',
+    'n-api-tasks','n-api-harmony','n-api-slack','n-api-calendar','n-api-chat','n-api-cron',
+    'n-db-prod','n-db-staging',
+    'n-ext-slack','n-ext-gcal','n-ext-gforms','n-ext-openai','n-ext-cron'];
+
+  const nodes = {};
+  for (const id of ids) {
+    const el = document.getElementById(id);
+    if (el) nodes[id] = getCenter(el);
+  }
+
+  // Users → Vercel prod
+  drawArrow(svg, nodes['n-staff'].x, nodes['n-staff'].bottom,
+    nodes['n-vercel-prod'].x, nodes['n-vercel-prod'].top - 6, strokeColor);
+  drawArrow(svg, nodes['n-viewer'].x, nodes['n-viewer'].bottom,
+    nodes['n-vercel-staging'].x, nodes['n-vercel-staging'].top - 6, dimColor, 'arrow-dim');
+
+  // Vercel prod → API routes (one line into cluster center)
+  const apiMid = (nodes['n-api-tasks'].x + nodes['n-api-cron'].x) / 2;
+  drawArrow(svg, nodes['n-vercel-prod'].x, nodes['n-vercel-prod'].bottom,
+    apiMid, nodes['n-api-tasks'].top - 6, strokeColor);
+
+  // API → DB prod
+  const dbMid = nodes['n-db-prod'].x;
+  drawArrow(svg, apiMid, nodes['n-api-tasks'].bottom,
+    dbMid, nodes['n-db-prod'].top - 6, strokeColor);
+
+  // Slack OAuth → Vercel prod (auth, right side)
+  drawPath(svg, [
+    [nodes['n-ext-slack'].x, nodes['n-ext-slack'].top],
+    [nodes['n-ext-slack'].x, nodes['n-api-slack'].bottom + 10],
+    [nodes['n-api-slack'].right, nodes['n-api-slack'].bottom + 10],
+    [nodes['n-api-slack'].right, nodes['n-api-slack'].bottom],
+  ], authColor, 'arrow-lime');
+
+  // API slack → Slack external
+  drawArrow(svg, nodes['n-api-slack'].x, nodes['n-api-slack'].bottom,
+    nodes['n-ext-slack'].top + (nodes['n-ext-slack'].y - nodes['n-ext-slack'].top),
+    nodes['n-ext-slack'].top - 6, strokeColor);
+
+  // Google cal API → calendar route
+  drawArrow(svg, nodes['n-ext-gcal'].x, nodes['n-ext-gcal'].top,
+    nodes['n-api-calendar'].x, nodes['n-api-calendar'].bottom + 6, authColor, 'arrow-lime');
+
+  // Google forms → ext (no direct route, show from prod)
+  drawArrow(svg, nodes['n-vercel-prod'].right, nodes['n-vercel-prod'].y,
+    nodes['n-ext-gforms'].left - 4, nodes['n-ext-gforms'].y, dimColor, 'arrow-dim', true);
+
+  // Chat → OpenAI
+  drawArrow(svg, nodes['n-api-chat'].x, nodes['n-api-chat'].bottom,
+    nodes['n-ext-openai'].x, nodes['n-ext-openai'].top - 6, strokeColor);
+
+  // Cron.org → cron route
+  drawArrow(svg, nodes['n-ext-cron'].x, nodes['n-ext-cron'].top,
+    nodes['n-api-cron'].x, nodes['n-api-cron'].bottom + 6, dimColor, 'arrow-dim', true);
+
+  // Staging vercel → staging db
+  drawArrow(svg, nodes['n-vercel-staging'].x, nodes['n-vercel-staging'].bottom,
+    nodes['n-db-staging'].x, nodes['n-db-staging'].top - 6, dimColor, 'arrow-dim');
+}
+
+window.addEventListener('load', () => { setTimeout(render, 50); });
+window.addEventListener('resize', () => { setTimeout(render, 50); });
+</script>

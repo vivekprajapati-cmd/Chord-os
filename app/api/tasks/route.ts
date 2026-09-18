@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getAuthedPerson } from '@/lib/supabase/get-authed-person';
 import { notifySlack } from '@/lib/slack';
 import { logActivity } from '@/lib/activity';
 
@@ -160,16 +160,8 @@ async function checkConflict(
 
 // ─── POST ─────────────────────────────────────────────────────────────────────
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-
-  const { data: person } = await supabase
-    .from('people')
-    .select('id, name, access_tier, is_team_lead')
-    .eq('email', user.email!)
-    .maybeSingle();
-
+  const { person, unauth } = await getAuthedPerson('id, name, access_tier, is_team_lead');
+  if (unauth) return unauth;
   if (!person) return NextResponse.json({ error: 'Person not found.' }, { status: 403 });
 
   const tier = (person as any).access_tier ?? 'staff';

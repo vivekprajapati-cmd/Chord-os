@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getAuthedPerson, canAccessHarmony } from '@/lib/supabase/get-authed-person';
 
 export const runtime = 'nodejs';
 
 // GET /api/harmony-core/assignments — fetch all brands + all people with harmony assignments
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const { person, unauth } = await getAuthedPerson();
+  if (unauth) return unauth;
+  if (!canAccessHarmony(person as any)) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
 
   const admin = createAdminClient();
 
@@ -23,17 +25,10 @@ export async function GET() {
 // POST /api/harmony-core/assignments — upsert or delete an assignment
 // body: { person_id, brand_id, role_type, action: 'assign' | 'unassign' }
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const { person: me, unauth } = await getAuthedPerson('access_tier');
+  if (unauth) return unauth;
 
-  const { data: me } = await supabase
-    .from('people')
-    .select('access_tier')
-    .eq('auth_user_id', user.id)
-    .maybeSingle();
-
-  if (me?.access_tier !== 'admin') {
+  if ((me as any)?.access_tier !== 'admin') {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 

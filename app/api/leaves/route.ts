@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getAuthedPerson } from '@/lib/supabase/get-authed-person';
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { person, unauth } = await getAuthedPerson('id');
+  if (unauth) return unauth;
+  if (!person) return NextResponse.json({ error: 'Person record not found' }, { status: 404 });
 
   const { type, start_date, end_date, reason, approver_id } = await req.json();
 
@@ -20,13 +20,6 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = createAdminClient();
-  const { data: person } = await admin
-    .from('people')
-    .select('id')
-    .eq('email', user.email!)
-    .maybeSingle();
-
-  if (!person) return NextResponse.json({ error: 'Person record not found' }, { status: 404 });
 
   const { data: leave, error } = await admin
     .from('leaves')

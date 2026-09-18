@@ -1,19 +1,23 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getAuthedPerson } from '@/lib/supabase/get-authed-person';
 
 export const runtime = 'nodejs';
 
 export async function GET(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const { person, unauth } = await getAuthedPerson();
+  if (unauth) return unauth;
 
   const { searchParams } = new URL(req.url);
   const person_id = searchParams.get('person_id');
   const week_start = searchParams.get('week_start'); // YYYY-MM-DD Monday
 
   if (!person_id || !week_start) return NextResponse.json({ error: 'missing params' }, { status: 400 });
+
+  const isPrivileged = ['admin', 'lead', 'operations'].includes((person as any)?.access_tier);
+  if (!isPrivileged && (person as any)?.id !== person_id) {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
 
   const admin = createAdminClient();
 
@@ -32,15 +36,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-
-  const { data: me } = await supabase
-    .from('people')
-    .select('id, access_tier')
-    .eq('email', user.email!)
-    .maybeSingle();
+  const { person: me, unauth } = await getAuthedPerson('id, access_tier');
+  if (unauth) return unauth;
 
   const body = await req.json();
   const { person_id, brand_id, week_start, followers, er, sov, profile_visits, avg_vtr } = body;
